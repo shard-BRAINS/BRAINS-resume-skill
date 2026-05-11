@@ -1,0 +1,54 @@
+# User-generated output (PII)
+output/
+
+# Common resume/CV filenames placed at repo root by mistake
+/resume.pdf
+/resume.docx
+/resume.txt
+/resume.md
+/cv.pdf
+/cv.docx
+/cv.txt
+/cv.md
+/cover-letter.pdf
+/cover-letter.docx
+/cover-letter.txt
+/cover-letter.md
+
+# LinkedIn exports
+/linkedin-export*.zip
+/linkedin*.zip
+/Basic_LinkedInDataExport*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
