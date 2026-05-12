@@ -17,6 +17,10 @@
 
 .EXAMPLE
   PS> .\install\install.ps1
+.NOTES
+  If PowerShell's execution policy blocks this script, use install.cmd
+  (which handles the bypass automatically) or invoke PowerShell directly:
+    powershell -ExecutionPolicy Bypass -File .\install\install.ps1
 #>
 
 param(

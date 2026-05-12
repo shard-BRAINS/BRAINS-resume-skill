@@ -30,9 +30,15 @@ v1.0.0 — all nine workflows live, install scripts shipping, Claude Project bun
 
 ### One-line installers (recommended)
 
-**Windows (PowerShell):**
+**Windows (Command Prompt or PowerShell):**
+```
+.\install\install.cmd
+```
+
+This wrapper handles PowerShell's default execution policy automatically — no system setting changed. If you'd rather invoke PowerShell directly, use:
+
 ```powershell
-.\install\install.ps1
+powershell -ExecutionPolicy Bypass -File .\install\install.ps1
 ```
 
 **macOS / Linux:**
