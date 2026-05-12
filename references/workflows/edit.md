@@ -22,7 +22,7 @@ Before beginning, confirm all four inputs:
 1. **Original resume** — accept DOCX, PDF, or pasted plain text.
 2. **Coaching report or recommendations** — accept the markdown path from a prior review session, a pasted coaching report, or a direct list of changes the user wants made.
 3. **Structure mode** — this choice has meaningful consequences; always confirm it explicitly with the user before proceeding:
-   - **Fresh chronological template (default):** Rebuilds the resume from scratch using `scripts/templates/resume_chronological.docx`. Fixes ATS structural issues (multi-column layouts, text boxes, headers/footers). Recommended for most users.
+   - **Fresh chronological template (default):** Rebuilds the resume from scratch using `templates/resume_chronological.docx`. Fixes ATS structural issues (multi-column layouts, text boxes, headers/footers). Recommended for most users.
    - **Preserve-structure mode (`--preserve-structure`, opt-in):** Edits content in-place inside the user's existing DOCX. Leaves tables, columns, and other structural elements untouched. The trade-off is explicit: structural ATS issues will remain.
 
    Name the trade-off out loud. Do not assume a mode.
