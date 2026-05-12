@@ -1,6 +1,8 @@
 """Tests for the cover-letter PDF generator."""
 from pathlib import Path
+
 import pdfplumber
+import pytest
 
 from scripts.generators.cover_letter_to_pdf import render_cover_letter_pdf
 
@@ -44,9 +46,6 @@ def test_pdf_contains_no_brains_branding(tmp_path):
                  "AI that works for every mind.", "BRAINS Trust", "BRAINS Incubator")
     for phrase in forbidden:
         assert phrase not in text, f"Brand leak: {phrase}"
-
-
-import pytest
 
 
 def test_pdf_accepts_template_argument(tmp_path):
