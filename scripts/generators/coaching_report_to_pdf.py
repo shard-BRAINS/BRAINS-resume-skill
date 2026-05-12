@@ -161,3 +161,92 @@ def render_coaching_report_pdf(
 
     doc.build(story)
     return out_path
+
+
+import re
+
+
+def _parse_markdown_report(md_text: str) -> dict:
+    """Extract the known coaching-report sections from markdown source.
+
+    Recognised level-1 heading: title (the first ``# `` line).
+    Recognised level-2 headings: Summary, ATS-safety findings, ND-bias findings,
+    Recommended next steps. The Status: line under ATS-safety findings is
+    extracted separately when present.
+    """
+    title_match = re.search(r"^#\s+(.+)$", md_text, re.MULTILINE)
+    title = title_match.group(1).strip() if title_match else "Coaching Report"
+
+    metadata_lines = []
+    for line in md_text.splitlines():
+        if line.startswith("**Prepared:**") or line.startswith("**Resume reviewed:**") or line.startswith("**Reviewer:**"):
+            metadata_lines.append(line)
+
+    resume_filename = ""
+    skill_version = ""
+    for line in metadata_lines:
+        if "Resume reviewed:" in line:
+            resume_filename = line.split("Resume reviewed:**", 1)[-1].strip()
+        if "Reviewer:" in line and "v" in line:
+            v_match = re.search(r"v(\d+\.\d+\.\d+)", line)
+            if v_match:
+                skill_version = v_match.group(1)
+
+    def _extract_section(label: str) -> str:
+        pattern = rf"##\s+{re.escape(label)}\s*\n(.+?)(?=\n##\s+|\Z)"
+        m = re.search(pattern, md_text, re.DOTALL)
+        return m.group(1).strip() if m else ""
+
+    summary = _extract_section("Summary")
+    ats_block = _extract_section("ATS-safety findings")
+    bias_block = _extract_section("ND-bias findings")
+    next_steps = _extract_section("Recommended next steps")
+
+    ats_status = "N/A"
+    ats_status_match = re.search(r"\*\*Status:\*\*\s+(\S+)", ats_block)
+    if ats_status_match:
+        ats_status = ats_status_match.group(1)
+        ats_block = re.sub(r"\*\*Status:\*\*\s+\S+\s*\n?", "", ats_block).strip()
+
+    return {
+        "title": title,
+        "resume_filename": resume_filename or "(unspecified)",
+        "skill_version": skill_version or "1.0.0",
+        "executive_summary": summary or "(no summary provided)",
+        "ats_status": ats_status,
+        "ats_findings": ats_block or "No issues detected.",
+        "bias_findings": bias_block or "No patterns detected.",
+        "next_steps": next_steps or "(none)",
+    }
+
+
+def render_from_markdown(
+    md_path: Union[str, Path],
+    out_path: Union[str, Path],
+    brand_mark_path: Union[str, Path],
+    include_trust_footer: bool = False,
+) -> Path:
+    """Render a coaching report PDF from a markdown source file.
+
+    The markdown file is the single source of truth; this avoids the
+    structured-data-reconstruction step that has caused duplication bugs
+    in workflow integrations.
+    """
+    md_path = Path(md_path)
+    if not md_path.exists():
+        raise FileNotFoundError(f"Markdown report not found: {md_path}")
+    md_text = md_path.read_text(encoding="utf-8")
+    parsed = _parse_markdown_report(md_text)
+    return render_coaching_report_pdf(
+        out_path=out_path,
+        title=parsed["title"],
+        resume_filename=parsed["resume_filename"],
+        skill_version=parsed["skill_version"],
+        executive_summary=parsed["executive_summary"],
+        ats_status=parsed["ats_status"],
+        ats_findings=parsed["ats_findings"],
+        bias_findings=parsed["bias_findings"],
+        next_steps=parsed["next_steps"],
+        include_trust_footer=include_trust_footer,
+        brand_mark_path=brand_mark_path,
+    )
