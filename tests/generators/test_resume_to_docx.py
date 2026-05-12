@@ -62,3 +62,32 @@ def test_renders_to_user_chosen_directory(tmp_path):
     render_resume_docx(SAMPLE_RESUME_DATA, out)
     assert out.exists()
     assert subdir.exists()
+
+
+def test_render_accepts_template_argument(tmp_path):
+    out = tmp_path / "resume.docx"
+    render_resume_docx(SAMPLE_RESUME_DATA, out, template="chronological")
+    assert out.exists()
+
+
+def test_render_unknown_template_raises_value_error(tmp_path):
+    out = tmp_path / "resume.docx"
+    with pytest.raises(ValueError) as exc_info:
+        render_resume_docx(SAMPLE_RESUME_DATA, out, template="nonexistent")
+    assert "nonexistent" in str(exc_info.value)
+    assert "chronological" in str(exc_info.value)  # message lists valid templates
+
+
+def test_render_default_template_unchanged_behaviour(tmp_path):
+    """Default behaviour matches v1.0.x — calling without template= produces
+    the chronological-template output."""
+    out_default = tmp_path / "default.docx"
+    out_explicit = tmp_path / "explicit.docx"
+    render_resume_docx(SAMPLE_RESUME_DATA, out_default)
+    render_resume_docx(SAMPLE_RESUME_DATA, out_explicit, template="chronological")
+    # Both produced output; both contain the candidate name.
+    from docx import Document
+    text_default = "\n".join(p.text for p in Document(str(out_default)).paragraphs)
+    text_explicit = "\n".join(p.text for p in Document(str(out_explicit)).paragraphs)
+    assert "Alex Test" in text_default
+    assert "Alex Test" in text_explicit

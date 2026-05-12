@@ -9,7 +9,7 @@ from typing import Union
 
 from docx import Document
 
-DEFAULT_TEMPLATE = "chronological"
+VALID_TEMPLATES = ("chronological", "functional", "hybrid", "executive")
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "templates" / "resume"
 
 
@@ -59,16 +59,27 @@ def _expand_multiline_paragraph(doc: Document, paragraph, value: str):
         insertion_index += 1
 
 
-def render_resume_docx(data: dict, out_path: Union[str, Path]) -> Path:
-    """Render a structured resume dict into the chronological DOCX template.
+def render_resume_docx(
+    data: dict,
+    out_path: Union[str, Path],
+    template: str = "chronological",
+) -> Path:
+    """Render a structured resume dict into the selected DOCX template.
 
+    template choices: chronological (default), functional, hybrid, executive.
     Required keys in data: candidate_name, candidate_contact_line, summary,
     skills, experience, education. Missing keys default to an empty string.
     """
+    if template not in VALID_TEMPLATES:
+        raise ValueError(
+            f"Unknown template {template!r}. Valid options: {', '.join(VALID_TEMPLATES)}"
+        )
+
+    template_path = TEMPLATES_DIR / f"{template}.docx"
+
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    template_path = TEMPLATES_DIR / f"{DEFAULT_TEMPLATE}.docx"
     if not template_path.exists():
         raise FileNotFoundError(f"Resume template not found: {template_path}")
 
