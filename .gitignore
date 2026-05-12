@@ -56,3 +56,7 @@ htmlcov/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Distribution artifacts (built on demand)
+dist/*
+!dist/.gitkeep
