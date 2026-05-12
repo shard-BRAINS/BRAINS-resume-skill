@@ -42,19 +42,17 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-**Install the skill bundle for Claude Code** — choose one:
+**Install the skill bundle for Claude Code** — copy or symlink:
 
-Copy (recommended for most users):
 ```bash
+# Copy (most users)
 cp -r . ~/.claude/skills/brains-resume/
-```
 
-Symlink (recommended if you want edits to the repo to take effect immediately):
-```bash
+# Symlink (edits take effect immediately)
 ln -s "$(pwd)" ~/.claude/skills/brains-resume
 ```
 
-On Windows, use a directory junction in place of a symlink:
+Windows — directory junction:
 ```powershell
 New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\brains-resume" -Target (Get-Location).Path
 ```
