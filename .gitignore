@@ -1,6 +1,9 @@
 # User-generated output (PII)
 output/
 
+# User-supplied source files (PII — resumes, LinkedIn exports, etc.)
+user_data/
+
 # Common resume/CV filenames placed at repo root by mistake
 /resume.pdf
 /resume.docx
