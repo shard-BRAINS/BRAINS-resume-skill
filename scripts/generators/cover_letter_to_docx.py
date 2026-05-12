@@ -9,7 +9,7 @@ from typing import Union
 from docx import Document
 
 
-DEFAULT_TEMPLATE = "formal-business"
+VALID_TEMPLATES = ("formal-business", "modern-clean")
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "templates" / "cover-letter"
 
 
@@ -27,12 +27,25 @@ PLACEHOLDER_MAP = {
 }
 
 
-def render_cover_letter_docx(data: dict, out_path: Union[str, Path]) -> Path:
-    """Fill the cover-letter template with letter data and save."""
+def render_cover_letter_docx(
+    data: dict,
+    out_path: Union[str, Path],
+    template: str = "formal-business",
+) -> Path:
+    """Fill the cover-letter template with letter data and save.
+
+    template choices: formal-business (default), modern-clean.
+    """
+    if template not in VALID_TEMPLATES:
+        raise ValueError(
+            f"Unknown template {template!r}. Valid options: {', '.join(VALID_TEMPLATES)}"
+        )
+
+    template_path = TEMPLATES_DIR / f"{template}.docx"
+
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    template_path = TEMPLATES_DIR / f"{DEFAULT_TEMPLATE}.docx"
     if not template_path.exists():
         raise FileNotFoundError(f"Cover-letter template not found: {template_path}")
 
