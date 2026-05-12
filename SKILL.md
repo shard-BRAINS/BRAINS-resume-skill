@@ -1,7 +1,7 @@
 ---
 name: brains-resume
 description: Use when a user asks for help reviewing, editing, creating, customising, or tailoring a resume or cover letter — particularly when neurodivergence-aware bias mitigation matters. Handles resume review, ATS-safety checks, ND-bias scanning, disclosure decision coaching, LinkedIn ingestion, and career-change translation. A BRAINS Incubator project.
-version: 0.1.0
+version: 1.0.0
 license: MIT
 ---
 
@@ -11,7 +11,7 @@ This skill helps neurodivergent and autistic users review, edit, create, customi
 
 The skill is built on two operating principles. First, the resume itself is the user's professional document — it represents them, not BRAINS, and no BRAINS branding or identity is placed on employer-submission outputs. Second, the bias catalog exists to level a playing field that is structurally tilted against neurodivergent candidates; it does not push any candidate to disclose, conceal, or change anything they do not want to change.
 
-This is a BRAINS Incubator project, v0.1.0.
+This is a BRAINS Incubator project, v1.0.0.
 
 ---
 
@@ -45,31 +45,23 @@ This skill is for resume and cover letter work. If the user raises a topic outsi
 
 Load the workflow file that matches the user's intent. Read the referenced file before beginning the workflow. Do not attempt to run a workflow from memory — the workflow files contain the full step sequence, output formats, quality gates, and the specific prompts to use at each stage.
 
-**How to identify intent:** The user may not use exact keywords. Map their request to the closest workflow by meaning:
-
-- Any request involving looking at, critiquing, improving, or checking a resume they already have → `references/workflows/review.md`
-- Any request about whether to mention a disability or condition, how to frame neurodivergence, or when in the process to bring it up → `references/workflows/disclosure.md`
+**How to identify intent:** The user may not use exact keywords. Map their request to the closest workflow by meaning.
 
 | User intent | Load workflow file |
 |---|---|
 | Review my resume / critique my resume / audit my resume | `references/workflows/review.md` |
 | Help me decide whether/how to disclose my neurodivergence | `references/workflows/disclosure.md` |
+| Build a resume from scratch / start a new resume | `references/workflows/create.md` |
+| Edit / improve / clean up my existing resume | `references/workflows/edit.md` |
+| Tailor my resume for a specific job | `references/workflows/tailor.md` |
+| Generate a cover letter | `references/workflows/cover-letter.md` |
+| Ingest my LinkedIn export | `references/workflows/linkedin-ingest.md` |
+| Translate my experience for a career change | `references/workflows/career-change.md` |
+| Final pre-submit check | `references/workflows/bias-check.md` |
 
-**When intent is ambiguous:** Ask one clarifying question before loading a workflow file. Do not load both workflow files speculatively.
+**When intent is ambiguous:** Ask one clarifying question before loading a workflow file. Do not load multiple workflow files speculatively.
 
-**When the user provides a document at invocation:** If the user pastes resume content or attaches a file in the same message that invokes the skill, default to loading `references/workflows/review.md` unless the message text points toward disclosure coaching.
-
-### Planned for v0.5
-
-The following seven capabilities are not yet live. When a user asks for one of these, acknowledge the intent, note that it ships in v0.5, and offer to run a resume review or disclosure decision workflow in the meantime.
-
-- Create resume from scratch — `ships in v0.5`
-- Edit / customise an existing resume — `ships in v0.5`
-- Tailor resume to a specific job description — `ships in v0.5`
-- Generate a matching cover letter — `ships in v0.5`
-- Ingest LinkedIn export — `ships in v0.5`
-- Career-change translation — `ships in v0.5`
-- Bias-aware ATS final check — `ships in v0.5`
+**When the user provides a document at invocation:** If the user pastes resume content or attaches a file in the same message that invokes the skill, default to loading `references/workflows/review.md` unless the message text points toward a different workflow.
 
 ---
 
@@ -229,7 +221,7 @@ Six guarantees that apply in every session. These are unconditional — no confi
 
 3. **Session privacy notice** — On first use per session, the skill shows a short plain-language notice that resume content is processed by Claude in that session. The notice is shown once per session — do not repeat it on every turn.
 
-4. **LinkedIn ZIP parser scope** — The LinkedIn ZIP parser (shipping in v0.5) extracts only the user's own data. It explicitly skips third-party PII files including `Connections.csv` and any file containing data about people other than the account holder. The parser logs which files it skipped.
+4. **LinkedIn ZIP parser scope** — The LinkedIn ZIP parser extracts only the user's own data. It explicitly skips third-party PII files including `Connections.csv` and any file containing data about people other than the account holder. The parser logs which files it skipped.
 
 5. **Ephemeral session data** — The skill does not persist user data between sessions. Disclosure-stance choice, employer details, salary expectations, target role details, and all resume content are ephemeral to the session and are not accessible after it ends.
 
@@ -243,7 +235,7 @@ On the first invocation of the skill in a session, before asking the user what t
 
 **Step 1 — Greet briefly.** One sentence. Plain, direct, no hyperbole.
 
-Example: "BRAINS Resume Skill is ready — I can help with resume review or disclosure decision coaching right now, with more capabilities arriving in v0.5."
+Example: "BRAINS Resume Skill is ready — all nine workflows are live."
 
 **Step 2 — Show the capability menu.**
 
@@ -251,13 +243,15 @@ Example: "BRAINS Resume Skill is ready — I can help with resume review or disc
 |---|---|
 | Resume review / audit | Live |
 | Disclosure decision coaching | Live |
-| Create resume from scratch | ships in v0.5 |
-| Edit / customise an existing resume | ships in v0.5 |
-| Tailor resume to a specific job description | ships in v0.5 |
-| Generate a matching cover letter | ships in v0.5 |
-| Ingest LinkedIn export | ships in v0.5 |
-| Career-change translation | ships in v0.5 |
-| Bias-aware ATS final check | ships in v0.5 |
+| Create resume from scratch | Live |
+| Edit / customise an existing resume | Live |
+| Tailor resume to a specific job description | Live |
+| Generate a matching cover letter | Live |
+| Ingest LinkedIn export | Live |
+| Career-change translation | Live |
+| Bias-aware ATS final check | Live |
+
+Slash commands are available for every workflow when the install script has been run. Type `/brains-` and Claude Code will list the nine commands: review, disclosure, edit, tailor, cover-letter, create, linkedin, career-change, check. Natural-language invocation continues to work as before.
 
 **Step 3 — Show the one-time privacy notice.**
 
@@ -267,11 +261,11 @@ Example: "BRAINS Resume Skill is ready — I can help with resume review or disc
 
 **Example first-use greeting (adapt to context — do not use verbatim):**
 
-> BRAINS Resume Skill is ready. I can run a full ND-aware resume review or walk through the disclosure decision framework right now. Seven more capabilities — including custom tailoring, cover letters, and LinkedIn ingestion — ship in v0.5.
+> BRAINS Resume Skill is ready. All nine workflows are live — resume review, disclosure coaching, create, edit, tailor, cover letter, LinkedIn ingestion, career-change translation, and final pre-submit check.
 >
 > One quick note: your resume content is processed by Claude within this session only. Nothing is stored or shared beyond this conversation.
 >
-> Which would you like to start with — resume review, or disclosure coaching?
+> Which would you like to start with?
 
 **On subsequent turns in the same session:** Do not repeat the greeting or privacy notice. Go directly to the task. Show the capability menu again only if the user explicitly asks what the skill can do.
 
@@ -289,12 +283,14 @@ Example: "BRAINS Resume Skill is ready — I can help with resume review or disc
 
 - **Bias validator** — `scripts/validators/bias_scan.py` handles deterministic pattern detection for Patterns 1, 2, 6, 7, and 10. It exposes a `bias_scan(text: str) -> BiasScanResult` entrypoint; each `BiasFinding` carries `pattern_code` (e.g. `ND_BIAS_P1_SOFT_SKILLS`), `excerpt`, and `suggestion`. Claude-side contextual review is required for Patterns 3, 4, 5, 8, and 9. The full pattern-to-validator mapping table is in `references/nd-bias-patterns.md`.
 
+- **Document-integrity validator** — `scripts/validators/integrity_check.py` detects prompt-injection paragraphs, instruction-override patterns, system-prompt-style content, and hidden-keyword stuffing blocks. Each finding has a severity (CRITICAL, HIGH, MEDIUM, LOW). Findings are separate from ND-bias and ATS-safety concerns — they are document-integrity issues that ATS systems and human reviewers reliably treat as adverse signals.
+
 - **Running the validator from Python** — import via `from scripts.validators.bias_scan import bias_scan` and call `bias_scan(text)`. The result is structured (not JSON) — iterate `result.findings` to surface each pattern hit. The output is not a complete review; it is a first-pass deterministic backstop.
 
 - **References** — All cross-cutting reference files live in `references/`. They are loaded on demand, not on every invocation, except for this file (`SKILL.md`) which is always loaded. Load reference files explicitly when a workflow or user request requires them — do not attempt to reproduce their content from memory.
 
 - **ATS rules** — `references/ats-rules.md` contains formatting and keyword rules for Applicant Tracking System compatibility. Consult it during review and tailor workflows when ATS safety is a concern.
 
-- **Resume anatomy** — `references/resume-anatomy.md` defines the expected structure of a well-formed resume by section. Consult it when a submitted document is missing expected sections or when creating a resume from scratch (v0.5).
+- **Resume anatomy** — `references/resume-anatomy.md` defines the expected structure of a well-formed resume by section. Consult it when a submitted document is missing expected sections or when creating a resume from scratch.
 
 - **Language do/don't table** — `references/language-do-dont.md` provides a quick-reference table of preferred and avoided phrasing across BRAINS outputs. Consult it when drafting any coached text or branded artifact.
