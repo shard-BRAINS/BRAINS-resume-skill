@@ -7,7 +7,7 @@ from pathlib import Path
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 
-TEMPLATE_PATH = Path(__file__).parent.parent.parent / "templates" / "cover_letter.docx"
+TEMPLATE_PATH = Path(__file__).parent.parent.parent / "templates" / "cover-letter" / "formal-business.docx"
 
 
 def make_template() -> Path:

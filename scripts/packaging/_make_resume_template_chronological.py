@@ -9,7 +9,7 @@ from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-TEMPLATE_PATH = Path(__file__).parent.parent.parent / "templates" / "resume_chronological.docx"
+TEMPLATE_PATH = Path(__file__).parent.parent.parent / "templates" / "resume" / "chronological.docx"
 
 
 def make_template() -> Path:

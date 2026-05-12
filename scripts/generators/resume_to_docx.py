@@ -9,7 +9,8 @@ from typing import Union
 
 from docx import Document
 
-TEMPLATE_PATH = Path(__file__).parent.parent.parent / "templates" / "resume_chronological.docx"
+DEFAULT_TEMPLATE = "chronological"
+TEMPLATES_DIR = Path(__file__).parent.parent.parent / "templates" / "resume"
 
 
 PLACEHOLDER_MAP = {
@@ -67,10 +68,11 @@ def render_resume_docx(data: dict, out_path: Union[str, Path]) -> Path:
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if not TEMPLATE_PATH.exists():
-        raise FileNotFoundError(f"Resume template not found: {TEMPLATE_PATH}")
+    template_path = TEMPLATES_DIR / f"{DEFAULT_TEMPLATE}.docx"
+    if not template_path.exists():
+        raise FileNotFoundError(f"Resume template not found: {template_path}")
 
-    doc = Document(str(TEMPLATE_PATH))
+    doc = Document(str(template_path))
 
     multiline_jobs = []
     for paragraph in list(doc.paragraphs):

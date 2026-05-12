@@ -3,7 +3,7 @@ from pathlib import Path
 
 from scripts.validators.ats_check import ats_check
 
-TEMPLATE = Path(__file__).parent.parent.parent / "templates" / "resume_chronological.docx"
+TEMPLATE = Path(__file__).parent.parent.parent / "templates" / "resume" / "chronological.docx"
 
 
 def test_template_exists():
