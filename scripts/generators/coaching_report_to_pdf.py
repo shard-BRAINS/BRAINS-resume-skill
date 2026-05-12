@@ -11,7 +11,8 @@ Reads styling parameters from references/brand-application.md:
 from pathlib import Path
 from typing import Union
 
-from reportlab.lib.colors import HexColor, black, grey
+from PIL import Image as PILImage
+from reportlab.lib.colors import HexColor, grey
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib.styles import ParagraphStyle
@@ -116,7 +117,13 @@ def render_coaching_report_pdf(
     story = []
 
     if brand_mark_path.exists():
-        story.append(Image(str(brand_mark_path), width=1.2 * inch, height=0.5 * inch))
+        # Preserve the mark's natural aspect ratio: lock target height,
+        # compute width from the source image's intrinsic dimensions.
+        with PILImage.open(brand_mark_path) as pil_img:
+            natural_w, natural_h = pil_img.size
+        target_height = 0.6 * inch
+        target_width = target_height * (natural_w / natural_h)
+        story.append(Image(str(brand_mark_path), width=target_width, height=target_height))
         story.append(Spacer(1, 12))
 
     story.append(Paragraph(title, h1))

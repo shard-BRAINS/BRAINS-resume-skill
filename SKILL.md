@@ -79,7 +79,7 @@ These ten principles apply in every workflow. They mirror the full pattern catal
 
 **Detection split:**
 
-- Patterns 1, 2, 6, 7, and 10 are detectable by keyword or regex. The bias validator (`scripts/bias_scan.py`) handles these automatically when the scripts layer is active.
+- Patterns 1, 2, 6, 7, and 10 are detectable by keyword or regex. The bias validator (`scripts/validators/bias_scan.py`) handles these automatically when the scripts layer is active.
 - Patterns 3, 4, 5, 8, and 9 require Claude-side contextual judgment — they depend on document structure, proximity analysis, section awareness, or confirmation that the work was genuinely candidate-led. The validator produces a partial flag; Claude provides the judgment.
 
 **Delivery standard:** When raising a flag, always (a) name the pattern, (b) quote the triggering text, (c) explain the risk in one sentence, and (d) offer a specific rewrite suggestion. Never raise a flag as a bare assertion. The user's ability to make an informed veto depends on a clear explanation.
@@ -285,11 +285,11 @@ Example: "BRAINS Resume Skill is ready — I can help with resume review or disc
 
 - **Templates** — Document templates live in `templates/`. The coaching report template is at `templates/coaching_report.md`. Templates are markdown source files; the PDF generator renders them — do not put styling directly into templates.
 
-- **Brand assets** — BRAINS mark and supporting assets live in `assets/`. The PDF generator (`scripts/coaching_report_to_pdf.py`) reads its styling parameters from `references/brand-application.md`. The mark asset for light backgrounds is `assets/brains-mark-light-bg.png`.
+- **Brand assets** — BRAINS mark and supporting assets live in `assets/`. The PDF generator (`scripts/generators/coaching_report_to_pdf.py`) reads its styling parameters from `references/brand-application.md`. The mark asset for light backgrounds is `assets/brains-mark-light-bg.png`.
 
-- **Bias validator** — `scripts/bias_scan.py` handles deterministic pattern detection for Patterns 1, 2, 6, 7, and 10. It returns a list of flag objects — each with `pattern_id`, `trigger_text`, `location`, and `confidence`. Claude-side contextual review is required for Patterns 3, 4, 5, 8, and 9. The full pattern-to-validator mapping table is in `references/nd-bias-patterns.md`.
+- **Bias validator** — `scripts/validators/bias_scan.py` handles deterministic pattern detection for Patterns 1, 2, 6, 7, and 10. It exposes a `bias_scan(text: str) -> BiasScanResult` entrypoint; each `BiasFinding` carries `pattern_code` (e.g. `ND_BIAS_P1_SOFT_SKILLS`), `excerpt`, and `suggestion`. Claude-side contextual review is required for Patterns 3, 4, 5, 8, and 9. The full pattern-to-validator mapping table is in `references/nd-bias-patterns.md`.
 
-- **Running the validator standalone** — `python scripts/bias_scan.py <path-to-resume-text-file>` will print a JSON report of all deterministic flags. This is useful for pre-screening before Claude reviews. The output is not a complete review — it is a first-pass flag list.
+- **Running the validator from Python** — import via `from scripts.validators.bias_scan import bias_scan` and call `bias_scan(text)`. The result is structured (not JSON) — iterate `result.findings` to surface each pattern hit. The output is not a complete review; it is a first-pass deterministic backstop.
 
 - **References** — All cross-cutting reference files live in `references/`. They are loaded on demand, not on every invocation, except for this file (`SKILL.md`) which is always loaded. Load reference files explicitly when a workflow or user request requires them — do not attempt to reproduce their content from memory.
 
