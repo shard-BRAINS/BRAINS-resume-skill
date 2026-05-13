@@ -9,11 +9,28 @@ This guide explains the Claude Project setup.
 
 ## What you get in a Claude Project
 
-- All nine workflows are usable conversationally
+- All eleven workflows are usable conversationally
 - The full ND-bias pattern catalog (10 families) is loaded as project knowledge
 - The disclosure decision framework is loaded
 - The brand-application rules are loaded
 - The coaching-report markdown template is loaded
+- Template selection guidance (4 resume templates, 2 cover-letter templates) for the create/edit/tailor workflows
+
+## Workflows available on claude.ai
+
+1. Resume review
+2. Disclosure coaching
+3. Create resume from scratch
+4. Edit / customise an existing resume
+5. Tailor resume to a specific job description
+6. Generate a matching cover letter
+7. LinkedIn export ingestion
+8. LinkedIn profile improvement (new in v1.1.0)
+9. Resume + LinkedIn consolidation (new in v1.1.0)
+10. Career-change translation
+11. Bias-aware ATS final check
+
+See `references/template-selection.md` for the full decision tree guiding template choice (4 resume templates, 2 cover-letter templates) in the create/edit/tailor workflows.
 
 ## What is different from Claude Code
 
@@ -39,6 +56,7 @@ This guide explains the Claude Project setup.
    - `language-do-dont.md`
    - `resume-anatomy.md`
    - `brand-application.md`
+   - `template-selection.md` (decision tree for resume and cover-letter templates)
 5. Add each `references/workflows/*.md` file as project knowledge.
 6. Add `templates/coaching_report.md` as project knowledge.
 
