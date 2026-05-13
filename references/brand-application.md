@@ -17,6 +17,10 @@ Different output surfaces get different brand treatment. The table below is auth
 | LinkedIn profile rewrite — text within the markdown artifact (Headline / About / Experience / Skills) | **Unbranded** — plain text intended for paste into LinkedIn | LinkedIn is a third-party surface where BRAINS branding would be inappropriate. |
 | LinkedIn profile rewrite — surrounding markdown coaching wrapper | BRAINS branded — coaching artifact frame | The wrapper is an internal coaching session record, same category as the review coaching report. |
 | Consolidation report (markdown) | **BRAINS branded** — Gold Deep headings, BRAINS mark in header if rendered to PDF, identity-first language | Internal coaching artifact, same category as the review coaching report. |
+| JD analyzer markdown report (saved to `output/`) | **BRAINS branded** — Gold Deep headings, identity-first language | Internal coaching artifact, same category as the review coaching report |
+| Pre-application check summary (saved to `output/`) | **BRAINS branded** | Internal coaching artifact |
+| Tracker CLI markdown output (`/brains-track` responses) | **BRAINS branded** — coaching artifact frame in chat | Internal coaching tooling |
+| `tracker.db` and `profile.json` | **Not branded** — raw data, no presentation surface | Data storage, not a presented artifact |
 | Coaching reports (markdown + PDF) | **BRAINS branded** — Gold Deep headings, BRAINS mark in header, identity-first language throughout, origin-phrase footer | Coaching reports are authored by the skill on behalf of BRAINS; they are internal or shared coaching artefacts, not employer submissions. |
 | Disclosure worksheets | **BRAINS branded** — same treatment as coaching reports, plus BRAINS Trust footer-credit line above the origin-phrase footer | Disclosure content draws on BRAINS Trust safeguarding principles and must acknowledge that provenance. |
 
