@@ -4,6 +4,37 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## [1.2.0] — 2026-05-13
+
+### Added
+- **Application tracker** — SQLite store at `~/.brains-resume/tracker.db` with 5 entity tables (resume_versions, cover_letters, jds, applications, outcomes) and migrations support. Public Python API at `scripts/tracker/{add,query,profile}.py`. Opt-in — never created unless the user invokes a tracker workflow.
+- **User profile store** — `~/.brains-resume/profile.json` holds focus areas and self-defined healthy weekly application rate. The skill never recommends a rate; it asks once and uses what the user provides.
+- **JD analyzer validator** (`scripts/validators/jd_analyzer.py`) — six-code finding catalog: soft-culture red flags, masking-cost markers, evidence-of-real-flexibility, required-vs-nice parsing, role-fit scoring against user focus areas, duplicate-application detection against the tracker.
+- **JD analyzer workflow** (`/brains-jd-analyze`) — surfaces ND-relevant signals in a JD; offers to persist to the tracker.
+- **Pre-application sanity check workflow** (`/brains-precheck`) — six-question coaching pass before submission: duplicate check, findings recap, fit-or-pressure question, pacing check, cover-letter check, channel+agency. Never blocks submission.
+- **Application tracker slash command** (`/brains-track`) — composite command with subcommands: `add`, `update`, `list`, `summary`, `focus-areas`, `healthy-rate`. All output is markdown rendered in chat.
+- **Opt-in integration with existing workflows** — `brains-tailor`, `brains-cover-letter`, `brains-review`, `brains-check` now prompt at end-of-workflow to register the artifact in the tracker. Users who consistently decline never create the tracker db.
+- **SQLite migration system** — numbered migration scripts in `scripts/tracker/migrations/`. Migration `0001_initial_schema` ships with v1.2.0; future schema changes follow the same pattern.
+- **Test isolation via environment variables** — `BRAINS_TRACKER_DB_PATH` and `BRAINS_TRACKER_PROFILE_PATH` override the default paths for test fixtures.
+
+### Changed
+- **SKILL.md router** — three new workflow entries; capability menu and slash-command list updated to reflect fourteen live workflows.
+- **`references/brand-application.md`** — Split-rule table extended for tracker CLI output, JD analyzer reports, and the pre-application check summary.
+- **`README.md`** — slash-command list updated; new "Tracking applications" section added.
+- **Claude Project bundle** — rebuilt to include new reference docs (the tracker itself is Claude-Code-only — claude.ai can't persist local files).
+
+### Deferred to Phase 5 (v1.3.0)
+- Streamlit dashboard UI built on top of this data layer.
+- Pacing/burnout tracker as a dedicated dashboard page.
+- Efficacy analytics with confidence bands.
+- Anonymized community efficacy data (opt-in, future).
+
+### Deferred (still)
+- Interview prep skill (sibling, separate bundle).
+- Salary negotiation skill (sibling, separate bundle).
+- Network/referral lane as a first-class entity (folded into `channel` enum for v1.2.0).
+- MCP server for Claude Desktop.
+
 ## [1.1.0] — 2026-05-13
 
 ### Added
