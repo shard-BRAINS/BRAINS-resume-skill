@@ -78,3 +78,39 @@ def test_open_db_enables_foreign_keys(monkeypatch, tmp_path):
         assert cur.fetchone()[0] == 1
     finally:
         conn.close()
+
+
+def test_all_five_entity_tables_exist_after_migration(monkeypatch, tmp_path):
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
+    conn = open_db()
+    try:
+        cur = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+        )
+        tables = {row[0] for row in cur.fetchall()}
+        # 5 entity tables + migrations + sqlite_sequence (autoincrement bookkeeping)
+        assert "resume_versions" in tables
+        assert "cover_letters" in tables
+        assert "jds" in tables
+        assert "applications" in tables
+        assert "outcomes" in tables
+        assert "migrations" in tables
+    finally:
+        conn.close()
+
+
+def test_foreign_key_enforced_at_runtime(monkeypatch, tmp_path):
+    """Insert an application row pointing at non-existent jd_id — must raise."""
+    import sqlite3
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
+    conn = open_db()
+    try:
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute(
+                "INSERT INTO applications "
+                "(jd_id, resume_version_id, submitted_at, channel, created_at) "
+                "VALUES (999, 999, '2026-05-13', 'direct', '2026-05-13')"
+            )
+            conn.commit()
+    finally:
+        conn.close()
