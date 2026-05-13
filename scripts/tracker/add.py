@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from scripts.tracker.db import open_db
+from scripts.tracker.models import APPLICATION_CHANNELS, OUTCOME_EVENT_TYPES
 
 
 def _now_iso() -> str:
@@ -76,6 +77,96 @@ def add_jd(
                 json.dumps(focus_areas_required),
                 json.dumps(focus_areas_nice),
                 _now_iso(),
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def add_cover_letter(
+    file_path: Optional[str],
+    resume_version_id: int,
+    jd_id: int,
+    template: str,
+) -> int:
+    """Insert a cover_letters row, return the new id."""
+    conn = open_db()
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO cover_letters
+                (file_path, resume_version_id, jd_id, template, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (file_path, resume_version_id, jd_id, template, _now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def add_application(
+    jd_id: int,
+    resume_version_id: int,
+    cover_letter_id: Optional[int],
+    submitted_at: datetime,
+    channel: str,
+    agency_name: Optional[str] = None,
+    recruiter_contact: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> int:
+    """Insert an applications row, return the new id."""
+    if channel not in APPLICATION_CHANNELS:
+        raise ValueError(
+            f"Unknown channel {channel!r}. Valid: {', '.join(APPLICATION_CHANNELS)}"
+        )
+    conn = open_db()
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO applications
+                (jd_id, resume_version_id, cover_letter_id, submitted_at,
+                 channel, agency_name, recruiter_contact, notes, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                jd_id, resume_version_id, cover_letter_id,
+                submitted_at.isoformat(),
+                channel, agency_name, recruiter_contact, notes,
+                _now_iso(),
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def record_outcome(
+    application_id: int,
+    event_type: str,
+    event_date: datetime,
+    notes: Optional[str] = None,
+) -> int:
+    """Insert an outcomes row, return the new id."""
+    if event_type not in OUTCOME_EVENT_TYPES:
+        raise ValueError(
+            f"Unknown event_type {event_type!r}. Valid: {', '.join(OUTCOME_EVENT_TYPES)}"
+        )
+    conn = open_db()
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO outcomes
+                (application_id, event_type, event_date, notes, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                application_id, event_type, event_date.isoformat(),
+                notes, _now_iso(),
             ),
         )
         conn.commit()
