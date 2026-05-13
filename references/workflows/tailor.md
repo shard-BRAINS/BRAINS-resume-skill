@@ -70,6 +70,8 @@ With decisions recorded and the tailored text assembled, run:
 
 Stop on any CRITICAL finding and require explicit user sign-off before continuing.
 
+**Template selection.** This workflow defaults to the `chronological` resume template. Before rendering the final output, walk the user through `references/template-selection.md` to decide whether `chronological`, `functional`, `hybrid`, or `executive` better fits their situation. Pass the chosen template name as the `template=` argument to the generator. Tailoring may justify switching templates — e.g. a career-pivot tailor often justifies switching from `chronological` to `hybrid`.
+
 **(h) Render output files.**
 Call `scripts/generators/resume_to_docx.py` and `scripts/generators/resume_to_pdf.py` with the finalised tailored content. Apply the timestamped naming convention (see Output Artifacts below).
 

@@ -66,6 +66,8 @@ Include only changes the user explicitly accepted. The user-veto principle is ab
 **(e) Run bias scan before rendering.**
 Run `scripts/validators/bias_scan.py` on the assembled text. If any confident-hit patterns fire — specifically P1, P2, P6, P7, or P10 — and the user has not opted into them via their disclosure stance, raise them as a final pre-flight check. The user decides; do not auto-suppress or auto-retain.
 
+**Template selection.** This workflow defaults to the `chronological` resume template. Before rendering the final output, walk the user through `references/template-selection.md` to decide whether `chronological`, `functional`, `hybrid`, or `executive` better fits their situation. Pass the chosen template name as the `template=` argument to the generator.
+
 **(f) Render output files.**
 Call `scripts/generators/resume_to_docx.py(data, output_docx)` and `scripts/generators/resume_to_pdf.py(data, output_pdf)`. Use the timestamped naming convention (see Output Artifacts below).
 

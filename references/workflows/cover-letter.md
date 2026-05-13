@@ -60,6 +60,8 @@ Stop on any CRITICAL finding and require explicit user sign-off before continuin
 **(f) Present the draft and collect per-paragraph decisions.**
 Show the full draft to the user. Walk through each paragraph in order and prompt: accept, reject, or modify. Record every decision; do not apply changes silently or in batches. If a revision request would require fabricating employer-specific knowledge the user has not supplied, decline the fabrication and offer a structurally equivalent alternative grounded in what is known.
 
+**Template selection.** This workflow defaults to the `formal-business` cover-letter template. Before rendering, walk the user through `references/template-selection.md` to decide whether `formal-business` or `modern-clean` better fits the target industry. Pass the chosen template name as the `template=` argument to the generator.
+
 **(g) Render output files.**
 Call `scripts/generators/cover_letter_to_docx.py` and `scripts/generators/cover_letter_to_pdf.py` with the finalised letter content. Apply the timestamped naming convention (see Output Artifacts below).
 

@@ -127,6 +127,8 @@ Before rendering, run both validators in order:
 
 If either surfaces CRITICAL findings, stop, surface them, and require explicit user confirmation before continuing.
 
+**Template selection.** This workflow defaults to the `chronological` resume template. Before rendering the final output, walk the user through `references/template-selection.md` to decide whether `chronological`, `functional`, `hybrid`, or `executive` better fits their situation. Pass the chosen template name as the `template=` argument to the generator.
+
 **(e) Render output files.**
 Call `scripts/generators/resume_to_docx.py(data, output_docx)` and `scripts/generators/resume_to_pdf.py(data, output_pdf)`. Use the timestamped naming convention (see Output Artifacts below).
 
