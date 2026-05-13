@@ -53,3 +53,98 @@ def test_mixed_jd_produces_some_of_each():
     codes = _codes(r)
     assert "JD_RED_FLAG_SOFT_CULTURE" in codes
     assert "JD_EVIDENCE_OF_FLEX" in codes
+
+
+import pytest
+
+
+def test_well_parsed_jd_extracts_required_and_nice_lists():
+    r = jd_analyze(fx.WELL_PARSED_JD)
+    # Required list should contain at least one of the bulleted items
+    required_joined = " ".join(r.required_list).lower()
+    assert "5+ years" in required_joined or "backend python" in required_joined
+    nice_joined = " ".join(r.nice_list).lower()
+    assert "go" in nice_joined or "open-source" in nice_joined
+
+
+def test_well_parsed_jd_produces_req_vs_nice_finding():
+    r = jd_analyze(fx.WELL_PARSED_JD)
+    codes = [f.code for f in r.findings]
+    assert "JD_REQ_VS_NICE_PARSING" in codes
+
+
+def test_role_fit_score_none_when_no_focus_areas_given():
+    r = jd_analyze(fx.WELL_PARSED_JD)
+    assert r.role_fit_score is None
+
+
+def test_role_fit_score_computed_when_focus_areas_given():
+    r = jd_analyze(
+        fx.WELL_PARSED_JD,
+        focus_areas=["python", "distributed systems", "on-call"],
+    )
+    assert r.role_fit_score is not None
+    assert 0 <= r.role_fit_score <= 100
+
+
+def test_role_fit_score_full_match_is_high():
+    """All focus areas match required items → score should be ≥80."""
+    r = jd_analyze(
+        fx.WELL_PARSED_JD,
+        focus_areas=["python", "distributed systems", "on-call"],
+    )
+    assert r.role_fit_score >= 80
+
+
+def test_role_fit_score_no_match_is_low():
+    """Focus areas have nothing to do with the JD → low score."""
+    r = jd_analyze(
+        fx.WELL_PARSED_JD,
+        focus_areas=["ceramics", "marine biology", "viking history"],
+    )
+    assert r.role_fit_score <= 30
+
+
+def test_role_fit_score_finding_in_result():
+    r = jd_analyze(
+        fx.WELL_PARSED_JD, focus_areas=["python", "on-call"],
+    )
+    codes = [f.code for f in r.findings]
+    assert "JD_ROLE_FIT_SCORE" in codes
+
+
+def test_duplicate_application_check_missing_db_does_not_crash(monkeypatch, tmp_path):
+    """If tracker db doesn't exist, the duplicate check is a no-op."""
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "never.db"))
+    r = jd_analyze(
+        fx.CLEAN_NEUTRAL_JD,
+        company="Example Corp", role_title="Senior Engineer",
+    )
+    codes = [f.code for f in r.findings]
+    assert "JD_DUPLICATE_APPLICATION" not in codes
+
+
+def test_duplicate_application_check_detects_recent_application(monkeypatch, tmp_path):
+    """Seed an application via the tracker, then ensure the analyzer flags it."""
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
+    from datetime import datetime
+    from scripts.tracker.add import (
+        add_resume_version, add_jd, add_application,
+    )
+    rv_id = add_resume_version(file_path=None, template="hybrid", focus_areas=[])
+    jd_id = add_jd(
+        source="paste", source_ref=None,
+        company="Example Corp", role_title="Senior Engineer",
+        raw_text="x", analyzer_findings={},
+        focus_areas_required=[], focus_areas_nice=[],
+    )
+    add_application(
+        jd_id=jd_id, resume_version_id=rv_id, cover_letter_id=None,
+        submitted_at=datetime.now(), channel="direct",
+    )
+    r = jd_analyze(
+        fx.CLEAN_NEUTRAL_JD,
+        company="Example Corp", role_title="Senior Engineer",
+    )
+    codes = [f.code for f in r.findings]
+    assert "JD_DUPLICATE_APPLICATION" in codes

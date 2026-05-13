@@ -67,6 +67,84 @@ def _find_hits(text: str, terms) -> List[str]:
     return [t for t in terms if t in text_lower]
 
 
+# ---- Required vs Nice-to-have parsing ----------------------------------------
+
+REQUIRED_HEADINGS = re.compile(
+    r"^\s*(required|requirements|must[- ]have|essential|qualifications)\s*:?\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+NICE_HEADINGS = re.compile(
+    r"^\s*(nice[- ]to[- ]have|preferred|bonus|good to have|plus)\s*:?\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+BULLET_LINE = re.compile(r"^\s*[-*•]\s+(.+)$", re.MULTILINE)
+
+
+def _extract_section(jd_text: str, heading_pattern: re.Pattern, next_patterns) -> List[str]:
+    """Extract bullet items under heading_pattern up to the next heading."""
+    heading_match = heading_pattern.search(jd_text)
+    if not heading_match:
+        return []
+    start = heading_match.end()
+    # Find earliest next heading after this section
+    end = len(jd_text)
+    for nh in next_patterns:
+        m = nh.search(jd_text, start)
+        if m and m.start() < end:
+            end = m.start()
+    section = jd_text[start:end]
+    return [m.group(1).strip() for m in BULLET_LINE.finditer(section)]
+
+
+# ---- Role-fit scoring --------------------------------------------------------
+
+def _normalise_term(s: str) -> str:
+    """Lowercase + strip punctuation + collapse whitespace."""
+    s = s.lower()
+    s = re.sub(r"[^\w\s+#-]", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def _normalised_tokens(items: List[str]) -> set:
+    tokens = set()
+    for item in items:
+        for word in _normalise_term(item).split():
+            if len(word) >= 3:  # skip stopwords-by-length
+                tokens.add(word)
+    return tokens
+
+
+def _compute_role_fit_score(
+    focus_areas: List[str],
+    required_list: List[str],
+    nice_list: List[str],
+) -> int:
+    """Weighted token-overlap score.
+
+    Score is based on what fraction of focus-area tokens appear in the JD.
+    Matches in the required section count double vs matches in the nice section.
+    Capped at 100.
+    """
+    fa_tokens = _normalised_tokens(focus_areas)
+    req_tokens = _normalised_tokens(required_list)
+    nice_tokens = _normalised_tokens(nice_list)
+
+    if not fa_tokens or (not req_tokens and not nice_tokens):
+        return 0
+
+    req_matches = fa_tokens & req_tokens
+    # Nice matches only count for tokens not already matched in required
+    nice_only_matches = (fa_tokens & nice_tokens) - req_matches
+
+    # Score per focus-area token: 2 pts for required match, 1 pt for nice-only
+    earned = len(req_matches) * 2 + len(nice_only_matches)
+    max_possible = len(fa_tokens) * 2  # if every focus token matched required
+    if max_possible == 0:
+        return 0
+    return min(100, round(100 * earned / max_possible))
+
+
 # ---- Main entry --------------------------------------------------------------
 
 def jd_analyze(
@@ -75,11 +153,7 @@ def jd_analyze(
     company: Optional[str] = None,
     role_title: Optional[str] = None,
 ) -> JdAnalyzerResult:
-    """Analyse a JD and return findings + parsed requirement lists + role-fit score.
-
-    focus_areas, company, role_title are optional; if absent, those checks are
-    skipped (role-fit returns None, duplicate-application check skipped).
-    """
+    """Analyse a JD and return findings + parsed requirement lists + role-fit score."""
     result = JdAnalyzerResult()
 
     # 1. Soft-culture red flags
@@ -125,5 +199,56 @@ def jd_analyze(
                 "flexibility as a buzzword."
             ),
         ))
+
+    # 4. Required vs nice-to-have parsing
+    required_list = _extract_section(
+        jd_text, REQUIRED_HEADINGS, [NICE_HEADINGS],
+    )
+    nice_list = _extract_section(
+        jd_text, NICE_HEADINGS, [REQUIRED_HEADINGS],
+    )
+    result.required_list = required_list
+    result.nice_list = nice_list
+    if required_list or nice_list:
+        result.findings.append(JdFinding(
+            code="JD_REQ_VS_NICE_PARSING",
+            severity="INFO",
+            excerpt=f"required: {len(required_list)}, nice: {len(nice_list)}",
+            suggestion=(
+                "The JD separates must-haves from wishlist items. Focus the "
+                "tailoring on the required list; the nice-to-haves are bonus."
+            ),
+        ))
+
+    # 5. Role-fit score (only if focus_areas provided)
+    if focus_areas is not None:
+        score = _compute_role_fit_score(focus_areas, required_list, nice_list)
+        result.role_fit_score = score
+        result.findings.append(JdFinding(
+            code="JD_ROLE_FIT_SCORE",
+            severity="INFO",
+            excerpt=f"{score}/100",
+            suggestion=(
+                "Role-fit score is informational — high scores indicate alignment "
+                "between your focus areas and the JD's requirements. Low scores "
+                "are not a veto, but worth examining."
+            ),
+        ))
+
+    # 6. Duplicate application check (only if company + role_title provided)
+    if company is not None and role_title is not None:
+        from scripts.tracker.query import find_duplicates
+        duplicates = find_duplicates(company, role_title)
+        if duplicates:
+            most_recent = duplicates[0]
+            result.findings.append(JdFinding(
+                code="JD_DUPLICATE_APPLICATION",
+                severity="HIGH",
+                excerpt=f"Previous application: {most_recent.company} / {most_recent.role_title} on {most_recent.submitted_at[:10]}",
+                suggestion=(
+                    "You have applied to this company and role recently. Confirm "
+                    "this is a deliberate re-application before proceeding."
+                ),
+            ))
 
     return result
