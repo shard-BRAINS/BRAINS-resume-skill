@@ -56,6 +56,7 @@ Load the workflow file that matches the user's intent. Read the referenced file 
 | Tailor my resume for a specific job | `references/workflows/tailor.md` |
 | Generate a cover letter | `references/workflows/cover-letter.md` |
 | Ingest my LinkedIn export | `references/workflows/linkedin-ingest.md` |
+| Improve / rewrite my LinkedIn profile | `references/workflows/linkedin-improve.md` |
 | Translate my experience for a career change | `references/workflows/career-change.md` |
 | Final pre-submit check | `references/workflows/bias-check.md` |
 
@@ -248,10 +249,11 @@ Example: "BRAINS Resume Skill is ready — all nine workflows are live."
 | Tailor resume to a specific job description | Live |
 | Generate a matching cover letter | Live |
 | Ingest LinkedIn export | Live |
+| Improve LinkedIn profile | Live |
 | Career-change translation | Live |
 | Bias-aware ATS final check | Live |
 
-Slash commands are available for every workflow when the install script has been run. Type `/brains-` and Claude Code will list the nine commands: review, disclosure, edit, tailor, cover-letter, create, linkedin, career-change, check. Natural-language invocation continues to work as before.
+Slash commands are available for every workflow when the install script has been run. Type `/brains-` and Claude Code will list the ten commands: review, disclosure, edit, tailor, cover-letter, create, linkedin, linkedin-improve, career-change, check. Natural-language invocation continues to work as before.
 
 **Step 3 — Show the one-time privacy notice.**
 
