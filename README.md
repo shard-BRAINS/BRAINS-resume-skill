@@ -8,7 +8,7 @@ A Claude Code skill that helps neurodivergent and autistic people review, create
 
 ## Status
 
-v1.0.0 — all nine workflows live, install scripts shipping, Claude Project bundle available.
+v1.1.0 — all eleven workflows live, install scripts shipping, Claude Project bundle available.
 
 ---
 
@@ -96,8 +96,30 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\brains-resume
 | `/brains-cover-letter [resume] [jd]` | Generate a matched cover letter |
 | `/brains-create` | Build a resume from scratch via interactive interview |
 | `/brains-linkedin [zip-path]` | Ingest a LinkedIn export (third-party PII auto-excluded) |
+| `/brains-linkedin-improve` | Rewrite a LinkedIn profile (Headline / About / Experience / Skills) using the ND-aware framework |
+| `/brains-consolidate` | Detect inconsistencies between a resume and a LinkedIn profile and propose resolutions |
 | `/brains-career-change [target]` | Translate experience to a new domain |
 | `/brains-check [resume] [letter]` | Final pre-submit ATS + bias + integrity pass |
+
+---
+
+## Choosing a template
+
+The skill ships four resume templates and two cover-letter templates. All are ATS-safe; the choice is about narrative shape:
+
+| Resume template | Best for |
+|---|---|
+| `chronological` (default) | Linear career history with recent relevant experience |
+| `functional` | Career-changers, employment gaps, skills-led story |
+| `hybrid` | Career pivots with relevant transferable skills |
+| `executive` | Senior roles, 15+ years experience, board / leadership framing |
+
+| Cover-letter template | Best for |
+|---|---|
+| `formal-business` (default) | Traditional industries, regulated sectors |
+| `modern-clean` | Tech / startup contexts |
+
+The skill walks the user through template selection during the create / edit / tailor workflows. See `references/template-selection.md` for the full decision tree, including the ND framing on the functional-template tradeoff.
 
 ---
 
