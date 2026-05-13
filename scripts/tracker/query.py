@@ -4,8 +4,6 @@ These helpers all return dataclasses or lists of dataclasses defined in
 scripts/tracker/models.py. SQL lives only here (and in db.py / migrations).
 Consumers must never construct SQL themselves.
 """
-import json
-import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import List, Optional
