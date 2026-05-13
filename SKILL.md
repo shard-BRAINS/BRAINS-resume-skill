@@ -57,6 +57,7 @@ Load the workflow file that matches the user's intent. Read the referenced file 
 | Generate a cover letter | `references/workflows/cover-letter.md` |
 | Ingest my LinkedIn export | `references/workflows/linkedin-ingest.md` |
 | Improve / rewrite my LinkedIn profile | `references/workflows/linkedin-improve.md` |
+| Check my resume and LinkedIn for inconsistencies | `references/workflows/consolidate.md` |
 | Translate my experience for a career change | `references/workflows/career-change.md` |
 | Final pre-submit check | `references/workflows/bias-check.md` |
 
@@ -236,7 +237,7 @@ On the first invocation of the skill in a session, before asking the user what t
 
 **Step 1 — Greet briefly.** One sentence. Plain, direct, no hyperbole.
 
-Example: "BRAINS Resume Skill is ready — all nine workflows are live."
+Example: "BRAINS Resume Skill is ready — all eleven workflows are live."
 
 **Step 2 — Show the capability menu.**
 
@@ -250,10 +251,11 @@ Example: "BRAINS Resume Skill is ready — all nine workflows are live."
 | Generate a matching cover letter | Live |
 | Ingest LinkedIn export | Live |
 | Improve LinkedIn profile | Live |
+| Resume + LinkedIn consolidation | Live |
 | Career-change translation | Live |
 | Bias-aware ATS final check | Live |
 
-Slash commands are available for every workflow when the install script has been run. Type `/brains-` and Claude Code will list the ten commands: review, disclosure, edit, tailor, cover-letter, create, linkedin, linkedin-improve, career-change, check. Natural-language invocation continues to work as before.
+Slash commands are available for every workflow when the install script has been run. Type `/brains-` and Claude Code will list the eleven commands: review, disclosure, edit, tailor, cover-letter, create, linkedin, linkedin-improve, consolidate, career-change, check. Natural-language invocation continues to work as before.
 
 **Step 3 — Show the one-time privacy notice.**
 
@@ -263,7 +265,7 @@ Slash commands are available for every workflow when the install script has been
 
 **Example first-use greeting (adapt to context — do not use verbatim):**
 
-> BRAINS Resume Skill is ready. All nine workflows are live — resume review, disclosure coaching, create, edit, tailor, cover letter, LinkedIn ingestion, career-change translation, and final pre-submit check.
+> BRAINS Resume Skill is ready. All eleven workflows are live — resume review, disclosure coaching, create, edit, tailor, cover letter, LinkedIn ingestion, LinkedIn profile improvement, resume-and-LinkedIn consolidation, career-change translation, and final pre-submit check.
 >
 > One quick note: your resume content is processed by Claude within this session only. Nothing is stored or shared beyond this conversation.
 >
