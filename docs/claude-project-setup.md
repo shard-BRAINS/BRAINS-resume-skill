@@ -3,13 +3,13 @@
 The BRAINS Resume Skill works in two environments:
 
 - **Claude Code (CLI)** — full functionality, including local Python scripts (parsers, validators, generators). This is the primary distribution.
-- **Claude.ai Projects (web)** — the conversational workflows (review, disclosure, edit, tailor, cover letter, create, career-change, bias-check) work, but the local Python scripts do not run in claude.ai. Deterministic checks (ATS-safety, ND-bias regex, integrity) operate as Claude-side judgments rather than script outputs.
+- **Claude.ai Projects (web)** — the conversational workflows (review, disclosure, edit, tailor, cover letter, create, JD analysis, pre-check, career-change, bias-check) work, but the local Python scripts do not run in claude.ai. Deterministic checks (ATS-safety, ND-bias regex, integrity) operate as Claude-side judgments rather than script outputs. The application tracker requires local file persistence and is Claude-Code-only.
 
 This guide explains the Claude Project setup.
 
 ## What you get in a Claude Project
 
-- All eleven workflows are usable conversationally
+- All fourteen workflows are usable conversationally (including JD analysis, pre-check, and career-change)
 - The full ND-bias pattern catalog (10 families) is loaded as project knowledge
 - The disclosure decision framework is loaded
 - The brand-application rules are loaded
@@ -29,6 +29,9 @@ This guide explains the Claude Project setup.
 9. Resume + LinkedIn consolidation (new in v1.1.0)
 10. Career-change translation
 11. Bias-aware ATS final check
+12. JD analyzer (new in v1.2.0)
+13. Pre-application sanity check (new in v1.2.0)
+14. Application tracker (new in v1.2.0 — CLI-only in this version; dashboard in v1.3.0)
 
 See `references/template-selection.md` for the full decision tree guiding template choice (4 resume templates, 2 cover-letter templates) in the create/edit/tailor workflows.
 
@@ -43,6 +46,7 @@ See `references/template-selection.md` for the full decision tree guiding templa
 | DOCX/PDF output | Yes (generators produce files) | Markdown text only — copy/paste into Word |
 | Slash commands | Yes (/brains-review etc.) | No — invoke by natural language |
 | LinkedIn ZIP ingestion | Yes (with PII exclusion) | Paste relevant CSV contents manually |
+| Application tracker (`/brains-track`, SQLite at `~/.brains-resume/`) | Yes — full functionality | No — claude.ai cannot persist local files; the tracker is Claude-Code-only |
 
 ## Setting up the Project
 
