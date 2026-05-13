@@ -124,3 +124,132 @@ def test_find_duplicates_case_insensitive_company(fresh_db):
     _make_app("Example Corp", role="Senior Engineer", days_ago=5)
     result = find_duplicates("example corp", "Senior Engineer")
     assert len(result) == 1
+
+
+# --- Task 8: weekly_summary + efficacy_by_template tests ---
+
+
+def test_weekly_summary_empty_db_returns_zero(fresh_db):
+    from scripts.tracker.query import weekly_summary
+    s = weekly_summary()
+    assert s.applications_count == 0
+    assert s.outcomes_by_type == {}
+    assert s.pacing_vs_target is None
+
+
+def test_weekly_summary_counts_last_7_days(fresh_db):
+    from scripts.tracker.query import weekly_summary
+    _make_app("Old Co", days_ago=10)  # outside window
+    _make_app("New A", days_ago=2)
+    _make_app("New B", days_ago=5)
+    s = weekly_summary()
+    assert s.applications_count == 2
+
+
+def test_weekly_summary_outcomes_by_type(fresh_db):
+    from scripts.tracker.query import weekly_summary
+    a1 = _make_app("Co1", days_ago=1)
+    a2 = _make_app("Co2", days_ago=2)
+    record_outcome(a1, "callback", datetime.now())
+    record_outcome(a2, "rejection", datetime.now())
+    record_outcome(a2, "withdrew", datetime.now())  # only most-recent per app counted
+    s = weekly_summary()
+    # All 3 events are within the last week — we count each event, not per-app
+    assert s.outcomes_by_type.get("callback", 0) == 1
+    assert s.outcomes_by_type.get("rejection", 0) == 1
+    assert s.outcomes_by_type.get("withdrew", 0) == 1
+
+
+def test_weekly_summary_pacing_above_target(monkeypatch, tmp_path):
+    from scripts.tracker.query import weekly_summary
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+    write_profile(Profile(focus_areas=[], healthy_weekly_rate=2))
+    _make_app("A"); _make_app("B"); _make_app("C")  # 3 in last week
+    s = weekly_summary()
+    assert s.pacing_vs_target == "above"
+
+
+def test_weekly_summary_pacing_at_target(monkeypatch, tmp_path):
+    from scripts.tracker.query import weekly_summary
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+    write_profile(Profile(focus_areas=[], healthy_weekly_rate=2))
+    _make_app("A"); _make_app("B")
+    s = weekly_summary()
+    assert s.pacing_vs_target == "at"
+
+
+def test_weekly_summary_pacing_below_target(monkeypatch, tmp_path):
+    from scripts.tracker.query import weekly_summary
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+    write_profile(Profile(focus_areas=[], healthy_weekly_rate=5))
+    _make_app("A")
+    s = weekly_summary()
+    assert s.pacing_vs_target == "below"
+
+
+def test_weekly_summary_pacing_none_when_no_target(fresh_db):
+    from scripts.tracker.query import weekly_summary
+    _make_app("A")
+    s = weekly_summary()
+    assert s.pacing_vs_target is None
+
+
+def test_efficacy_by_template_groups_by_resume_template(fresh_db):
+    from scripts.tracker.query import efficacy_by_template
+    # Seed two apps with hybrid resumes, one with chronological
+    rv1 = add_resume_version(file_path=None, template="hybrid", focus_areas=[])
+    rv2 = add_resume_version(file_path=None, template="hybrid", focus_areas=[])
+    rv3 = add_resume_version(file_path=None, template="chronological", focus_areas=[])
+    jd_id = add_jd(
+        source="paste", source_ref=None, company="X", role_title="Y",
+        raw_text="z", analyzer_findings={},
+        focus_areas_required=[], focus_areas_nice=[],
+    )
+    a1 = add_application(jd_id=jd_id, resume_version_id=rv1,
+                          cover_letter_id=None,
+                          submitted_at=datetime.now(), channel="direct")
+    a2 = add_application(jd_id=jd_id, resume_version_id=rv2,
+                          cover_letter_id=None,
+                          submitted_at=datetime.now(), channel="direct")
+    a3 = add_application(jd_id=jd_id, resume_version_id=rv3,
+                          cover_letter_id=None,
+                          submitted_at=datetime.now(), channel="direct")
+    record_outcome(a1, "callback", datetime.now())
+    record_outcome(a2, "rejection", datetime.now())
+    record_outcome(a3, "callback", datetime.now())
+
+    rows = efficacy_by_template()
+    by_template = {r.template: r for r in rows}
+    assert by_template["hybrid"].submitted_count == 2
+    assert by_template["hybrid"].callback_count == 1
+    assert by_template["hybrid"].rejection_count == 1
+    assert by_template["chronological"].submitted_count == 1
+    assert by_template["chronological"].callback_count == 1
+
+
+def test_efficacy_by_template_interview_count_aggregates(fresh_db):
+    from scripts.tracker.query import efficacy_by_template
+    rv = add_resume_version(file_path=None, template="hybrid", focus_areas=[])
+    jd_id = add_jd(
+        source="paste", source_ref=None, company="X", role_title="Y",
+        raw_text="z", analyzer_findings={},
+        focus_areas_required=[], focus_areas_nice=[],
+    )
+    app_id = add_application(
+        jd_id=jd_id, resume_version_id=rv, cover_letter_id=None,
+        submitted_at=datetime.now(), channel="direct",
+    )
+    record_outcome(app_id, "phone_screen", datetime.now())
+    record_outcome(app_id, "first_round", datetime.now())
+    record_outcome(app_id, "second_round", datetime.now())
+    rows = efficacy_by_template()
+    assert rows[0].interview_count >= 3

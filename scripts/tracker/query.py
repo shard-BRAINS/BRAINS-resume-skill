@@ -4,11 +4,14 @@ These helpers all return dataclasses or lists of dataclasses defined in
 scripts/tracker/models.py. SQL lives only here (and in db.py / migrations).
 Consumers must never construct SQL themselves.
 """
+from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import List, Optional
 
 from scripts.tracker.db import get_db_path, open_db
+from scripts.tracker.models import WeeklySummary, EfficacyRow
+from scripts.tracker.profile import read_profile
 
 
 # --- Result types (lightweight DTOs distinct from the row dataclasses) --------
@@ -109,3 +112,122 @@ def find_duplicates(
     role_lower = role_title.lower()
     return [r for r in rows if role_lower in r.role_title.lower()
             or r.role_title.lower() in role_lower]
+
+
+# --- Task 8: weekly_summary + efficacy_by_template ----
+
+INTERVIEW_EVENT_TYPES = {"phone_screen", "first_round", "second_round", "take_home"}
+
+
+def weekly_summary(now: Optional[datetime] = None) -> WeeklySummary:
+    """Return a summary of the last 7 days: application count, outcomes by
+    type, and pacing vs the user's healthy_weekly_rate (if set)."""
+    if now is None:
+        now = datetime.now()
+    week_ago = now - timedelta(days=7)
+
+    if not get_db_path().exists():
+        return WeeklySummary(
+            week_starting=week_ago.date().isoformat(),
+            applications_count=0,
+            outcomes_by_type={},
+            pacing_vs_target=None,
+        )
+
+    conn = open_db()
+    try:
+        app_count = conn.execute(
+            "SELECT COUNT(*) FROM applications "
+            "WHERE archived_at IS NULL AND submitted_at >= ?",
+            (week_ago.isoformat(),),
+        ).fetchone()[0]
+
+        outcome_rows = conn.execute(
+            "SELECT event_type, COUNT(*) FROM outcomes "
+            "WHERE archived_at IS NULL AND event_date >= ? "
+            "GROUP BY event_type",
+            (week_ago.isoformat(),),
+        ).fetchall()
+        outcomes_by_type = {row[0]: row[1] for row in outcome_rows}
+    finally:
+        conn.close()
+
+    target = read_profile().healthy_weekly_rate
+    if target is None:
+        pacing = None
+    elif app_count > target:
+        pacing = "above"
+    elif app_count == target:
+        pacing = "at"
+    else:
+        pacing = "below"
+
+    return WeeklySummary(
+        week_starting=week_ago.date().isoformat(),
+        applications_count=app_count,
+        outcomes_by_type=outcomes_by_type,
+        pacing_vs_target=pacing,
+    )
+
+
+def efficacy_by_template() -> List[EfficacyRow]:
+    """Return per-template counts of submitted/callback/interview/offer/rejection.
+
+    Each application contributes once to each event-type count it has produced.
+    An application with phone_screen + first_round + offer contributes:
+      - submitted_count: 1
+      - interview_count: 2 (phone_screen + first_round)
+      - offer_count: 1
+    """
+    if not get_db_path().exists():
+        return []
+
+    conn = open_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT rv.template,
+                   a.id,
+                   (SELECT GROUP_CONCAT(event_type, ',')
+                    FROM outcomes
+                    WHERE application_id = a.id AND archived_at IS NULL)
+                   AS event_types
+            FROM applications a
+            JOIN resume_versions rv ON rv.id = a.resume_version_id
+            WHERE a.archived_at IS NULL
+            """
+        ).fetchall()
+    finally:
+        conn.close()
+
+    by_template: dict = defaultdict(lambda: {
+        "submitted": 0, "callback": 0, "interview": 0,
+        "offer": 0, "rejection": 0,
+    })
+    for template, _app_id, event_csv in rows:
+        bucket = by_template[template]
+        bucket["submitted"] += 1
+        if not event_csv:
+            continue
+        events = event_csv.split(",")
+        for ev in events:
+            if ev == "callback":
+                bucket["callback"] += 1
+            elif ev in INTERVIEW_EVENT_TYPES:
+                bucket["interview"] += 1
+            elif ev == "offer":
+                bucket["offer"] += 1
+            elif ev == "rejection":
+                bucket["rejection"] += 1
+
+    return [
+        EfficacyRow(
+            template=template,
+            submitted_count=counts["submitted"],
+            callback_count=counts["callback"],
+            interview_count=counts["interview"],
+            offer_count=counts["offer"],
+            rejection_count=counts["rejection"],
+        )
+        for template, counts in sorted(by_template.items())
+    ]
