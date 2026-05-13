@@ -1,7 +1,7 @@
 ---
 name: brains-resume
 description: Use when a user asks for help reviewing, editing, creating, customising, or tailoring a resume or cover letter — particularly when neurodivergence-aware bias mitigation matters. Handles resume review, ATS-safety checks, ND-bias scanning, disclosure decision coaching, LinkedIn ingestion, and career-change translation. A BRAINS Incubator project.
-version: 1.0.0
+version: 1.1.0
 license: MIT
 ---
 
@@ -11,7 +11,7 @@ This skill helps neurodivergent and autistic users review, edit, create, customi
 
 The skill is built on two operating principles. First, the resume itself is the user's professional document — it represents them, not BRAINS, and no BRAINS branding or identity is placed on employer-submission outputs. Second, the bias catalog exists to level a playing field that is structurally tilted against neurodivergent candidates; it does not push any candidate to disclose, conceal, or change anything they do not want to change.
 
-This is a BRAINS Incubator project, v1.0.0.
+This is a BRAINS Incubator project, v1.1.0.
 
 ---
 
