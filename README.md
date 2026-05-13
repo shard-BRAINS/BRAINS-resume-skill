@@ -8,7 +8,7 @@ A Claude Code skill that helps neurodivergent and autistic people review, create
 
 ## Status
 
-v1.1.0 — all eleven workflows live, install scripts shipping, Claude Project bundle available.
+v1.2.0 — all fourteen workflows live, JD analyzer + application tracker shipped, Claude Project bundle available.
 
 ---
 
@@ -100,6 +100,9 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\brains-resume
 | `/brains-consolidate` | Detect inconsistencies between a resume and a LinkedIn profile and propose resolutions |
 | `/brains-career-change [target]` | Translate experience to a new domain |
 | `/brains-check [resume] [letter]` | Final pre-submit ATS + bias + integrity pass |
+| `/brains-jd-analyze [jd]` | Analyse a job description for ND-relevant signals (red flags, masking cost, evidence of flex, role-fit score) |
+| `/brains-precheck [resume] [jd]` | Six-question coaching pass before submitting an application; registers it in the tracker |
+| `/brains-track [command]` | Manage the application tracker — add applications, log outcomes, view pipeline summary |
 
 ---
 
@@ -120,6 +123,31 @@ The skill ships four resume templates and two cover-letter templates. All are AT
 | `modern-clean` | Tech / startup contexts |
 
 The skill walks the user through template selection during the create / edit / tailor workflows. See `references/template-selection.md` for the full decision tree, including the ND framing on the functional-template tradeoff.
+
+---
+
+## Tracking applications
+
+The skill includes an opt-in application tracker stored locally at `~/.brains-resume/tracker.db` (SQLite). The tracker is created on first use; if you never run `/brains-track` or `/brains-precheck`, the database is never created.
+
+The tracker carries:
+
+- Resume versions (with focus-area tags and tailored-from lineage)
+- Job descriptions (with analyzer findings)
+- Cover letters (linked to resume + JD)
+- Applications (with channel, agency, recruiter contact)
+- Outcomes (callback, interview, offer, rejection, etc.)
+
+From these you can query:
+
+- This-week pacing vs your self-defined healthy weekly application rate
+- Per-template efficacy (which template + JD combinations are converting)
+- Open applications by company or recency
+- Duplicate-application detection (prevents accidental re-application)
+
+Use `/brains-track summary` for a pipeline view, `/brains-track update <id> <event-type>` to log outcomes as they happen, and `/brains-track healthy-rate` to set the application pace that fits your sensory bandwidth — the skill never tells you what that number should be.
+
+The dashboard UI for these views ships in v1.3.0; for v1.2.0, all queries are surfaced as markdown tables in chat.
 
 ---
 
