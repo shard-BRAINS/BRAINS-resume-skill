@@ -67,6 +67,9 @@ Flag any P6/P7 language that survived prior editing — these must be resolved b
 
 Aggregate all findings from steps (a)-(f) into a prioritised pass / fail / warn report. Each finding gets a one-line fix suggestion. Order findings: CRITICAL blockers first, FAIL items second, WARN items third, PASS confirmations last.
 
+**(h) Application tracker (opt-in).**
+After the bias-check passes, ask the user: "Run the pre-application sanity check and register this in the tracker? (yes runs the precheck workflow; no submits without registering)". If yes, invoke `pre-application-check.md`.
+
 ---
 
 ## Output Artifacts

@@ -68,6 +68,9 @@ Call `scripts/generators/cover_letter_to_docx.py` and `scripts/generators/cover_
 **(h) Offer the bias-aware ATS-check workflow.**
 Present the option to run the bias-aware ATS-check workflow on the cover letter and resume together before submission.
 
+**(i) Application tracker (opt-in).**
+After saving the cover letter, ask the user: "Track this in the application tracker? (yes runs the pre-application sanity check; later registers it without the check; no skips tracking entirely)". If yes, invoke the `pre-application-check.md` workflow with the resume's metadata. If later, call `scripts/tracker/add.py:add_resume_version` (and the related helpers) silently without going through the precheck questions. If no, no tracker writes occur.
+
 ---
 
 ## Output Artifacts

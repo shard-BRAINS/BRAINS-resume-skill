@@ -60,6 +60,9 @@ Structure the full output using `templates/coaching_report.md` (added in Task 17
 **(i) Render to branded PDF.**
 Run `scripts/generators/coaching_report_to_pdf.py` with `include_trust_footer=False`. Coaching reports use the standard origin-phrase footer only. The BRAINS Trust footer is reserved for disclosure worksheets; it must not appear on review outputs.
 
+**(j) Application tracker (opt-in).**
+After surfacing the review findings, ask the user: "Register this resume version in the application tracker? (yes — saves the resume version with its current focus areas; no — coaching report stays in chat only)". If yes, call `scripts/tracker/add.py:add_resume_version` with the file path, template, and focus areas the user confirms.
+
 ---
 
 ## Output artifacts

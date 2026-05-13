@@ -86,6 +86,9 @@ The match report is a BRAINS coaching artifact and carries BRAINS branding. The 
 **(j) Offer the cover-letter workflow.**
 Present the option to move directly into the cover-letter workflow, using the remaining gaps from the match report as the brief.
 
+**(k) Application tracker (opt-in).**
+After saving the tailored resume, ask the user: "Track this in the application tracker? (yes runs the pre-application sanity check; later registers it without the check; no skips tracking entirely)". If yes, invoke the `pre-application-check.md` workflow with the resume's metadata. If later, call `scripts/tracker/add.py:add_resume_version` (and the related helpers) silently without going through the precheck questions. If no, no tracker writes occur.
+
 ---
 
 ## Output Artifacts
