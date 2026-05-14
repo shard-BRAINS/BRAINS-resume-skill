@@ -89,6 +89,15 @@ Present the option to move directly into the cover-letter workflow, using the re
 **(k) Application tracker (opt-in).**
 After saving the tailored resume, ask the user: "Track this in the application tracker? (yes runs the pre-application sanity check; later registers it without the check; no skips tracking entirely)". If yes, invoke the `pre-application-check.md` workflow with the resume's metadata. If later, call `scripts/tracker/add.py:add_resume_version` (and the related helpers) silently without going through the precheck questions. If no, no tracker writes occur.
 
+**De-AI check (optional).** Before saving the final output, optionally run the AI-signal validator:
+
+```python
+from scripts.validators.ai_signal_check import ai_signal_check
+score = ai_signal_check(produced_text).score
+```
+
+If the score is above 30, surface the top three findings with rewrite suggestions and offer to revise. The user can decline — this is coaching, not gating. See `references/ai-signal-patterns.md` for the full pattern catalog.
+
 ---
 
 ## Output Artifacts

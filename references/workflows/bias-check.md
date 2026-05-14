@@ -51,6 +51,15 @@ Run `scripts/validators/bias_scan.py` on the extracted text.
 
 Surface all findings calibrated to the user's current disclosure stance (from Inputs). The bias scan checks for protected-attribute language, identity markers, and phrasing patterns that introduce unnecessary risk.
 
+**De-AI signal check (auto).** After bias_scan and integrity_check, also run the AI-signal check:
+
+```python
+from scripts.validators.ai_signal_check import ai_signal_check
+ai_signal = ai_signal_check(text)
+```
+
+Surface the AI-signal score numerically (e.g. "AI-signal score: 18/100 (mild traces — likely fine)") alongside the bias and integrity findings. If score >= 30, surface the top three findings with their suggestions; link to `references/ai-signal-patterns.md` for full rewrite guidance. Findings are coaching — the user decides whether to revise.
+
 **(e) Disclosure-stance consistency check**
 
 If the user's disclosure stance is non-disclosure or neutral signalling, scan the output of step (d) for residual P6 or P7 hits (protected attribute categories 6 and 7 per `references/workflows/disclosure.md`).

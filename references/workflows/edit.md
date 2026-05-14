@@ -80,6 +80,15 @@ Present the user with three options for continuing:
 - Generate a cover letter for this role (cover-letter workflow)
 - Run a final bias-aware ATS check (ATS-check workflow)
 
+**De-AI check (optional).** Before saving the final output, optionally run the AI-signal validator:
+
+```python
+from scripts.validators.ai_signal_check import ai_signal_check
+score = ai_signal_check(produced_text).score
+```
+
+If the score is above 30, surface the top three findings with rewrite suggestions and offer to revise. The user can decline — this is coaching, not gating. See `references/ai-signal-patterns.md` for the full pattern catalog.
+
 ---
 
 ## Preserve-Structure Mode (Opt-In)

@@ -172,6 +172,15 @@ This artifact carries BRAINS coaching branding — it is an internal coaching ar
 - Offer the consolidation workflow (`/brains-consolidate`) if the user also has a resume, to check that the rewritten LinkedIn and the resume tell a coherent story.
 - Offer to iterate on any section the user wants to redirect.
 
+**De-AI check (optional).** Before saving the final output, optionally run the AI-signal validator:
+
+```python
+from scripts.validators.ai_signal_check import ai_signal_check
+score = ai_signal_check(produced_text).score
+```
+
+If the score is above 30, surface the top three findings with rewrite suggestions and offer to revise. The user can decline — this is coaching, not gating. See `references/ai-signal-patterns.md` for the full pattern catalog.
+
 ---
 
 ## Output artifacts
