@@ -19,6 +19,7 @@ Different output surfaces get different brand treatment. The table below is auth
 | Consolidation report (markdown) | **BRAINS branded** — Gold Deep headings, BRAINS mark in header if rendered to PDF, identity-first language | Internal coaching artifact, same category as the review coaching report. |
 | JD analyzer markdown report (saved to `output/`) | **BRAINS branded** — Gold Deep headings, identity-first language | Internal coaching artifact, same category as the review coaching report |
 | Pre-application check summary (saved to `output/`) | **BRAINS branded** | Internal coaching artifact |
+| De-AI report (saved to `output/`) | **BRAINS branded** — coaching artifact frame; identity-first language | Internal coaching artifact, same category as the bias-scan and ATS coaching reports |
 | Tracker CLI markdown output (`/brains-track` responses) | **BRAINS branded** — coaching artifact frame in chat | Internal coaching tooling |
 | `tracker.db` and `profile.json` | **Not branded** — raw data, no presentation surface | Data storage, not a presented artifact |
 | Coaching reports (markdown + PDF) | **BRAINS branded** — Gold Deep headings, BRAINS mark in header, identity-first language throughout, origin-phrase footer | Coaching reports are authored by the skill on behalf of BRAINS; they are internal or shared coaching artefacts, not employer submissions. |

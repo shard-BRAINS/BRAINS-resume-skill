@@ -35,6 +35,10 @@ This guide explains the Claude Project setup.
 
 See `references/template-selection.md` for the full decision tree guiding template choice (4 resume templates, 2 cover-letter templates) in the create/edit/tailor workflows.
 
+### De-AI tool (v1.2.1+)
+
+The skill includes an AI-signal validator (`/brains-deai`) that scans produced text for common AI-tell patterns and surfaces a 0-100 score with rewrite suggestions. Auto-runs in the bias-aware final check; available standalone. See `references/ai-signal-patterns.md` for the nine-pattern catalog.
+
 ## What is different from Claude Code
 
 | Feature | Claude Code | Claude Project |

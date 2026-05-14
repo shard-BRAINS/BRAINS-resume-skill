@@ -8,7 +8,7 @@ A Claude Code skill that helps neurodivergent and autistic people review, create
 
 ## Status
 
-v1.2.0 — all fourteen workflows live, JD analyzer + application tracker shipped, Claude Project bundle available.
+v1.2.1 — adds the de-AI validator; fourteen workflows live (de-AI is a tool, not a workflow).
 
 ---
 
@@ -102,6 +102,7 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\brains-resume
 | `/brains-check [resume] [letter]` | Final pre-submit ATS + bias + integrity pass |
 | `/brains-jd-analyze [jd]` | Analyse a job description for ND-relevant signals (red flags, masking cost, evidence of flex, role-fit score) |
 | `/brains-precheck [resume] [jd]` | Six-question coaching pass before submitting an application; registers it in the tracker |
+| `/brains-deai` | Scan resume / cover-letter / LinkedIn text for AI-tell signals; surfaces a 0-100 AI-signal score and rewrite suggestions |
 | `/brains-track [command]` | Manage the application tracker — add applications, log outcomes, view pipeline summary |
 
 ---

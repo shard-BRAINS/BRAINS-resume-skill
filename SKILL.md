@@ -261,7 +261,7 @@ Example: "BRAINS Resume Skill is ready — all fourteen workflows are live."
 | Career-change translation | Live |
 | Bias-aware ATS final check | Live |
 
-Slash commands are available for every workflow when the install script has been run. Type `/brains-` and Claude Code will list the fourteen commands: review, disclosure, edit, tailor, cover-letter, create, linkedin, linkedin-improve, consolidate, jd-analyze, precheck, track, career-change, check. Natural-language invocation continues to work as before.
+Slash commands are available for every workflow when the install script has been run. Type `/brains-` and Claude Code will list the fifteen commands: review, disclosure, edit, tailor, cover-letter, create, linkedin, linkedin-improve, consolidate, jd-analyze, precheck, track, deai, career-change, check. Natural-language invocation continues to work as before.
 
 **Step 3 — Show the one-time privacy notice.**
 
@@ -294,6 +294,8 @@ Slash commands are available for every workflow when the install script has been
 - **Bias validator** — `scripts/validators/bias_scan.py` handles deterministic pattern detection for Patterns 1, 2, 6, 7, and 10. It exposes a `bias_scan(text: str) -> BiasScanResult` entrypoint; each `BiasFinding` carries `pattern_code` (e.g. `ND_BIAS_P1_SOFT_SKILLS`), `excerpt`, and `suggestion`. Claude-side contextual review is required for Patterns 3, 4, 5, 8, and 9. The full pattern-to-validator mapping table is in `references/nd-bias-patterns.md`.
 
 - **Document-integrity validator** — `scripts/validators/integrity_check.py` detects prompt-injection paragraphs, instruction-override patterns, system-prompt-style content, and hidden-keyword stuffing blocks. Each finding has a severity (CRITICAL, HIGH, MEDIUM, LOW). Findings are separate from ND-bias and ATS-safety concerns — they are document-integrity issues that ATS systems and human reviewers reliably treat as adverse signals.
+
+- **AI-signal validator** — `scripts/validators/ai_signal_check.py` detects nine common AI-tell patterns in text (em-dash overuse, AI-flavoured vocabulary, parallel-structure abuse, rhetorical contrasts, transitional overuse, present-participle pile-ups, hedging phrases, range quantifiers, whether-disjunctions). Returns a 0-100 AI-signal score (lower = better). Auto-invoked in the `bias-check` workflow; optional in `tailor`, `cover-letter`, `linkedin-improve`, `edit`; standalone via `/brains-deai`. Full pattern catalog: `references/ai-signal-patterns.md`.
 
 - **Running the validator from Python** — import via `from scripts.validators.bias_scan import bias_scan` and call `bias_scan(text)`. The result is structured (not JSON) — iterate `result.findings` to surface each pattern hit. The output is not a complete review; it is a first-pass deterministic backstop.
 

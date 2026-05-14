@@ -4,6 +4,20 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## [1.2.1] — 2026-05-14
+
+### Added
+- **AI-signal validator** (`scripts/validators/ai_signal_check.py`) — detects nine common AI-tell patterns in text: em-dash overuse, AI-flavoured vocabulary, parallel-structure abuse, rhetorical contrasts, transitional overuse, present-participle pile-ups, hedging phrases, range quantifiers, whether-disjunctions. Returns a 0-100 AI-signal score (lower = fewer AI tells).
+- **AI-signal-patterns reference** (`references/ai-signal-patterns.md`) — full pattern catalog with detection rationale, severity calibration, and per-pattern rewrite guidance.
+- **`/brains-deai` slash command** — standalone scanner that produces a markdown de-AI report with score + per-finding suggestions.
+
+### Changed
+- **`bias-check` workflow** — now auto-invokes the AI-signal validator alongside ATS, bias, and integrity checks. The final pre-submit pass surfaces the AI-signal score and top findings.
+- **`tailor`, `cover-letter`, `linkedin-improve`, `edit` workflows** — gain an optional end-of-workflow de-AI prompt; if the score is above 30, the workflow surfaces the top three findings with rewrite suggestions before saving.
+- **`references/brand-application.md`** — split-rule table extended to cover the de-AI report artifact type.
+- **`README.md` and `SKILL.md`** — slash-command list updated (14 → 15 commands; de-AI is a tool, not a workflow).
+- **Claude Project bundle** — rebuilt to include `references/ai-signal-patterns.md`.
+
 ## [1.2.0] — 2026-05-13
 
 ### Added
