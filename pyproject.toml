@@ -29,6 +29,7 @@ dependencies = [
     "pyyaml>=6.0",
     "streamlit>=1.30.0",
     "plotly>=5.18.0",
+    "pyperclip>=1.8.0",
 ]
 
 [project.optional-dependencies]
