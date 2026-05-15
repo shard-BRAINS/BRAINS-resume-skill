@@ -55,3 +55,24 @@ def test_read_profile_malformed_json_returns_empty(monkeypatch, tmp_path):
     # Defensive default — corrupt file should not crash, just return empty.
     assert p.focus_areas == []
     assert p.healthy_weekly_rate is None
+
+
+def test_pacing_notes_round_trip(monkeypatch, tmp_path):
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+    write_profile(Profile(
+        focus_areas=["python"], healthy_weekly_rate=3,
+        pacing_notes="Felt overwhelming this week.",
+    ))
+    p = read_profile()
+    assert p.pacing_notes == "Felt overwhelming this week."
+
+
+def test_pacing_notes_backward_compat_missing_field(monkeypatch, tmp_path):
+    """Old profile.json files without pacing_notes should still read cleanly."""
+    path = tmp_path / "p.json"
+    path.write_text('{"focus_areas": ["x"], "healthy_weekly_rate": 5}', encoding="utf-8")
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(path))
+    p = read_profile()
+    assert p.pacing_notes is None
+    assert p.focus_areas == ["x"]
+    assert p.healthy_weekly_rate == 5

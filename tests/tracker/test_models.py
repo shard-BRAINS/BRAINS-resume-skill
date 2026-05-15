@@ -67,3 +67,8 @@ def test_efficacy_row_carries_per_template_counts():
     )
     assert e.template == "hybrid"
     assert e.submitted_count == 10
+
+
+def test_profile_default_pacing_notes_is_none():
+    p = Profile()
+    assert p.pacing_notes is None

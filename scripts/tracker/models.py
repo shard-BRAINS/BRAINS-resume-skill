@@ -102,6 +102,7 @@ class Outcome:
 class Profile:
     focus_areas: List[str] = field(default_factory=list)
     healthy_weekly_rate: Optional[int] = None
+    pacing_notes: Optional[str] = None
 
 
 @dataclass

@@ -36,6 +36,7 @@ def read_profile() -> Profile:
     return Profile(
         focus_areas=list(data.get("focus_areas", []) or []),
         healthy_weekly_rate=data.get("healthy_weekly_rate"),
+        pacing_notes=data.get("pacing_notes"),
     )
 
 
@@ -48,6 +49,7 @@ def write_profile(profile: Profile) -> None:
             {
                 "focus_areas": profile.focus_areas,
                 "healthy_weekly_rate": profile.healthy_weekly_rate,
+                "pacing_notes": profile.pacing_notes,
             },
             indent=2,
         ),
