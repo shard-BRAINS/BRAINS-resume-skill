@@ -43,6 +43,8 @@ The skill includes an AI-signal validator (`/brains-deai`) that scans produced t
 
 The skill includes a local Streamlit dashboard accessible via `brains-resume-dashboard` after install. It is **Claude-Code-only** — claude.ai cannot run Streamlit, and the dashboard depends on the local SQLite tracker file under `~/.brains-resume/`. See the README's "Launching the dashboard" section for details.
 
+From v1.4.0, the dashboard also exposes every slash command via a Workflows tab and inline action buttons — see the README's "What's new in v1.4.0" subsection for details.
+
 ## What is different from Claude Code
 
 | Feature | Claude Code | Claude Project |

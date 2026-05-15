@@ -301,6 +301,8 @@ Slash commands are available for every workflow when the install script has been
 
 - **Local Streamlit dashboard** — `scripts/dashboard/` package launches via `brains-resume-dashboard` (registered in `pyproject.toml [project.scripts]`). BRAINS Incubator branded, single-page top-tab layout with seven tabs (Overview, Resumes, Cover Letters, JDs, Applications, Analytics, Pacing) plus a persistent sidebar for profile editing. Read-only except for sidebar profile.json edits. Available from v1.3.0 onward.
 
+- **Dashboard workflows** — From v1.4.0, every slash command is reachable through the dashboard. The 8th `Workflows` tab houses all 15 commands as cards; the existing Resumes / Cover Letters / JDs / Applications tabs gain inline action buttons. Validator-backed commands (de-AI, JD analyze, tracker, consolidate, final check, review preview) execute in-dashboard with no Claude Code roundtrip. LLM-heavy commands (review, edit, tailor, cover-letter, create, disclosure, linkedin, linkedin-improve, career-change, precheck) copy the ready-to-paste slash command to the clipboard. No new API key required.
+
 - **References** — All cross-cutting reference files live in `references/`. They are loaded on demand, not on every invocation, except for this file (`SKILL.md`) which is always loaded. Load reference files explicitly when a workflow or user request requires them — do not attempt to reproduce their content from memory.
 
 - **ATS rules** — `references/ats-rules.md` contains formatting and keyword rules for Applicant Tracking System compatibility. Consult it during review and tailor workflows when ATS safety is a concern.

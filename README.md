@@ -174,6 +174,17 @@ The dashboard is BRAINS Incubator branded (Incubator Blue accents with Gold Deep
 
 Read-only except for the sidebar profile editor (focus areas, healthy weekly rate, pacing notes). Application outcomes are still logged via `/brains-track update <id> <event>` in your terminal.
 
+### What's new in v1.4.0
+
+The dashboard now exposes every slash command:
+
+- **Workflows tab (8th tab)** — all 15 commands as cards, grouped into Resume / JD & application / LinkedIn & coaching workflows
+- **Inline action buttons** on Resumes, Cover Letters, JDs, and Applications tabs — pick a row, run the workflow directly
+- **Validator-backed commands run in-dashboard** — de-AI scan, JD analyze, tracker CRUD, consolidation diff handoff, final composite check, review preview — no Claude Code roundtrip required
+- **LLM-heavy commands hand off via clipboard** — click "Copy /brains-X" → paste into Claude Code chat. Optional audit log at `~/.brains-resume/handoffs/`.
+
+The dashboard remains read-only for resume / cover letter / JD content; the only mutable state is the profile editor and the tracker (outcomes logging).
+
 ---
 
 ## Claude Desktop / claude.ai

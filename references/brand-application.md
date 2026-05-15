@@ -21,6 +21,7 @@ Different output surfaces get different brand treatment. The table below is auth
 | Pre-application check summary (saved to `output/`) | **BRAINS branded** | Internal coaching artifact |
 | De-AI report (saved to `output/`) | **BRAINS branded** — coaching artifact frame; identity-first language | Internal coaching artifact, same category as the bias-scan and ATS coaching reports |
 | Streamlit dashboard UI (`brains-resume-dashboard`) | **BRAINS Incubator branded** — Incubator Blue accents with Gold Deep delta callouts, Atkinson Hyperlegible body, BRAINS Incubator mark in sidebar, identity-first language throughout | Internal coaching surface; renders the user's own data, no external audience |
+| Dashboard workflow handoffs (clipboard text) | Plain slash-command text — no BRAINS branding in the clipboard payload (the payload becomes a Claude Code chat message, which is user-private context) | Internal pipe; clipboard is not a publication surface |
 | Tracker CLI markdown output (`/brains-track` responses) | **BRAINS branded** — coaching artifact frame in chat | Internal coaching tooling |
 | `tracker.db` and `profile.json` | **Not branded** — raw data, no presentation surface | Data storage, not a presented artifact |
 | Coaching reports (markdown + PDF) | **BRAINS branded** — Gold Deep headings, BRAINS mark in header, identity-first language throughout, origin-phrase footer | Coaching reports are authored by the skill on behalf of BRAINS; they are internal or shared coaching artefacts, not employer submissions. |
