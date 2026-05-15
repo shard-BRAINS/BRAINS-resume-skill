@@ -3,11 +3,23 @@
 Run via the `brains-resume-dashboard` CLI entry point (see launch.py)
 which invokes `streamlit run scripts/dashboard/app.py`.
 
-This is the v1.3.0 stub — subsequent tasks fill in the data layer, styling,
-seven tabs, and sidebar. For now, the app renders a title and a placeholder
-message confirming the dashboard is reachable.
+Single-page top-tab layout matching the user's TSE Tools visual reference.
+Seven tabs: Overview, Resumes, Cover Letters, JDs, Applications, Analytics,
+Pacing. Persistent sidebar for profile editing. BRAINS Incubator branded.
 """
 import streamlit as st
+
+from scripts.dashboard.sidebar import render_sidebar
+from scripts.dashboard.style import inject_brand_css
+from scripts.dashboard.tabs import (
+    analytics,
+    applications,
+    cover_letters,
+    jds,
+    overview,
+    pacing,
+    resumes,
+)
 
 
 def main() -> None:
@@ -17,12 +29,35 @@ def main() -> None:
         layout="wide",
         initial_sidebar_state="expanded",
     )
+    inject_brand_css()
+    render_sidebar()
+
     st.title("BRAINS Resume Dashboard")
-    st.caption("v1.3.0 — under construction")
-    st.info(
-        "Dashboard package skeleton is in place. Tab modules, sidebar, and "
-        "data layer ship in later Plan 5b tasks."
-    )
+
+    tabs = st.tabs([
+        "Overview",
+        "Resumes",
+        "Cover Letters",
+        "JDs",
+        "Applications",
+        "Analytics",
+        "Pacing",
+    ])
+
+    with tabs[0]:
+        overview.render()
+    with tabs[1]:
+        resumes.render()
+    with tabs[2]:
+        cover_letters.render()
+    with tabs[3]:
+        jds.render()
+    with tabs[4]:
+        applications.render()
+    with tabs[5]:
+        analytics.render()
+    with tabs[6]:
+        pacing.render()
 
 
 main()
