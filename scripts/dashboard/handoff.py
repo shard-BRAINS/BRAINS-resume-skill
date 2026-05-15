@@ -55,7 +55,7 @@ def handoff(cmd: str, *args: str, note: str = "", log: bool = True) -> None:
         except Exception:
             pass  # log failure is non-fatal
     if ok:
-        st.toast(f"Copied: {command_str}", icon="✓")
+        st.toast(f"Copied: {command_str}", icon="✅")
     else:
         st.warning("Clipboard unavailable — copy this command manually:")
         st.code(command_str, language="text")

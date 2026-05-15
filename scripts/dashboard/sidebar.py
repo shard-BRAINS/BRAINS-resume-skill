@@ -94,7 +94,7 @@ def _render_handoff_section(profile: Profile) -> None:
         from scripts.tracker import profile as profile_io
         profile.log_handoffs = new_value
         profile_io.write_profile(profile)
-        st.toast("Handoff-log preference saved.", icon="✓")
+        st.toast("Handoff-log preference saved.", icon="✅")
 
     with st.expander("Recent handoffs (last 10)"):
         if not handoff.HANDOFF_LOG_DIR.exists():
