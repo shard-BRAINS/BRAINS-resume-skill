@@ -48,6 +48,45 @@ def render() -> None:
     if selected_id is not None:
         _render_findings_for_jd(selected_id, rows)
 
+    # Inline workflow actions (v1.4.0)
+    st.markdown("---")
+    st.subheader("Actions")
+    rows = _list_jds()
+    if not rows:
+        st.caption("_No JDs tracked yet._")
+        return
+
+    def _label(r: dict) -> str:
+        company = r.get("company", "") or ""
+        role = r.get("role_title", "") or ""
+        return f"{company} / {role}".strip(" /")
+
+    options = {_label(r): r.get("source", "") for r in rows if r.get("company") or r.get("role_title")}
+    if not options:
+        st.caption("_No JDs with a company/role label._")
+        return
+
+    selected = st.selectbox("Select a JD to act on", options=list(options.keys()), key="jds_action_pick")
+    if selected:
+        from scripts.dashboard.workflows import jd_analyze as wf_jda, tailor as wf_tailor
+
+        jd_source = options[selected]
+        action = st.radio(
+            "Action",
+            ["Analyze", "Tailor a resume to this JD"],
+            horizontal=True,
+            key="jds_action_radio",
+        )
+        st.markdown("---")
+        if action == "Analyze":
+            wf_jda.render(file_path=None)
+            if jd_source:
+                st.caption(f"JD source: `{jd_source}` — paste its text into the analyzer above, or use the handoff button.")
+        elif action == "Tailor a resume to this JD":
+            wf_tailor.render(file_path=None)
+            if jd_source:
+                st.caption(f"JD source: `{jd_source}`")
+
 
 def _list_jds() -> list:
     conn = open_db()
