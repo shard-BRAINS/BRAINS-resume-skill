@@ -76,3 +76,30 @@ def test_pacing_notes_backward_compat_missing_field(monkeypatch, tmp_path):
     assert p.pacing_notes is None
     assert p.focus_areas == ["x"]
     assert p.healthy_weekly_rate == 5
+
+
+def test_profile_default_log_handoffs_is_true():
+    p = Profile()
+    assert p.log_handoffs is True
+
+
+def test_read_profile_missing_log_handoffs_defaults_to_true(monkeypatch, tmp_path):
+    path = tmp_path / "p.json"
+    path.write_text('{"focus_areas": ["A"], "healthy_weekly_rate": 5}', encoding="utf-8")
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(path))
+    p = read_profile()
+    assert p.log_handoffs is True
+
+
+def test_write_profile_persists_log_handoffs_false(monkeypatch, tmp_path):
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+    write_profile(Profile(focus_areas=["X"], healthy_weekly_rate=4, log_handoffs=False))
+    data = (tmp_path / "p.json").read_text(encoding="utf-8")
+    assert '"log_handoffs": false' in data
+
+
+def test_round_trip_log_handoffs_false(monkeypatch, tmp_path):
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+    write_profile(Profile(focus_areas=["X"], healthy_weekly_rate=4, log_handoffs=False))
+    p = read_profile()
+    assert p.log_handoffs is False
