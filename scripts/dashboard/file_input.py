@@ -57,6 +57,7 @@ def _list_tracker_files(kind: Literal["resume", "cover_letter", "jd"]) -> list[s
 
     Lazy import of `scripts.dashboard.data` to avoid Streamlit import-cycle.
     """
+    paths: set[str] = set()
     try:
         from scripts.dashboard import data
         if kind == "resume":
@@ -67,9 +68,17 @@ def _list_tracker_files(kind: Literal["resume", "cover_letter", "jd"]) -> list[s
             rows = data.cached_list_jd_paths()
         else:
             rows = []
-        return sorted({r for r in rows if r})
+        paths.update(r for r in rows if r)
     except Exception:
-        return []
+        pass
+
+    upload_dir = UPLOAD_ROOT / kind
+    if upload_dir.exists():
+        for p in upload_dir.iterdir():
+            if p.is_file() and p.suffix.lower() in (".docx", ".pdf", ".zip"):
+                paths.add(str(p))
+
+    return sorted(paths)
 
 
 def pick_file(kind: Literal["resume", "cover_letter", "jd"], key: str) -> Optional[Path]:
