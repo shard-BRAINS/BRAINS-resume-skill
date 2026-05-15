@@ -4,6 +4,23 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## [1.3.0] — 2026-05-15
+
+### Added
+- **Local Streamlit dashboard** (`brains-resume-dashboard`) — BRAINS Incubator branded, single-page top-tab layout. Seven tabs: Overview (funnel + summary tiles + sparklines + idle-state callouts + twin panels), Resumes, Cover Letters, JDs, Applications, Analytics, Pacing. Persistent sidebar for editing focus areas, healthy weekly rate, and sensory-load notes.
+- **`scripts/dashboard/` package** — `app.py`, `launch.py` (CLI entry), `style.py` (BRAINS Incubator CSS), `data.py` (cached query wrappers), `sidebar.py`, plus `tabs/` and `prep/` submodules.
+- **`brains-resume-dashboard` CLI entry** — registered via `pyproject.toml [project.scripts]`. After `pip install -e .` the command launches the dashboard from any terminal.
+- **`/brains-dashboard` slash command** — prints the launch command (does not spawn the subprocess from Claude Code).
+- **`.streamlit/config.toml`** — dark-theme baseline, headless server config, telemetry disabled.
+- **Four pure prep modules** — `prep/funnel.py`, `prep/sparkline.py`, `prep/trends.py`, `prep/idle_states.py`. Fully unit-tested without Streamlit dependency.
+- **`pacing_notes` field on `Profile` dataclass** — optional sensory-load notes journal, persisted to `profile.json`, editable from the sidebar.
+- **Streamlit + Plotly** added to `pyproject.toml` `dependencies` (required, not optional).
+
+### Changed
+- **`SKILL.md` and `README.md`** — slash-command list updated (15 → 16 commands; dashboard is a tool, not a workflow); new "Launching the dashboard" section in README.
+- **`references/brand-application.md`** — split-rule table extended for the dashboard UI artifact type.
+- **`docs/claude-project-setup.md`** — note that the dashboard is Claude-Code-only.
+
 ## [1.2.1] — 2026-05-14
 
 ### Added
