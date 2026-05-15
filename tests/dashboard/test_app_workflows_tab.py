@@ -39,3 +39,7 @@ def test_workflows_tab_has_three_subheaders(empty_tracker):
     assert "Resume workflows" in subheaders
     assert "JD & application workflows" in subheaders
     assert "LinkedIn & coaching workflows" in subheaders
+
+
+def test_phase3_workflow_modules_import():
+    from scripts.dashboard.workflows import check, consolidate, deai, jd_analyze, review, track  # noqa: F401
