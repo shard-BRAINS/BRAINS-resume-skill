@@ -54,26 +54,38 @@ def cached_find_duplicates(
 
 @st.cache_data(ttl=60)
 def cached_list_resume_paths() -> list[str]:
-    """Distinct resume file paths known to the tracker DB."""
-    from scripts.tracker import query
-    apps = query.list_applications()
-    return list({a.resume_path for a in apps if getattr(a, "resume_path", None)})
+    """Distinct resume file paths from the resume_versions table."""
+    from scripts.tracker.query import open_db
+    try:
+        with open_db() as conn:
+            cur = conn.execute("SELECT DISTINCT file_path FROM resume_versions WHERE file_path IS NOT NULL")
+            return sorted({row[0] for row in cur.fetchall() if row[0]})
+    except Exception:
+        return []
 
 
 @st.cache_data(ttl=60)
 def cached_list_cover_letter_paths() -> list[str]:
-    """Distinct cover-letter file paths known to the tracker DB."""
-    from scripts.tracker import query
-    rows = query.list_cover_letters() if hasattr(query, "list_cover_letters") else []
-    return list({r.path for r in rows if getattr(r, "path", None)})
+    """Distinct cover-letter file paths from the cover_letters table."""
+    from scripts.tracker.query import open_db
+    try:
+        with open_db() as conn:
+            cur = conn.execute("SELECT DISTINCT file_path FROM cover_letters WHERE file_path IS NOT NULL")
+            return sorted({row[0] for row in cur.fetchall() if row[0]})
+    except Exception:
+        return []
 
 
 @st.cache_data(ttl=60)
 def cached_list_jd_paths() -> list[str]:
-    """Distinct JD identifier strings (URLs or file paths) known to the tracker DB."""
-    from scripts.tracker import query
-    rows = query.list_jds() if hasattr(query, "list_jds") else []
-    return list({r.source for r in rows if getattr(r, "source", None)})
+    """Distinct JD source identifiers (URLs or file paths) from the jds table."""
+    from scripts.tracker.query import open_db
+    try:
+        with open_db() as conn:
+            cur = conn.execute("SELECT DISTINCT source FROM jds WHERE source IS NOT NULL")
+            return sorted({row[0] for row in cur.fetchall() if row[0]})
+    except Exception:
+        return []
 
 
 def clear_all_caches() -> None:
