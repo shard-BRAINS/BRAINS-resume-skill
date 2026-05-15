@@ -8,7 +8,7 @@ A Claude Code skill that helps neurodivergent and autistic people review, create
 
 ## Status
 
-v1.2.1 — adds the de-AI validator; fourteen workflows live (de-AI is a tool, not a workflow).
+v1.3.0 — adds the local Streamlit dashboard; fourteen workflows live (dashboard and de-AI are tools, not workflows).
 
 ---
 
@@ -103,6 +103,7 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\brains-resume
 | `/brains-jd-analyze [jd]` | Analyse a job description for ND-relevant signals (red flags, masking cost, evidence of flex, role-fit score) |
 | `/brains-precheck [resume] [jd]` | Six-question coaching pass before submitting an application; registers it in the tracker |
 | `/brains-deai` | Scan resume / cover-letter / LinkedIn text for AI-tell signals; surfaces a 0-100 AI-signal score and rewrite suggestions |
+| `/brains-dashboard` | Print the command to launch the local Streamlit dashboard in a browser |
 | `/brains-track [command]` | Manage the application tracker — add applications, log outcomes, view pipeline summary |
 
 ---
@@ -149,6 +150,29 @@ From these you can query:
 Use `/brains-track summary` for a pipeline view, `/brains-track update <id> <event-type>` to log outcomes as they happen, and `/brains-track healthy-rate` to set the application pace that fits your sensory bandwidth — the skill never tells you what that number should be.
 
 The dashboard UI for these views ships in v1.3.0; for v1.2.0, all queries are surfaced as markdown tables in chat.
+
+---
+
+## Launching the dashboard
+
+The skill ships a local Streamlit dashboard from v1.3.0. After `pip install -e .` (which registers the `brains-resume-dashboard` CLI entry), launch from any terminal:
+
+```
+brains-resume-dashboard
+```
+
+The dashboard opens at `http://localhost:8501`. Press Ctrl+C in the launch terminal to stop it.
+
+What you get:
+- **Overview** — pipeline funnel, summary tiles, sparkline trends, idle-state callouts, pending-callbacks panel
+- **Resumes / Cover Letters / JDs** — tagged tables with focus areas, AI-signal score per text artifact, links to source files
+- **Applications** — filterable table by company / channel / status / date
+- **Analytics** — efficacy by template and channel
+- **Pacing** — this-week count vs your self-defined healthy weekly rate, with sensory-load notes journal
+
+The dashboard is BRAINS Incubator branded (Incubator Blue accents with Gold Deep delta callouts, Atkinson Hyperlegible font, dark theme) and runs entirely on localhost — no telemetry, no outbound network.
+
+Read-only except for the sidebar profile editor (focus areas, healthy weekly rate, pacing notes). Application outcomes are still logged via `/brains-track update <id> <event>` in your terminal.
 
 ---
 

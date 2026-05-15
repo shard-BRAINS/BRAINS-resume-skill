@@ -39,6 +39,10 @@ See `references/template-selection.md` for the full decision tree guiding templa
 
 The skill includes an AI-signal validator (`/brains-deai`) that scans produced text for common AI-tell patterns and surfaces a 0-100 score with rewrite suggestions. Auto-runs in the bias-aware final check; available standalone. See `references/ai-signal-patterns.md` for the nine-pattern catalog.
 
+### Dashboard (v1.3.0+)
+
+The skill includes a local Streamlit dashboard accessible via `brains-resume-dashboard` after install. It is **Claude-Code-only** — claude.ai cannot run Streamlit, and the dashboard depends on the local SQLite tracker file under `~/.brains-resume/`. See the README's "Launching the dashboard" section for details.
+
 ## What is different from Claude Code
 
 | Feature | Claude Code | Claude Project |
