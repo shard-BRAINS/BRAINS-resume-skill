@@ -41,6 +41,41 @@ def render() -> None:
 
     st.caption(f"Showing {len(df)} cover letters.")
 
+    # Inline workflow actions (v1.4.0)
+    st.markdown("---")
+    st.subheader("Actions")
+    rows = _list_cover_letters()
+    if not rows:
+        st.caption("_No cover letters tracked yet._")
+        return
+
+    from pathlib import Path as _P
+
+    def _label(r: dict) -> str:
+        fp = r.get("file_path") or "(no file)"
+        filename = _P(fp).name if fp and fp != "(no file)" else "(no file)"
+        company = r.get("jd_company", "") or ""
+        role = r.get("jd_role_title", "") or ""
+        return f"{filename} — {company} / {role}".strip(" —/")
+
+    options = {_label(r): r["file_path"] for r in rows if r.get("file_path") and r["file_path"] != "(no file)"}
+    if not options:
+        st.caption("_No cover letters with a file path on disk yet._")
+        return
+
+    selected = st.selectbox("Select a cover letter to act on", options=list(options.keys()), key="cl_action_pick")
+    if selected:
+        from pathlib import Path
+        from scripts.dashboard.workflows import deai as wf_deai, edit as wf_edit
+
+        file_path = Path(options[selected])
+        action = st.radio("Action", ["Edit", "De-AI"], horizontal=True, key="cl_action_radio")
+        st.markdown("---")
+        if action == "Edit":
+            wf_edit.render(file_path=file_path)
+        elif action == "De-AI":
+            wf_deai.render(file_path=file_path)
+
 
 def _list_cover_letters() -> list:
     from scripts.validators.ai_signal_check import ai_signal_check
