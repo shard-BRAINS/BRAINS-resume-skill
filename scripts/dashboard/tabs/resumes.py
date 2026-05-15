@@ -48,6 +48,56 @@ def render() -> None:
 
     st.caption(f"Showing {len(df)} resume versions.")
 
+    # Inline workflow actions (v1.4.0)
+    st.markdown("---")
+    st.subheader("Actions")
+    versions = _list_resume_versions()
+    if not versions:
+        st.caption("_No resumes tracked yet._")
+        return
+
+    # Build labels: prefer filename + template + date
+    def _label(v: dict) -> str:
+        from pathlib import Path as _P
+        fp = v.get("file_path") or "(no file)"
+        filename = _P(fp).name if fp and fp != "(no file)" else "(no file)"
+        return f"{filename} — {v.get('template', '')} — {v.get('created_at', '')}"
+
+    options = {_label(v): v["file_path"] for v in versions if v.get("file_path") and v["file_path"] != "(no file)"}
+    if not options:
+        st.caption("_No resumes with a file path on disk yet._")
+        return
+
+    selected = st.selectbox("Select a resume to act on", options=list(options.keys()), key="resumes_action_pick")
+    if selected:
+        from pathlib import Path
+        from scripts.dashboard.workflows import (
+            check as wf_check,
+            deai as wf_deai,
+            edit as wf_edit,
+            review as wf_review,
+            tailor as wf_tailor,
+        )
+
+        file_path = Path(options[selected])
+        action = st.radio(
+            "Action",
+            ["Review", "Edit", "Tailor", "De-AI", "Final check"],
+            horizontal=True,
+            key="resumes_action_radio",
+        )
+        st.markdown("---")
+        if action == "Review":
+            wf_review.render(file_path=file_path)
+        elif action == "Edit":
+            wf_edit.render(file_path=file_path)
+        elif action == "Tailor":
+            wf_tailor.render(file_path=file_path)
+        elif action == "De-AI":
+            wf_deai.render(file_path=file_path)
+        elif action == "Final check":
+            wf_check.render(file_path=file_path)
+
 
 def _list_resume_versions() -> list:
     """Read-only direct query for resume versions + computed AI-signal score."""
