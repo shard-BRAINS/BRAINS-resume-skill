@@ -52,9 +52,36 @@ def cached_find_duplicates(
     return _query.find_duplicates(company, role_title, within_days=within_days)
 
 
+@st.cache_data(ttl=60)
+def cached_list_resume_paths() -> list[str]:
+    """Distinct resume file paths known to the tracker DB."""
+    from scripts.tracker import query
+    apps = query.list_applications()
+    return list({a.resume_path for a in apps if getattr(a, "resume_path", None)})
+
+
+@st.cache_data(ttl=60)
+def cached_list_cover_letter_paths() -> list[str]:
+    """Distinct cover-letter file paths known to the tracker DB."""
+    from scripts.tracker import query
+    rows = query.list_cover_letters() if hasattr(query, "list_cover_letters") else []
+    return list({r.path for r in rows if getattr(r, "path", None)})
+
+
+@st.cache_data(ttl=60)
+def cached_list_jd_paths() -> list[str]:
+    """Distinct JD identifier strings (URLs or file paths) known to the tracker DB."""
+    from scripts.tracker import query
+    rows = query.list_jds() if hasattr(query, "list_jds") else []
+    return list({r.source for r in rows if getattr(r, "source", None)})
+
+
 def clear_all_caches() -> None:
     """Clear every cached wrapper at once. Called by the sidebar global refresh."""
     cached_list_applications.clear()
     cached_weekly_summary.clear()
     cached_efficacy_by_template.clear()
     cached_find_duplicates.clear()
+    cached_list_resume_paths.clear()
+    cached_list_cover_letter_paths.clear()
+    cached_list_jd_paths.clear()
