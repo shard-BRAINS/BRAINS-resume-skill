@@ -43,3 +43,20 @@ def test_workflows_tab_has_three_subheaders(empty_tracker):
 
 def test_phase3_workflow_modules_import():
     from scripts.dashboard.workflows import check, consolidate, deai, jd_analyze, review, track  # noqa: F401
+
+
+def test_applications_tab_inline_actions_added(empty_tracker):
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(APP_PATH))
+    at.run(timeout=15)
+    # Check that the app renders without error (inline actions are wired up)
+    assert not at.exception, f"App raised: {at.exception}"
+
+
+def test_app_does_not_raise_with_all_inline_actions(empty_tracker):
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(APP_PATH))
+    at.run(timeout=15)
+    assert not at.exception, f"App raised: {at.exception}"

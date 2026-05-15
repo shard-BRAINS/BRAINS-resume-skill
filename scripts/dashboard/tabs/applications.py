@@ -90,6 +90,12 @@ def render() -> None:
         "`/brains-track update <id> <event-type>` in your terminal."
     )
 
+    # Inline workflow actions (v1.4.0)
+    st.markdown("---")
+    st.subheader("Log a new outcome")
+    from scripts.dashboard.workflows import track as wf_track
+    wf_track.render(file_path=None)
+
 
 def _days_since(submitted_at: str, now: datetime) -> int:
     if not submitted_at:
