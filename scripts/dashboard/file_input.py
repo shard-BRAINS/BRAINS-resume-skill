@@ -81,13 +81,34 @@ def _list_tracker_files(kind: Literal["resume", "cover_letter", "jd"]) -> list[s
     return sorted(paths)
 
 
+def _format_known_file(value: str) -> str:
+    """Render the dropdown label as `YYYY-MM-DD HH:MM — filename` when the value is a file path.
+
+    Falls back to the raw value when the path doesn't exist on disk (e.g. JD source URLs).
+    """
+    import datetime as _dt
+
+    if value == DROPDOWN_PLACEHOLDER or not value:
+        return value
+    p = Path(value)
+    if not p.exists():
+        return value  # URL or missing file — show as-is
+    mtime = _dt.datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+    return f"{mtime} — {p.name}"
+
+
 def pick_file(kind: Literal["resume", "cover_letter", "jd"], key: str) -> Optional[Path]:
     """Render the three-way picker. Return the first resolved Path or None.
 
     The `key` arg must be unique per call site (Streamlit widget key).
     """
     options = [DROPDOWN_PLACEHOLDER] + _list_tracker_files(kind)
-    dropdown_value = st.selectbox(f"Pick a known {kind}", options=options, key=f"{key}_dropdown")
+    dropdown_value = st.selectbox(
+        f"Pick a known {kind}",
+        options=options,
+        format_func=_format_known_file,
+        key=f"{key}_dropdown",
+    )
 
     text_value = st.text_input(f"Or paste an absolute path", value="", key=f"{key}_text")
 
