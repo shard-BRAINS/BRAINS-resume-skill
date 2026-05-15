@@ -19,6 +19,7 @@ from scripts.dashboard.tabs import (
     overview,
     pacing,
     resumes,
+    workflows,
 )
 
 
@@ -42,6 +43,7 @@ def main() -> None:
         "Applications",
         "Analytics",
         "Pacing",
+        "Workflows",
     ])
 
     with tabs[0]:
@@ -58,6 +60,8 @@ def main() -> None:
         analytics.render()
     with tabs[6]:
         pacing.render()
+    with tabs[7]:
+        workflows.render()
 
 
 main()
