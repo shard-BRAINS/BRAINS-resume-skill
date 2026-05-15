@@ -4,6 +4,26 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## [1.4.0] — 2026-05-15
+
+### Added
+- **Dashboard workflows** — every slash command is now reachable through the v1.3.0 dashboard. New 8th tab `Workflows` with 15 command cards, grouped into three sections (Resume / JD & application / LinkedIn & coaching). Existing Resumes, Cover Letters, JDs, and Applications tabs gain inline action buttons that pre-fill the workflow form below the table.
+- **`scripts/dashboard/workflows/` package** — one module per slash command (15 modules) exposing `render(file_path=None)`. Validator-backed modules run analyzers in-dashboard; pure-LLM modules collect inputs and trigger a clipboard handoff.
+- **`scripts/dashboard/handoff.py`** — clipboard helper using `pyperclip`. Optional audit log at `~/.brains-resume/handoffs/<timestamp>-<cmd>.txt`. Graceful fallback to `st.code` block on clipboard failure.
+- **`scripts/dashboard/file_input.py`** — three-way file picker (dropdown of tracker-known files / path text input / `st.file_uploader`). Uploads land in `~/.brains-resume/uploads/<kind>/`.
+- **Validator-backed in-dashboard workflows** — `/brains-deai`, `/brains-jd-analyze`, `/brains-track` (full CRUD), `/brains-check`, `/brains-review` (preview) execute natively. `/brains-consolidate` is a handoff-only surface (structural parsers live in the LLM workflow). Optional Claude Code handoff for follow-on LLM coaching.
+- **Pure-LLM handoff cards** — `/brains-create`, `/brains-edit`, `/brains-tailor`, `/brains-cover-letter`, `/brains-disclosure`, `/brains-linkedin`, `/brains-linkedin-improve`, `/brains-career-change`, `/brains-precheck` collect inputs and copy the ready-to-paste slash command to the clipboard.
+- **Sidebar additions** — handoff-log toggle (default on, persisted to profile.json as `log_handoffs`), expander showing the last 10 handoff filenames.
+- **`log_handoffs` field on Profile** — backward-compat default `True` when missing from existing profile.json.
+- **`pyperclip>=1.8.0`** added to `pyproject.toml` dependencies.
+
+### Changed
+- **`SKILL.md`, `README.md`, `docs/claude-project-setup.md`** — v1.4.0 dashboard-workflows note.
+- **`references/brand-application.md`** — clipboard-handoff row added to the Split Rule table.
+
+### Fixed
+- **`scripts/dashboard/data.py`** — `cached_list_resume_paths` / `cached_list_cover_letter_paths` / `cached_list_jd_paths` now query the underlying SQLite tables directly (resume_versions / cover_letters / jds) instead of trying to read attributes that don't exist on `ApplicationRow`.
+
 ## [1.3.0] — 2026-05-15
 
 ### Added
