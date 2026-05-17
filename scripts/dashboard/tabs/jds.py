@@ -79,11 +79,11 @@ def render() -> None:
         )
         st.markdown("---")
         if action == "Analyze":
-            wf_jda.render(file_path=None)
+            wf_jda.render(file_path=None, key_prefix="jdtab_jda")
             if jd_source:
                 st.caption(f"JD source: `{jd_source}` — paste its text into the analyzer above, or use the handoff button.")
         elif action == "Tailor a resume to this JD":
-            wf_tailor.render(file_path=None)
+            wf_tailor.render(file_path=None, key_prefix="jdtab_tailor")
             if jd_source:
                 st.caption(f"JD source: `{jd_source}`")
 

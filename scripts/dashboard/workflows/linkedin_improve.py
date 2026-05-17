@@ -10,11 +10,11 @@ from scripts.dashboard.file_input import pick_file
 from scripts.dashboard.workflows._card import handoff_button
 
 
-def render(file_path: Optional[Path] = None) -> None:
+def render(file_path: Optional[Path] = None, key_prefix: str = "li_improve") -> None:
     st.markdown("**Rewrite a LinkedIn profile using the ND-aware framework.**")
     st.caption("Headline, About, Experience, Skills — identity-first, strengths-aligned.")
     if file_path is None:
-        file_path = pick_file("cover_letter", key="li_improve")  # LinkedIn DOCX exports
+        file_path = pick_file("cover_letter", key=f"{key_prefix}_pick")  # LinkedIn DOCX exports
     st.write(f"Selected: `{file_path}`" if file_path else "_No file selected._")
     if file_path is not None:
-        handoff_button("linkedin-improve", [file_path], note="Claude Code will rewrite each section.", key="li_improve_btn")
+        handoff_button("linkedin-improve", [file_path], note="Claude Code will rewrite each section.", key=f"{key_prefix}_btn")

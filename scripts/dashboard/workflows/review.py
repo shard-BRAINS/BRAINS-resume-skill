@@ -12,18 +12,18 @@ from scripts.parsers.docx_to_text import parse_docx_resume
 from scripts.validators.bias_scan import bias_scan
 
 
-def render(file_path: Optional[Path] = None) -> None:
+def render(file_path: Optional[Path] = None, key_prefix: str = "review") -> None:
     st.markdown("**Audit a resume for ND-bias, ATS-safety, and integrity issues.**")
     st.caption("Dashboard shows a shallow bias-scan preview. The full multi-pass review (LLM-driven) runs in Claude Code.")
 
     if file_path is None:
-        file_path = pick_file("resume", key="review")
+        file_path = pick_file("resume", key=f"{key_prefix}_pick")
     if file_path is None:
         return
 
     st.write(f"Selected: `{file_path}`")
 
-    if is_docx(file_path) and st.button("Preview bias scan", key="review_preview_btn"):
+    if is_docx(file_path) and st.button("Preview bias scan", key=f"{key_prefix}_preview_btn"):
         try:
             text = parse_docx_resume(file_path).get("raw_text", "")
             if not text:
@@ -43,4 +43,4 @@ def render(file_path: Optional[Path] = None) -> None:
             st.error(f"Preview failed: {e}")
 
     st.markdown("---")
-    handoff_button("review", [file_path], note="Run the full multi-pass review in Claude Code (LLM-coached).", key="review_handoff_btn")
+    handoff_button("review", [file_path], note="Run the full multi-pass review in Claude Code (LLM-coached).", key=f"{key_prefix}_handoff_btn")

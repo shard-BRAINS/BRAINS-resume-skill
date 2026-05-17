@@ -94,7 +94,7 @@ def render() -> None:
     st.markdown("---")
     st.subheader("Log a new outcome")
     from scripts.dashboard.workflows import track as wf_track
-    wf_track.render(file_path=None)
+    wf_track.render(file_path=None, key_prefix="apptab_track")
 
 
 def _days_since(submitted_at: str, now: datetime) -> int:

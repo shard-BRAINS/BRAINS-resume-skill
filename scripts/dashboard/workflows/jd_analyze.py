@@ -11,14 +11,14 @@ from scripts.tracker.profile import read_profile
 from scripts.validators.jd_analyzer import jd_analyze
 
 
-def render(file_path: Optional[Path] = None) -> None:
+def render(file_path: Optional[Path] = None, key_prefix: str = "jda") -> None:
     st.markdown("**Analyse a job description for ND-relevant signals.**")
     st.caption("Red flags, masking cost, role-fit score (vs your profile focus areas).")
 
-    jd_text = st.text_area("Paste JD text", key="jda_text", height=180, value="")
-    jd_url = st.text_input("Or JD URL / file path (for the Claude Code handoff)", key="jda_url")
+    jd_text = st.text_area("Paste JD text", key=f"{key_prefix}_text", height=180, value="")
+    jd_url = st.text_input("Or JD URL / file path (for the Claude Code handoff)", key=f"{key_prefix}_url")
 
-    if st.button("Analyze", key="jda_analyze_btn"):
+    if st.button("Analyze", key=f"{key_prefix}_analyze_btn"):
         if not jd_text.strip():
             st.error("Paste the JD text first (in-dashboard analyzer needs raw text).")
         else:
@@ -63,4 +63,4 @@ def render(file_path: Optional[Path] = None) -> None:
 
     st.markdown("---")
     handoff_arg = jd_url or "(paste-from-clipboard)"
-    handoff_button("jd-analyze", [handoff_arg], note="Full coaching report in Claude Code (will load the JD).", key="jda_handoff_btn")
+    handoff_button("jd-analyze", [handoff_arg], note="Full coaching report in Claude Code (will load the JD).", key=f"{key_prefix}_handoff_btn")

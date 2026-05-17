@@ -15,22 +15,22 @@ from scripts.validators.bias_scan import bias_scan
 from scripts.validators.integrity_check import integrity_check
 
 
-def render(file_path: Optional[Path] = None) -> None:
+def render(file_path: Optional[Path] = None, key_prefix: str = "check") -> None:
     st.markdown("**Final pre-submit pass — ATS-safety, document integrity, ND-bias, AI-signal score.**")
     st.caption("Runs all four validators in-dashboard. Use the handoff button for the LLM coaching layer.")
 
     if file_path is None:
-        file_path = pick_file("resume", key="check")
+        file_path = pick_file("resume", key=f"{key_prefix}_pick")
     if file_path is None:
         return
 
     st.write(f"Selected: `{file_path}`")
     if not is_docx(file_path):
         st.error("DOCX required for in-dashboard checks. Use the handoff button.")
-        handoff_button("check", [file_path], note="Run composite check in Claude Code (reads PDF).", key="check_handoff_pdf")
+        handoff_button("check", [file_path], note="Run composite check in Claude Code (reads PDF).", key=f"{key_prefix}_handoff_pdf")
         return
 
-    if st.button("Run all checks", key="check_run_btn"):
+    if st.button("Run all checks", key=f"{key_prefix}_run_btn"):
         try:
             text = parse_docx_resume(file_path).get("raw_text", "")
         except Exception as e:
@@ -100,4 +100,4 @@ def render(file_path: Optional[Path] = None) -> None:
                 st.error(f"AI-signal scan failed: {e}")
 
     st.markdown("---")
-    handoff_button("check", [file_path], note="Get the LLM coaching layer in Claude Code.", key="check_handoff_btn")
+    handoff_button("check", [file_path], note="Get the LLM coaching layer in Claude Code.", key=f"{key_prefix}_handoff_btn")

@@ -10,11 +10,11 @@ from scripts.dashboard.file_input import pick_file
 from scripts.dashboard.workflows._card import handoff_button
 
 
-def render(file_path: Optional[Path] = None) -> None:
+def render(file_path: Optional[Path] = None, key_prefix: str = "tailor") -> None:
     st.markdown("**Tailor a resume to a specific job description.**")
     if file_path is None:
-        file_path = pick_file("resume", key="tailor_resume")
-    jd_input = st.text_input("JD URL or file path", key="tailor_jd")
+        file_path = pick_file("resume", key=f"{key_prefix}_resume")
+    jd_input = st.text_input("JD URL or file path", key=f"{key_prefix}_jd")
     st.write(f"Resume: `{file_path}`" if file_path else "_No resume selected._")
     if file_path is not None and jd_input:
-        handoff_button("tailor", [file_path, jd_input], note="Claude Code will produce a tailored resume with focus-area alignment.", key="tailor_btn")
+        handoff_button("tailor", [file_path, jd_input], note="Claude Code will produce a tailored resume with focus-area alignment.", key=f"{key_prefix}_btn")

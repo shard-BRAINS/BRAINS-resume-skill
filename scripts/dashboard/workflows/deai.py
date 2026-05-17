@@ -12,21 +12,21 @@ from scripts.parsers.docx_to_text import parse_docx_resume
 from scripts.validators.ai_signal_check import ai_signal_check
 
 
-def render(file_path: Optional[Path] = None) -> None:
+def render(file_path: Optional[Path] = None, key_prefix: str = "deai") -> None:
     st.markdown("**Scan a document for AI-tell signals.**")
     st.caption("Runs the nine-finding-code de-AI scanner natively. Use the handoff button for rewrite suggestions in Claude Code.")
     if file_path is None:
-        file_path = pick_file("resume", key="deai")
+        file_path = pick_file("resume", key=f"{key_prefix}_pick")
     if file_path is None:
         return
 
     st.write(f"Selected: `{file_path}`")
     if not is_docx(file_path):
         st.error("DOCX required for in-dashboard scan. Use the handoff button (Claude Code can read PDFs).")
-        handoff_button("deai", [file_path], note="Run de-AI scan in Claude Code (reads PDF).", key="deai_handoff_pdf")
+        handoff_button("deai", [file_path], note="Run de-AI scan in Claude Code (reads PDF).", key=f"{key_prefix}_handoff_pdf")
         return
 
-    if st.button("Scan now", key="deai_scan_btn"):
+    if st.button("Scan now", key=f"{key_prefix}_scan_btn"):
         try:
             text = parse_docx_resume(file_path).get("raw_text", "")
             if not text:
@@ -53,4 +53,4 @@ def render(file_path: Optional[Path] = None) -> None:
             st.success("No de-AI findings.")
 
     st.markdown("---")
-    handoff_button("deai", [file_path], note="Get rewrite suggestions in Claude Code.", key="deai_handoff_btn")
+    handoff_button("deai", [file_path], note="Get rewrite suggestions in Claude Code.", key=f"{key_prefix}_handoff_btn")

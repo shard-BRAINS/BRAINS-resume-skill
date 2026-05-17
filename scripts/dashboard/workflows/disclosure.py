@@ -9,7 +9,7 @@ import streamlit as st
 from scripts.dashboard.workflows._card import handoff_button
 
 
-def render(file_path: Optional[Path] = None) -> None:
+def render(file_path: Optional[Path] = None, key_prefix: str = "disclosure") -> None:
     st.markdown("**Walk through the disclosure-decision framework.**")
     st.caption("Whether, when, and how to disclose neurodivergence. Always your call — this is structured reflection, not a prescription.")
-    handoff_button("disclosure", [], note="Open Claude Code to start the coaching turn.", key="disclosure_btn")
+    handoff_button("disclosure", [], note="Open Claude Code to start the coaching turn.", key=f"{key_prefix}_btn")

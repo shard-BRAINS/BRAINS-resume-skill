@@ -88,15 +88,15 @@ def render() -> None:
         )
         st.markdown("---")
         if action == "Review":
-            wf_review.render(file_path=file_path)
+            wf_review.render(file_path=file_path, key_prefix="rsmtab_review")
         elif action == "Edit":
-            wf_edit.render(file_path=file_path)
+            wf_edit.render(file_path=file_path, key_prefix="rsmtab_edit")
         elif action == "Tailor":
-            wf_tailor.render(file_path=file_path)
+            wf_tailor.render(file_path=file_path, key_prefix="rsmtab_tailor")
         elif action == "De-AI":
-            wf_deai.render(file_path=file_path)
+            wf_deai.render(file_path=file_path, key_prefix="rsmtab_deai")
         elif action == "Final check":
-            wf_check.render(file_path=file_path)
+            wf_check.render(file_path=file_path, key_prefix="rsmtab_check")
 
 
 def _list_resume_versions() -> list:

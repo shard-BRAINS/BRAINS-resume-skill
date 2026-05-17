@@ -15,7 +15,7 @@ EVENT_TYPES = [
 ]
 
 
-def render(file_path: Optional[Path] = None) -> None:
+def render(file_path: Optional[Path] = None, key_prefix: str = "track") -> None:
     st.markdown("**Manage the application tracker.**")
     st.caption("Fully in-dashboard — no Claude Code handoff for tracker actions.")
 
@@ -25,14 +25,14 @@ def render(file_path: Optional[Path] = None) -> None:
         return
 
     options = {f"#{a.id} — {a.company} / {a.role_title}": a.id for a in apps}
-    selected_label = st.selectbox("Pick an application", options=list(options.keys()), key="track_pick")
+    selected_label = st.selectbox("Pick an application", options=list(options.keys()), key=f"{key_prefix}_pick")
     app_id = options[selected_label]
 
-    event_type = st.selectbox("Event type", EVENT_TYPES, key="track_event")
-    event_date = st.date_input("Date", value=date.today(), key="track_date")
-    notes = st.text_input("Notes (optional)", key="track_notes")
+    event_type = st.selectbox("Event type", EVENT_TYPES, key=f"{key_prefix}_event")
+    event_date = st.date_input("Date", value=date.today(), key=f"{key_prefix}_date")
+    notes = st.text_input("Notes (optional)", key=f"{key_prefix}_notes")
 
-    if st.button("Log outcome", key="track_log_btn"):
+    if st.button("Log outcome", key=f"{key_prefix}_log_btn"):
         try:
             event_dt = datetime.combine(event_date, datetime.min.time())
             tracker_add.record_outcome(

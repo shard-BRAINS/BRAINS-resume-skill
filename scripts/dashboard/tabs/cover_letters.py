@@ -72,9 +72,9 @@ def render() -> None:
         action = st.radio("Action", ["Edit", "De-AI"], horizontal=True, key="cl_action_radio")
         st.markdown("---")
         if action == "Edit":
-            wf_edit.render(file_path=file_path)
+            wf_edit.render(file_path=file_path, key_prefix="cltab_edit")
         elif action == "De-AI":
-            wf_deai.render(file_path=file_path)
+            wf_deai.render(file_path=file_path, key_prefix="cltab_deai")
 
 
 def _list_cover_letters() -> list:
