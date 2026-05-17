@@ -4,6 +4,16 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## [1.4.1] — 2026-05-18
+
+### Added
+- **Workflows tab journey-stage layout** — cards now render in the order a user would actually run them: `1 · Pre-application & decisions` (Pre-application → JD analyze → Disclosure), `2 · Resume & cover docs` (Create → Review → Tailor → Edit → Career change → De-AI → Cover letter → Final check), `3 · Track & LinkedIn` (Track → LinkedIn ingest → LinkedIn improve → Consolidate). Replaces the prior Resume / JD & application / LinkedIn & coaching grouping.
+
+### Fixed
+- **Streamlit duplicate-key collisions** — every `scripts/dashboard/workflows/*.py` `render(...)` now accepts a `key_prefix` parameter and threads it through every `st.text_input` / `st.button` / `st.selectbox` / `st.file_uploader` widget key. Tab call sites (`tabs/resumes.py`, `tabs/cover_letters.py`, `tabs/jds.py`, `tabs/applications.py`, `tabs/workflows.py`) pass unique prefixes (`rsmtab_`, `cltab_`, `jdtab_`, `apptab_`, `wftab_`) so the same workflow can appear inline on a content tab AND on the Workflows tab in the same session without StreamlitDuplicateElementKey errors.
+- **Known-files dropdown across all workflow tabs** — pickers in `Resumes`, `Cover Letters`, `JDs`, and `Applications` tabs now show uploaded files alongside tracker-known files, and display them as `YYYY-MM-DD HH:MM — filename` instead of full paths.
+- **`st.toast` icon codepoint** — replaced an invalid emoji codepoint (✓) with a valid one (✅) so toast notifications render correctly across all workflow surfaces.
+
 ## [1.4.0] — 2026-05-15
 
 ### Added
