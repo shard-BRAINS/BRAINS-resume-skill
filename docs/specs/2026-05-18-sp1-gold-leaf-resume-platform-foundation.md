@@ -3,7 +3,7 @@
 **Date:** 2026-05-18
 **Author:** BRAINS Incubator
 **Product:** Gold Leaf Resume (a shard product under BRAINS Incubator)
-**Status:** In implementation — SP1·M0 + M1 + M2 complete (2026-05-18 — `sp1-m0`, `sp1-m1`, `sp1-m2` tags in `gold-leaf-resume`); M3 (Frontend auth + consent flows) next.
+**Status:** In implementation — SP1·M0 + M1 + M2 + M3 complete (2026-05-18 — `sp1-m0`, `sp1-m1`, `sp1-m2`, `sp1-m3` tags in `gold-leaf-resume`); M4 (LLM abstraction + vault) next.
 **Predecessor:** BRAINS Resume Skill v1.4.1 (local Streamlit + Claude Code, shipped 2026-05-18)
 
 ---
