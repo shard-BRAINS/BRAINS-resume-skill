@@ -46,6 +46,7 @@ class ResumeVersion:
     archived_at: Optional[str]
     artifact_uid: Optional[str] = None
     parent_uid: Optional[str] = None
+    for_candidate: Optional[str] = None
 
 
 @dataclass
@@ -59,6 +60,7 @@ class CoverLetter:
     archived_at: Optional[str]
     artifact_uid: Optional[str] = None
     parent_uid: Optional[str] = None
+    for_candidate: Optional[str] = None
 
 
 @dataclass
