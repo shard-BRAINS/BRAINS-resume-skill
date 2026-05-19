@@ -126,3 +126,19 @@ def resolve_folder_collision(parent: Path, candidate_name: str) -> str:
     while (parent / f"{candidate_name}_v{n}").exists():
         n += 1
     return f"{candidate_name}_v{n}"
+
+
+def split_candidate_name(full_name: str) -> tuple[str, str]:
+    """Split a free-text candidate name into (first, last) for filename construction.
+
+    - Two or more tokens: last token is the surname, everything before is the given-name part.
+    - Single token: returned as first with empty last.
+    - Empty / whitespace-only: returned as ("", "").
+    - Internal whitespace runs collapse to single spaces.
+    """
+    tokens = (full_name or "").split()
+    if not tokens:
+        return ("", "")
+    if len(tokens) == 1:
+        return (tokens[0], "")
+    return (" ".join(tokens[:-1]), tokens[-1])
