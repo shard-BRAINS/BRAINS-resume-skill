@@ -242,3 +242,76 @@ def test_add_application_rejects_invalid_channel(fresh_db):
             submitted_at=datetime.now(), channel="not_a_real_channel",
         )
     assert "not_a_real_channel" in str(exc_info.value)
+
+
+def test_add_resume_version_persists_artifact_uid(fresh_db):
+    id_ = add_resume_version(
+        file_path="/tmp/r.docx",
+        template="hybrid",
+        focus_areas=[],
+        artifact_uid="KX7M9Q",
+        parent_uid="PT4N2B",
+    )
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT artifact_uid, parent_uid FROM resume_versions WHERE id=?",
+            (id_,),
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row == ("KX7M9Q", "PT4N2B")
+
+
+def test_add_cover_letter_persists_artifact_uid(fresh_db):
+    resume_id = add_resume_version("/tmp/r.docx", "hybrid", [])
+    jd_id = add_jd(
+        source="manual", source_ref=None, company="Acme",
+        role_title="Eng", raw_text="...", analyzer_findings={},
+        focus_areas_required=[], focus_areas_nice=[],
+    )
+    cl_id = add_cover_letter(
+        file_path="/tmp/cl.docx",
+        resume_version_id=resume_id, jd_id=jd_id, template="formal-business",
+        artifact_uid="H8VR3W", parent_uid=None,
+    )
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT artifact_uid, parent_uid FROM cover_letters WHERE id=?",
+            (cl_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row == ("H8VR3W", None)
+
+
+def test_add_jd_persists_folder_path(fresh_db):
+    jd_id = add_jd(
+        source="manual", source_ref=None, company="Acme",
+        role_title="Eng", raw_text="...", analyzer_findings={},
+        focus_areas_required=[], focus_areas_nice=[],
+        folder_path="/tmp/outputs/2026-05-19_Acme_Eng",
+    )
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT folder_path FROM jds WHERE id=?", (jd_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row[0] == "/tmp/outputs/2026-05-19_Acme_Eng"
+
+
+def test_add_resume_version_omitting_uids_inserts_nulls(fresh_db):
+    """Backward compatibility — pre-v1.5.0 call sites still work."""
+    id_ = add_resume_version("/tmp/r.docx", "hybrid", [])
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT artifact_uid, parent_uid FROM resume_versions WHERE id=?",
+            (id_,),
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row == (None, None)

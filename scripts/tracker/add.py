@@ -21,6 +21,8 @@ def add_resume_version(
     focus_areas: List[str],
     parent_id: Optional[int] = None,
     tagged_jd_id: Optional[int] = None,
+    artifact_uid: Optional[str] = None,
+    parent_uid: Optional[str] = None,
 ) -> int:
     """Insert a resume_versions row, return the new id."""
     conn = open_db()
@@ -28,8 +30,9 @@ def add_resume_version(
         cur = conn.execute(
             """
             INSERT INTO resume_versions
-                (file_path, template, focus_areas, parent_id, tagged_jd_id, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (file_path, template, focus_areas, parent_id, tagged_jd_id,
+                 created_at, artifact_uid, parent_uid)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 file_path,
@@ -38,6 +41,8 @@ def add_resume_version(
                 parent_id,
                 tagged_jd_id,
                 _now_iso(),
+                artifact_uid,
+                parent_uid,
             ),
         )
         conn.commit()
@@ -55,6 +60,7 @@ def add_jd(
     analyzer_findings: dict,
     focus_areas_required: List[str],
     focus_areas_nice: List[str],
+    folder_path: Optional[str] = None,
 ) -> int:
     """Insert a jds row, return the new id."""
     conn = open_db()
@@ -64,8 +70,8 @@ def add_jd(
             INSERT INTO jds
                 (source, source_ref, company, role_title, raw_text,
                  analyzer_findings, focus_areas_required, focus_areas_nice,
-                 created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 created_at, folder_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 source,
@@ -77,6 +83,7 @@ def add_jd(
                 json.dumps(focus_areas_required),
                 json.dumps(focus_areas_nice),
                 _now_iso(),
+                folder_path,
             ),
         )
         conn.commit()
@@ -90,6 +97,8 @@ def add_cover_letter(
     resume_version_id: int,
     jd_id: int,
     template: str,
+    artifact_uid: Optional[str] = None,
+    parent_uid: Optional[str] = None,
 ) -> int:
     """Insert a cover_letters row, return the new id."""
     conn = open_db()
@@ -97,10 +106,12 @@ def add_cover_letter(
         cur = conn.execute(
             """
             INSERT INTO cover_letters
-                (file_path, resume_version_id, jd_id, template, created_at)
-            VALUES (?, ?, ?, ?, ?)
+                (file_path, resume_version_id, jd_id, template, created_at,
+                 artifact_uid, parent_uid)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (file_path, resume_version_id, jd_id, template, _now_iso()),
+            (file_path, resume_version_id, jd_id, template, _now_iso(),
+             artifact_uid, parent_uid),
         )
         conn.commit()
         return cur.lastrowid
