@@ -18,7 +18,7 @@ CROCKFORD_BASE32 = "23456789ABCDEFGHJKMNPQRSTVWXYZ"  # 30 chars, no 0/O/1/I/L
 # Em-dash, en-dash, figure-dash, horizontal-bar — all normalize to '-'.
 _DASH_LIKE = "–—―−"
 
-_APOSTROPHE_LIKE = "'''ʼ"
+_APOSTROPHE_LIKE = "'‘’ʼ"  # straight, left-curly, right-curly, modifier-letter
 
 
 def slugify(text: str, max_len: int = 40) -> str:

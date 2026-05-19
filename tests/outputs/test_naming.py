@@ -34,3 +34,13 @@ def test_slugify_max_len_strips_trailing_hyphen():
 def test_slugify_default_max_len_is_40():
     long_text = "a" * 100
     assert len(slugify(long_text)) == 40
+
+
+@pytest.mark.parametrize("text,expected", [
+    # Curly quotes (U+2018, U+2019) and modifier letter apostrophe (U+02BC).
+    ("O’Brien", "OBrien"),
+    ("‘Acme’ Corp", "Acme-Corp"),
+    ("Marʼa's Resume", "Maras-Resume"),
+])
+def test_slugify_strips_curly_apostrophes(text, expected):
+    assert slugify(text) == expected
