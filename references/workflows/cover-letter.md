@@ -25,6 +25,7 @@ Before beginning, confirm every input below:
 3. **Recipient name and title** (optional) — improves personalisation of the salutation and close.
 4. **Personal hook** (optional) — a specific reason for interest, a connection to the employer's work, or a detail the user wants threaded through the letter. If not supplied, use generic-but-specific structure. **Do not invent a hook.**
 5. **Disclosure stance** — carry over from the current session. If not established, ask before proceeding.
+6. **Candidate confirmation (cover letter is FOR the same person as the parent resume).** A cover letter is a derived artifact — it inherits the candidate from the resume it pairs with. If the parent resume was generated with `for_candidate="<name>"`, confirm that the cover letter is for the same named candidate, and pass that same value into the generator path (`make_artifact_path(..., for_candidate="<name>")`) and into the tracker insert (`add_cover_letter_version(..., for_candidate="<name>")`). Do not re-collect the name; only confirm. If the parent resume was for the profile holder, leave `for_candidate` unset. If the parent resume's `for_candidate` is missing or ambiguous, stop and surface the inconsistency before composing — never silently drop or invent the value.
 
 ---
 

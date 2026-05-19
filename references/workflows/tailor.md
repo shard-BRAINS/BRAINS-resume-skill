@@ -25,6 +25,7 @@ Before beginning, confirm every input below:
    - Screenshot: read directly; Claude can parse image text
 3. **Company or recipient details** (optional) — carry any company name, team context, or culture signals through to the summary and match report.
 4. **Disclosure stance** — carry over from the current session. If not established, ask before proceeding.
+5. **Is this resume for the profile holder, or for someone else?** If for someone else, capture their full name (e.g., "Mathilda Gell"). The workflow otherwise proceeds normally — every reference to "the user" in subsequent steps applies to the named candidate. Pass the candidate name into the generator path (`make_artifact_path(..., for_candidate="<name>")`) and into the tracker insert (`add_resume_version(..., for_candidate="<name>")`) so the DOCX and the tracker row both record who the artifact is FOR. When the workflow runs for the profile holder, leave `for_candidate` unset.
 
 ---
 

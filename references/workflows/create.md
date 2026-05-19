@@ -27,6 +27,7 @@ Open with context-setting before collecting any personal details:
 - Is this resume for a specific job posting, or for general applications?
 - What is the user's **disclosure stance** — explicit ND disclosure, non-disclosure, or context-dependent? (Carry this forward; it governs language choices throughout.)
 - What **identity-language preference** does the user have? (e.g., identity-first, person-first, or no explicit ND framing at all.)
+- **Is this resume for the profile holder, or for someone else?** If for someone else, capture their full name (e.g., "Mathilda Gell"). The interview otherwise proceeds normally — every reference to "the user" in subsequent sections applies to the named candidate. Pass the candidate name into the generator path (`make_artifact_path(..., for_candidate="<name>")`) and into the tracker insert (`add_resume_version(..., for_candidate="<name>")`) so the DOCX and the tracker row both record who the artifact is FOR. When the workflow runs for the profile holder, leave `for_candidate` unset.
 
 Record both answers. Do not proceed without them.
 
