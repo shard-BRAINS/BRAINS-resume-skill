@@ -361,3 +361,75 @@ def test_add_cover_letter_persists_for_candidate(fresh_db):
     finally:
         conn.close()
     assert row[0] == "Mathilda Gell"
+
+
+def test_add_resume_version_first_row_per_candidate_sets_is_baseline(fresh_db):
+    """The first non-archived row inserted for a candidate gets is_baseline=1."""
+    from scripts.tracker.add import add_resume_version
+    from scripts.tracker.db import open_db
+
+    rv_id = add_resume_version(None, "hybrid", [], for_candidate="Mathilda Gell")
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT is_baseline FROM resume_versions WHERE id=?", (rv_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row[0] == 1
+
+
+def test_add_resume_version_second_row_per_candidate_is_not_baseline(fresh_db):
+    from scripts.tracker.add import add_resume_version
+    from scripts.tracker.db import open_db
+
+    first = add_resume_version(None, "hybrid", [], for_candidate="Mathilda Gell")
+    second = add_resume_version(None, "hybrid", [], for_candidate="Mathilda Gell")
+    conn = open_db()
+    try:
+        rows = conn.execute(
+            "SELECT id, is_baseline FROM resume_versions WHERE id IN (?, ?)",
+            (first, second),
+        ).fetchall()
+    finally:
+        conn.close()
+    by_id = {r[0]: r[1] for r in rows}
+    assert by_id[first] == 1
+    assert by_id[second] == 0
+
+
+def test_add_resume_version_separate_candidates_each_get_a_baseline(fresh_db):
+    from scripts.tracker.add import add_resume_version
+    from scripts.tracker.db import open_db
+
+    a = add_resume_version(None, "hybrid", [], for_candidate="Matthew Gell")
+    b = add_resume_version(None, "hybrid", [], for_candidate="Mathilda Gell")
+    conn = open_db()
+    try:
+        rows = conn.execute(
+            "SELECT id, is_baseline FROM resume_versions WHERE id IN (?, ?)",
+            (a, b),
+        ).fetchall()
+    finally:
+        conn.close()
+    by_id = {r[0]: r[1] for r in rows}
+    assert by_id[a] == 1
+    assert by_id[b] == 1
+
+
+def test_add_resume_version_explicit_is_baseline_false_overrides_auto(fresh_db):
+    """Caller can opt out of the auto-baseline by passing is_baseline=False."""
+    from scripts.tracker.add import add_resume_version
+    from scripts.tracker.db import open_db
+
+    rv_id = add_resume_version(
+        None, "hybrid", [], for_candidate="Mathilda Gell", is_baseline=False,
+    )
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT is_baseline FROM resume_versions WHERE id=?", (rv_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row[0] == 0
