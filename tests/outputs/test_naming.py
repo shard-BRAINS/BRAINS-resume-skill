@@ -220,3 +220,35 @@ def test_resolve_folder_collision_chain(tmp_path):
     (tmp_path / "abc_v2").mkdir()
     (tmp_path / "abc_v3").mkdir()
     assert resolve_folder_collision(tmp_path, "abc") == "abc_v4"
+
+
+def test_split_candidate_name_two_tokens():
+    from scripts.outputs.naming import split_candidate_name
+    assert split_candidate_name("Mathilda Gell") == ("Mathilda", "Gell")
+
+
+def test_split_candidate_name_three_or_more_tokens_joins_middle_into_first():
+    from scripts.outputs.naming import split_candidate_name
+    # First name takes all but the last token. Keeps middle names with the given name.
+    assert split_candidate_name("Anne Marie O'Brien") == ("Anne Marie", "O'Brien")
+
+
+def test_split_candidate_name_hyphenated_surname_preserved():
+    from scripts.outputs.naming import split_candidate_name
+    assert split_candidate_name("Sam Smith-Jones") == ("Sam", "Smith-Jones")
+
+
+def test_split_candidate_name_single_token_returns_empty_last():
+    from scripts.outputs.naming import split_candidate_name
+    assert split_candidate_name("Cher") == ("Cher", "")
+
+
+def test_split_candidate_name_collapses_internal_whitespace():
+    from scripts.outputs.naming import split_candidate_name
+    assert split_candidate_name("Mathilda   Gell") == ("Mathilda", "Gell")
+
+
+def test_split_candidate_name_empty_returns_empty_pair():
+    from scripts.outputs.naming import split_candidate_name
+    assert split_candidate_name("") == ("", "")
+    assert split_candidate_name("   ") == ("", "")

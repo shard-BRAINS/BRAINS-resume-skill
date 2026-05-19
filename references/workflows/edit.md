@@ -28,6 +28,7 @@ Before beginning, confirm all four inputs:
    Name the trade-off out loud. Do not assume a mode.
 
 4. **Disclosure stance and identity-language preference** — carry these over from the review session if available. If not, ask before proceeding.
+5. **Is this resume for the profile holder, or for someone else?** If for someone else, capture their full name (e.g., "Mathilda Gell"). The workflow otherwise proceeds normally — every reference to "the user" in subsequent steps applies to the named candidate, and the user-veto principle still applies on their behalf (the profile holder remains the operator approving each edit). Pass the candidate name into the generator path (`make_artifact_path(..., for_candidate="<name>")`) and into the tracker insert (`add_resume_version(..., for_candidate="<name>")`) so the DOCX and the tracker row both record who the artifact is FOR. When the workflow runs for the profile holder, leave `for_candidate` unset.
 
 ---
 

@@ -94,7 +94,7 @@ def ensure_jd_folder(jd_id: int) -> Path:
         conn.close()
 
 
-_SKILL_VERSION = "1.5.0"
+_SKILL_VERSION = "1.6.0"
 _MAX_UID_RETRIES = 5
 
 
@@ -102,6 +102,7 @@ def make_artifact_path(
     jd_id: int,
     kind: Literal["resume", "cover-letter"],
     parent_uid: str | None = None,
+    for_candidate: str | None = None,
 ) -> tuple[Path, ArtifactMeta]:
     """Reserve a new artifact path + UID within the JD folder.
 
@@ -109,19 +110,31 @@ def make_artifact_path(
     generator succeeds). The caller passes the returned ArtifactMeta
     into the generator or to finalize_docx after save.
 
-    Raises ProfileNameMissingError if first_name or last_name is unset.
+    If `for_candidate` is provided, it supersedes the profile name for
+    filename construction and is stamped onto the returned ArtifactMeta
+    so the DOCX records who the artifact is FOR. When None, the profile
+    name is used (pre-C behaviour).
+
+    Raises ProfileNameMissingError if first_name or last_name is unset
+    AND no for_candidate override is provided.
     """
-    profile = read_profile()
-    if not profile.first_name or not profile.last_name:
-        raise ProfileNameMissingError(
-            "Profile is missing first_name or last_name. "
-            "Set them in the dashboard sidebar."
-        )
+    from scripts.outputs.naming import split_candidate_name
+
+    if for_candidate:
+        first_name, last_name = split_candidate_name(for_candidate)
+    else:
+        profile = read_profile()
+        if not profile.first_name or not profile.last_name:
+            raise ProfileNameMissingError(
+                "Profile is missing first_name or last_name. "
+                "Set them in the dashboard sidebar, or pass for_candidate explicitly."
+            )
+        first_name, last_name = profile.first_name, profile.last_name
+
     folder = ensure_jd_folder(jd_id)
     today = _date.today()
     for _ in range(_MAX_UID_RETRIES):
         uid = new_uid()
-        # Collision check across both tables.
         if find_artifact_by_uid(uid) is None:
             break
     else:
@@ -130,8 +143,8 @@ def make_artifact_path(
             f"Database may be saturated; investigate."
         )
     filename = artifact_filename(
-        first_name=profile.first_name,
-        last_name=profile.last_name,
+        first_name=first_name,
+        last_name=last_name,
         kind=kind,
         created_date=today,
         uid=uid,
@@ -144,6 +157,7 @@ def make_artifact_path(
         parent_uid=parent_uid,
         created_at=datetime.utcnow().isoformat() + "Z",
         skill_version=_SKILL_VERSION,
+        for_candidate=for_candidate,
     )
     return path, meta
 

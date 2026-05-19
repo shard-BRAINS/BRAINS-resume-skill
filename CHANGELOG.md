@@ -4,6 +4,23 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## v1.6.0 — 2026-05-19
+
+### Added
+- Multi-candidate support (Approach C): optional `for_candidate` free-text field
+  on resumes and cover letters. Pass `for_candidate="<full name>"` into the
+  generators / tracker inserts when building a resume for someone other than
+  the profile holder. The DOCX records the candidate via the
+  `BrainsForCandidate` custom property; the tracker records it via the new
+  `for_candidate` columns (migration 0003). When unset, behaviour is identical
+  to v1.5.0.
+- `scripts.tracker.query.list_artifacts_for_candidate(name)` returns all
+  resume + cover-letter rows for a given candidate name.
+
+### Notes
+- Single-profile assumption is unchanged. The eventual `candidates` table
+  migration (Approach B) will backfill `candidate_id` from this column.
+
 ## [1.5.0] - 2026-05-19
 
 ### Added

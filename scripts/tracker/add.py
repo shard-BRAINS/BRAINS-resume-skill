@@ -23,6 +23,7 @@ def add_resume_version(
     tagged_jd_id: Optional[int] = None,
     artifact_uid: Optional[str] = None,
     parent_uid: Optional[str] = None,
+    for_candidate: Optional[str] = None,
 ) -> int:
     """Insert a resume_versions row, return the new id."""
     conn = open_db()
@@ -31,8 +32,8 @@ def add_resume_version(
             """
             INSERT INTO resume_versions
                 (file_path, template, focus_areas, parent_id, tagged_jd_id,
-                 created_at, artifact_uid, parent_uid)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 created_at, artifact_uid, parent_uid, for_candidate)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 file_path,
@@ -43,6 +44,7 @@ def add_resume_version(
                 _now_iso(),
                 artifact_uid,
                 parent_uid,
+                for_candidate,
             ),
         )
         conn.commit()
@@ -99,6 +101,7 @@ def add_cover_letter(
     template: str,
     artifact_uid: Optional[str] = None,
     parent_uid: Optional[str] = None,
+    for_candidate: Optional[str] = None,
 ) -> int:
     """Insert a cover_letters row, return the new id."""
     conn = open_db()
@@ -107,11 +110,11 @@ def add_cover_letter(
             """
             INSERT INTO cover_letters
                 (file_path, resume_version_id, jd_id, template, created_at,
-                 artifact_uid, parent_uid)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                 artifact_uid, parent_uid, for_candidate)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (file_path, resume_version_id, jd_id, template, _now_iso(),
-             artifact_uid, parent_uid),
+             artifact_uid, parent_uid, for_candidate),
         )
         conn.commit()
         return cur.lastrowid

@@ -72,3 +72,34 @@ def test_efficacy_row_carries_per_template_counts():
 def test_profile_default_pacing_notes_is_none():
     p = Profile()
     assert p.pacing_notes is None
+
+
+def test_resume_version_has_for_candidate_default_none():
+    from scripts.tracker.models import ResumeVersion
+    rv = ResumeVersion(
+        id=1, file_path=None, template="chronological", focus_areas=[],
+        parent_id=None, tagged_jd_id=None,
+        created_at="2026-05-19T00:00:00Z", archived_at=None,
+    )
+    assert rv.for_candidate is None
+
+
+def test_resume_version_accepts_for_candidate():
+    from scripts.tracker.models import ResumeVersion
+    rv = ResumeVersion(
+        id=1, file_path=None, template="chronological", focus_areas=[],
+        parent_id=None, tagged_jd_id=None,
+        created_at="2026-05-19T00:00:00Z", archived_at=None,
+        for_candidate="Mathilda Gell",
+    )
+    assert rv.for_candidate == "Mathilda Gell"
+
+
+def test_cover_letter_has_for_candidate_default_none():
+    from scripts.tracker.models import CoverLetter
+    cl = CoverLetter(
+        id=1, file_path=None, resume_version_id=1, jd_id=1,
+        template="formal-business",
+        created_at="2026-05-19T00:00:00Z", archived_at=None,
+    )
+    assert cl.for_candidate is None

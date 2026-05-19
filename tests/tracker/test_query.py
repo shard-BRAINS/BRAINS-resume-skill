@@ -283,3 +283,36 @@ def test_get_artifact_by_uid_finds_cover_letter(fresh_db):
 def test_get_artifact_by_uid_returns_none_on_miss(fresh_db):
     from scripts.tracker.query import get_artifact_by_uid
     assert get_artifact_by_uid("ZZZZZZ") is None
+
+
+# --- Task 4 (multi-candidate Approach C): for_candidate on read path ---
+
+
+def test_get_artifact_by_uid_returns_for_candidate(fresh_db):
+    from scripts.tracker.add import add_resume_version
+    from scripts.tracker.query import get_artifact_by_uid
+
+    rv_id = add_resume_version(
+        None, "hybrid", [], artifact_uid="ABC123",
+        for_candidate="Mathilda Gell",
+    )
+    row = get_artifact_by_uid("ABC123")
+    assert row is not None
+    assert row.for_candidate == "Mathilda Gell"
+
+
+def test_list_artifacts_for_candidate(fresh_db):
+    from scripts.tracker.add import add_resume_version
+    from scripts.tracker.query import list_artifacts_for_candidate
+
+    add_resume_version(None, "hybrid", [], for_candidate="Mathilda Gell")
+    add_resume_version(None, "chronological", [], for_candidate="Mathilda Gell")
+    add_resume_version(None, "chronological", [])  # profile holder, NULL
+    rows = list_artifacts_for_candidate("Mathilda Gell")
+    assert len(rows) == 2
+    assert all(r.for_candidate == "Mathilda Gell" for r in rows)
+
+
+def test_list_artifacts_for_candidate_empty_when_no_match(fresh_db):
+    from scripts.tracker.query import list_artifacts_for_candidate
+    assert list_artifacts_for_candidate("Nobody") == []

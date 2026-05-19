@@ -15,10 +15,12 @@ so this module manipulates the underlying ZIP/XML directly.
 | BrainsJDId            | integer | tracker JD row id; 0 if unset      |
 | BrainsParentId        | string  | parent UID; '' if root             |
 | BrainsCreatedAt       | string  | ISO 8601 UTC                       |
-| BrainsSkillVersion    | string  | e.g. '1.5.0'                       |
+| BrainsSkillVersion    | string  | e.g. '1.6.0'                       |
+| BrainsForCandidate    | string  | candidate name; '' if unset        |
 
-Absent jd_id stored as 0; absent parent_uid stored as ''. The reader
-(read_artifact_meta in Task 7) converts these back to None.
+Absent jd_id stored as 0; absent parent_uid stored as ''; absent
+for_candidate stored as ''. The reader (read_artifact_meta in Task 7)
+converts these back to None.
 """
 from __future__ import annotations
 
@@ -61,14 +63,11 @@ class ArtifactMeta:
     parent_uid: str | None
     created_at: str
     skill_version: str
+    for_candidate: str | None = None
 
 
 def _meta_to_property_dict(meta: ArtifactMeta) -> dict[str, tuple[str, str]]:
-    """Convert ArtifactMeta into {name: (vt_type, string_value)} entries.
-
-    vt_type is the XML element name within the vt: namespace ('lpwstr' for
-    strings, 'i4' for 32-bit integers).
-    """
+    """Convert ArtifactMeta into {name: (vt_type, string_value)} entries."""
     return {
         "BrainsArtifactId":    ("lpwstr", meta.artifact_uid),
         "BrainsArtifactKind":  ("lpwstr", meta.artifact_kind),
@@ -76,6 +75,7 @@ def _meta_to_property_dict(meta: ArtifactMeta) -> dict[str, tuple[str, str]]:
         "BrainsParentId":      ("lpwstr", meta.parent_uid if meta.parent_uid is not None else ""),
         "BrainsCreatedAt":     ("lpwstr", meta.created_at),
         "BrainsSkillVersion":  ("lpwstr", meta.skill_version),
+        "BrainsForCandidate":  ("lpwstr", meta.for_candidate if meta.for_candidate is not None else ""),
     }
 
 
@@ -199,6 +199,7 @@ def read_artifact_meta(docx_path: Path | str) -> ArtifactMeta | None:
     The reader converts placeholder values back to None:
     - BrainsJDId == "0" or absent -> jd_id = None
     - BrainsParentId == "" or absent -> parent_uid = None
+    - BrainsForCandidate == "" or absent -> for_candidate = None
     """
     props = _read_custom_properties_raw(docx_path)
     if "BrainsArtifactId" not in props:
@@ -209,6 +210,7 @@ def read_artifact_meta(docx_path: Path | str) -> ArtifactMeta | None:
     except (ValueError, TypeError):
         jd_id_int = 0
     parent_raw = props.get("BrainsParentId", "")
+    for_candidate_raw = props.get("BrainsForCandidate", "")
     return ArtifactMeta(
         artifact_uid=props["BrainsArtifactId"],
         artifact_kind=props.get("BrainsArtifactKind", ""),
@@ -216,4 +218,5 @@ def read_artifact_meta(docx_path: Path | str) -> ArtifactMeta | None:
         parent_uid=parent_raw if parent_raw else None,
         created_at=props.get("BrainsCreatedAt", ""),
         skill_version=props.get("BrainsSkillVersion", ""),
+        for_candidate=for_candidate_raw if for_candidate_raw else None,
     )
