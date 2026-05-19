@@ -58,6 +58,106 @@ def test_create_workflow_passes_for_candidate_to_artifact_meta(monkeypatch, tmp_
     assert meta.for_candidate == "Mathilda Gell"
 
 
+def test_edit_workflow_passes_for_candidate_to_artifact_meta(monkeypatch, tmp_path):
+    """edit._resolve_target threads for_candidate into make_artifact_path + meta."""
+    from scripts.dashboard.workflows import edit as edit_mod
+    from scripts.outputs.tagging import ArtifactMeta
+
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
+    monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
+
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+
+    captured = {}
+    def fake_make_artifact_path(jd_id, kind, parent_uid=None, for_candidate=None):
+        captured["for_candidate"] = for_candidate
+        path = tmp_path / "fake.docx"
+        meta = ArtifactMeta(
+            artifact_uid="EDT123", artifact_kind=kind,
+            jd_id=jd_id, parent_uid=parent_uid,
+            created_at="2026-05-19T00:00:00Z", skill_version="1.5.0",
+            for_candidate=for_candidate,
+        )
+        return path, meta
+
+    monkeypatch.setattr(edit_mod, "make_artifact_path", fake_make_artifact_path)
+    target_path, meta = edit_mod._resolve_target(
+        jd_id=1, parent_uid="SRC001", for_candidate="Mathilda Gell",
+    )
+    assert captured["for_candidate"] == "Mathilda Gell"
+    assert meta.for_candidate == "Mathilda Gell"
+
+
+def test_tailor_workflow_passes_for_candidate_to_artifact_meta(monkeypatch, tmp_path):
+    """tailor._resolve_target threads for_candidate into make_artifact_path + meta."""
+    from scripts.dashboard.workflows import tailor as tailor_mod
+    from scripts.outputs.tagging import ArtifactMeta
+
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
+    monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
+
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+
+    captured = {}
+    def fake_make_artifact_path(jd_id, kind, parent_uid=None, for_candidate=None):
+        captured["for_candidate"] = for_candidate
+        path = tmp_path / "fake.docx"
+        meta = ArtifactMeta(
+            artifact_uid="TLR123", artifact_kind=kind,
+            jd_id=jd_id, parent_uid=parent_uid,
+            created_at="2026-05-19T00:00:00Z", skill_version="1.5.0",
+            for_candidate=for_candidate,
+        )
+        return path, meta
+
+    monkeypatch.setattr(tailor_mod, "make_artifact_path", fake_make_artifact_path)
+    target_path, meta = tailor_mod._resolve_target(
+        jd_id=1, parent_uid="SRC001", for_candidate="Mathilda Gell",
+    )
+    assert captured["for_candidate"] == "Mathilda Gell"
+    assert meta.for_candidate == "Mathilda Gell"
+
+
+def test_cover_letter_workflow_passes_for_candidate_to_artifact_meta(monkeypatch, tmp_path):
+    """cover_letter._resolve_target threads for_candidate into make_artifact_path + meta."""
+    from scripts.dashboard.workflows import cover_letter as cl_mod
+    from scripts.outputs.tagging import ArtifactMeta
+
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
+    monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
+
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+
+    captured = {}
+    def fake_make_artifact_path(jd_id, kind, parent_uid=None, for_candidate=None):
+        captured["for_candidate"] = for_candidate
+        path = tmp_path / "fake.docx"
+        meta = ArtifactMeta(
+            artifact_uid="CL123", artifact_kind=kind,
+            jd_id=jd_id, parent_uid=parent_uid,
+            created_at="2026-05-19T00:00:00Z", skill_version="1.5.0",
+            for_candidate=for_candidate,
+        )
+        return path, meta
+
+    monkeypatch.setattr(cl_mod, "make_artifact_path", fake_make_artifact_path)
+    target_path, meta = cl_mod._resolve_target(
+        jd_id=1, parent_uid="SRC001", for_candidate="Mathilda Gell",
+    )
+    assert captured["for_candidate"] == "Mathilda Gell"
+    assert meta.for_candidate == "Mathilda Gell"
+    assert meta.artifact_kind == "cover-letter"
+
+
 def test_jd_analyze_persists_jd_and_analysis_to_folder(monkeypatch, tmp_path):
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
