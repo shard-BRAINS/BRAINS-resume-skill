@@ -54,3 +54,36 @@ def new_uid() -> str:
     UIDs can't be guessed even if an attacker sees recent ones.
     """
     return "".join(secrets.choice(CROCKFORD_BASE32) for _ in range(6))
+
+
+_FOLDER_MAX_LEN = 80
+
+
+def folder_name(
+    jd_date: date,
+    company: str | None,
+    recruiter: str | None,
+    role_title: str,
+) -> str:
+    """Compose 'YYYY-MM-DD_<Anchor>_<Role>'.
+
+    Anchor: company if present, else 'via-<Recruiter>' if recruiter present,
+    else 'unknown'. Total length capped at _FOLDER_MAX_LEN; role suffix is
+    truncated first.
+    """
+    date_str = jd_date.isoformat()
+    if company:
+        anchor = slugify(company)
+    elif recruiter:
+        anchor = f"via-{slugify(recruiter)}"
+    else:
+        anchor = "unknown"
+    role = slugify(role_title)
+    base = f"{date_str}_{anchor}_{role}"
+    if len(base) > _FOLDER_MAX_LEN:
+        # Truncate the role portion only.
+        prefix = f"{date_str}_{anchor}_"
+        available = _FOLDER_MAX_LEN - len(prefix)
+        role = role[: max(0, available)].rstrip("-")
+        base = prefix + role
+    return base
