@@ -4,13 +4,14 @@ These helpers all return dataclasses or lists of dataclasses defined in
 scripts/tracker/models.py. SQL lives only here (and in db.py / migrations).
 Consumers must never construct SQL themselves.
 """
+import json
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, date
 from typing import List, Optional
 
 from scripts.tracker.db import get_db_path, open_db
-from scripts.tracker.models import WeeklySummary, EfficacyRow
+from scripts.tracker.models import WeeklySummary, EfficacyRow, ResumeVersion, CoverLetter
 from scripts.tracker.profile import read_profile
 
 
@@ -231,3 +232,52 @@ def efficacy_by_template() -> List[EfficacyRow]:
         )
         for template, counts in sorted(by_template.items())
     ]
+
+
+def get_artifact_by_uid(uid: str) -> ResumeVersion | CoverLetter | None:
+    """Look up an artifact by its 6-char Crockford-base32 UID across
+    both resume_versions and cover_letters. Returns None if not found.
+    """
+    conn = open_db()
+    try:
+        row = conn.execute(
+            """SELECT id, file_path, template, focus_areas, parent_id,
+                      tagged_jd_id, created_at, archived_at,
+                      artifact_uid, parent_uid
+               FROM resume_versions WHERE artifact_uid = ?""",
+            (uid,),
+        ).fetchone()
+        if row:
+            return ResumeVersion(
+                id=row[0],
+                file_path=row[1],
+                template=row[2],
+                focus_areas=json.loads(row[3]),
+                parent_id=row[4],
+                tagged_jd_id=row[5],
+                created_at=row[6],
+                archived_at=row[7],
+                artifact_uid=row[8],
+                parent_uid=row[9],
+            )
+        row = conn.execute(
+            """SELECT id, file_path, resume_version_id, jd_id, template,
+                      created_at, archived_at, artifact_uid, parent_uid
+               FROM cover_letters WHERE artifact_uid = ?""",
+            (uid,),
+        ).fetchone()
+        if row:
+            return CoverLetter(
+                id=row[0],
+                file_path=row[1],
+                resume_version_id=row[2],
+                jd_id=row[3],
+                template=row[4],
+                created_at=row[5],
+                archived_at=row[6],
+                artifact_uid=row[7],
+                parent_uid=row[8],
+            )
+        return None
+    finally:
+        conn.close()

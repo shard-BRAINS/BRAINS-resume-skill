@@ -253,3 +253,33 @@ def test_efficacy_by_template_interview_count_aggregates(fresh_db):
     record_outcome(app_id, "second_round", datetime.now())
     rows = efficacy_by_template()
     assert rows[0].interview_count >= 3
+
+
+# --- Task 12: get_artifact_by_uid lookup helper ---
+
+
+def test_get_artifact_by_uid_finds_resume(fresh_db):
+    from scripts.tracker.query import get_artifact_by_uid
+    from scripts.tracker.models import ResumeVersion
+    add_resume_version("/tmp/r.docx", "hybrid", [], artifact_uid="KX7M9Q")
+    result = get_artifact_by_uid("KX7M9Q")
+    assert isinstance(result, ResumeVersion)
+    assert result.artifact_uid == "KX7M9Q"
+
+
+def test_get_artifact_by_uid_finds_cover_letter(fresh_db):
+    from scripts.tracker.query import get_artifact_by_uid
+    from scripts.tracker.models import CoverLetter
+    from scripts.tracker.add import add_cover_letter
+    rv_id = add_resume_version("/tmp/r.docx", "hybrid", [])
+    jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+    add_cover_letter("/tmp/cl.docx", rv_id, jd_id, "formal-business",
+                     artifact_uid="H8VR3W")
+    result = get_artifact_by_uid("H8VR3W")
+    assert isinstance(result, CoverLetter)
+    assert result.artifact_uid == "H8VR3W"
+
+
+def test_get_artifact_by_uid_returns_none_on_miss(fresh_db):
+    from scripts.tracker.query import get_artifact_by_uid
+    assert get_artifact_by_uid("ZZZZZZ") is None
