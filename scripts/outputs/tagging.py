@@ -15,10 +15,12 @@ so this module manipulates the underlying ZIP/XML directly.
 | BrainsJDId            | integer | tracker JD row id; 0 if unset      |
 | BrainsParentId        | string  | parent UID; '' if root             |
 | BrainsCreatedAt       | string  | ISO 8601 UTC                       |
-| BrainsSkillVersion    | string  | e.g. '1.5.0'                       |
+| BrainsSkillVersion    | string  | e.g. '1.6.0'                       |
+| BrainsForCandidate    | string  | candidate name; '' if unset        |
 
-Absent jd_id stored as 0; absent parent_uid stored as ''. The reader
-(read_artifact_meta in Task 7) converts these back to None.
+Absent jd_id stored as 0; absent parent_uid stored as ''; absent
+for_candidate stored as ''. The reader (read_artifact_meta in Task 7)
+converts these back to None.
 """
 from __future__ import annotations
 
