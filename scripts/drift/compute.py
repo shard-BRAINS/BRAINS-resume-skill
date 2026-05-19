@@ -340,3 +340,64 @@ def compute_drift_score(left: dict, right: dict) -> dict:
     from scripts.drift.formatters import format_headline_changes
     out["headline_changes"] = format_headline_changes(out)
     return out
+
+
+import json as _json
+from datetime import datetime as _datetime
+
+
+def _now_iso() -> str:
+    return _datetime.utcnow().isoformat() + "Z"
+
+
+def write_snapshot_and_compute_drift(artifact_uid: str, facts: dict) -> None:
+    """Persist the snapshot, look up parent + baseline, compute and persist scores.
+
+    Idempotent on artifact_uid — uses INSERT OR REPLACE so calling twice for the
+    same UID overwrites cleanly.
+
+    The baseline-relative score is NULL when this row IS the baseline (looked up
+    by checking is_baseline on the resume_versions row).
+    """
+    from scripts.drift.lineage import get_parent_snapshot, get_baseline_snapshot
+    from scripts.tracker.db import open_db
+
+    conn = open_db()
+    try:
+        conn.execute(
+            "INSERT OR REPLACE INTO resume_fact_snapshots "
+            "(artifact_uid, facts, schema_version, created_at) "
+            "VALUES (?, ?, ?, ?)",
+            (artifact_uid, _json.dumps(facts), 1, _now_iso()),
+        )
+
+        # Determine whether this row IS the baseline.
+        row = conn.execute(
+            "SELECT is_baseline FROM resume_versions WHERE artifact_uid=?",
+            (artifact_uid,),
+        ).fetchone()
+        is_baseline = bool(row and row[0])
+
+        parent_snap = None if is_baseline else get_parent_snapshot(artifact_uid)
+        # For non-baseline rows, baseline_snap is the active baseline's facts.
+        baseline_snap = None if is_baseline else get_baseline_snapshot(artifact_uid)
+
+        vs_parent = (compute_drift_score(parent_snap, facts)
+                     if parent_snap is not None else None)
+        vs_baseline = (compute_drift_score(baseline_snap, facts)
+                       if baseline_snap is not None else None)
+
+        conn.execute(
+            "INSERT OR REPLACE INTO resume_drift_scores "
+            "(artifact_uid, vs_parent_score, vs_baseline_score, computed_at) "
+            "VALUES (?, ?, ?, ?)",
+            (
+                artifact_uid,
+                _json.dumps(vs_parent) if vs_parent is not None else None,
+                _json.dumps(vs_baseline) if vs_baseline is not None else None,
+                _now_iso(),
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
