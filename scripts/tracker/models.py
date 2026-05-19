@@ -44,6 +44,8 @@ class ResumeVersion:
     tagged_jd_id: Optional[int]
     created_at: str
     archived_at: Optional[str]
+    artifact_uid: Optional[str] = None
+    parent_uid: Optional[str] = None
 
 
 @dataclass
@@ -55,6 +57,8 @@ class CoverLetter:
     template: str
     created_at: str
     archived_at: Optional[str]
+    artifact_uid: Optional[str] = None
+    parent_uid: Optional[str] = None
 
 
 @dataclass
@@ -70,6 +74,7 @@ class JD:
     focus_areas_nice: List[str]
     created_at: str
     archived_at: Optional[str]
+    folder_path: Optional[str] = None
 
 
 @dataclass
