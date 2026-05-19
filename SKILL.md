@@ -283,6 +283,31 @@ Slash commands are available for every workflow when the install script has been
 
 ---
 
+## File organization (v1.5.0+)
+
+The skill writes every output under `~/.brains-resume/outputs/` (overridable
+via `BRAINS_OUTPUTS_DIR`). Each JD gets its own folder named:
+
+    YYYY-MM-DD_<Company>_<Role>/
+
+where `<Company>` falls back to `via-<Recruiter>` when the hiring company
+isn't known, or to `unknown` when neither is set.
+
+Resumes and cover letters land inside the JD folder with filenames of the
+form:
+
+    <First>_<Last>_<resume|cover-letter>_<YYYY-MM-DD>_<UID>.docx
+
+The trailing `<UID>` is a 6-char Crockford base32 identifier. The same UID
+is also written as an invisible custom property inside the DOCX itself, so
+renaming the file doesn't break tracker lookups.
+
+To set your name (used in every filename), open the dashboard sidebar and
+fill in the "Your name" section. The dashboard prompts you with a one-shot
+modal on first launch if names are missing.
+
+---
+
 ## Tooling Notes
 
 - **Scripts** — Python scripts (parsers, generators, validators) live in `scripts/`. The project must be installed in a Python 3.10+ virtual environment via `pip install -e ".[dev]"` for scripts to be importable as modules. Python 3.10 or later is required; earlier versions are not supported.

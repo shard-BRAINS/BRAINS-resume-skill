@@ -187,6 +187,14 @@ The dashboard remains read-only for resume / cover letter / JD content; the only
 
 ---
 
+## Output organization
+
+All resumes and cover letters produced by the skill land in
+`~/.brains-resume/outputs/<JD-folder>/` with a deterministic filename
+pattern. See `SKILL.md` § File organization for the full convention.
+
+---
+
 ## Claude Desktop / claude.ai
 
 A ready-to-import Claude Project bundle is available at:

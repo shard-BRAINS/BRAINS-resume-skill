@@ -114,6 +114,19 @@ Based on findings:
 
 ---
 
+### File organization (v1.5.0+)
+
+The dashboard's `persist_analyzed_jd(...)` function in
+`scripts/dashboard/workflows/jd_analyze.py` creates the per-JD folder, writes
+`jd.txt` (raw JD text), and writes `jd-analysis.md` (analyzer findings as
+Markdown). The output folder name follows the convention:
+
+    YYYY-MM-DD_<Company>_<Role>/
+
+where `<Company>` falls back to `via-<Recruiter>` or `unknown` when needed.
+
+---
+
 ## Safeguarding boundaries
 
 - **No automatic apply-or-don't recommendation.** The analyzer surfaces signals; the user decides.

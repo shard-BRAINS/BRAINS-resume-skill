@@ -93,6 +93,21 @@ If the score is above 30, surface the top three findings with rewrite suggestion
 
 ---
 
+### File organization (v1.5.0+)
+
+The dashboard reserves the output path before invoking this command. The
+handoff payload contains the absolute path to write to. Do NOT pick your
+own filename. After saving the DOCX, call:
+
+    from scripts.outputs.io import finalize_docx
+    from scripts.outputs.tagging import ArtifactMeta
+    finalize_docx(target_path, meta)
+
+then record the row via the appropriate `tracker.add_*` call, passing the
+`artifact_uid` and `parent_uid` from the handoff payload.
+
+---
+
 ## Boundaries
 
 These rules are non-negotiable:
