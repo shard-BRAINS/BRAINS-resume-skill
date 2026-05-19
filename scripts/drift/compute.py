@@ -283,3 +283,60 @@ def compute_class_diff(left: Any, right: Any, kind: str) -> dict:
     if kind in _LIST_OBJECT_KINDS:
         return _list_object_diff(left, right, kind)
     raise ValueError(f"Unknown class kind: {kind!r}")
+
+
+DRIFT_CLASS_WEIGHTS = {
+    "identity": 0.20,
+    "experience": 0.25,
+    "education": 0.12,
+    "skills": 0.08,
+    "certifications": 0.08,
+    "standalone_achievements": 0.06,
+    "hobbies": 0.04,
+    "languages": 0.07,
+    "publications": 0.06,
+    "portfolio_links": 0.04,
+}
+
+_CLASS_KIND = {
+    "identity": "identity",
+    "experience": "experience",
+    "education": "education",
+    "skills": "set",
+    "certifications": "certifications",
+    "standalone_achievements": "set",
+    "hobbies": "set",
+    "languages": "languages",
+    "publications": "publications",
+    "portfolio_links": "portfolio_links",
+}
+
+
+def compute_drift_score(left: dict, right: dict) -> dict:
+    """Compute the full per-class + overall drift between two snapshots.
+
+    See spec §5d for the weighted aggregate with null-class renormalisation.
+    Both snapshots must use schema_version 1 (Section 4).
+    """
+    out: dict = {}
+    captured_weights_sum = 0.0
+    weighted_total = 0.0
+    for cls, kind in _CLASS_KIND.items():
+        diff = compute_class_diff(left.get(cls), right.get(cls), kind=kind)
+        out[cls] = diff
+        if diff.get("status") == "not_captured":
+            continue
+        weight = DRIFT_CLASS_WEIGHTS[cls]
+        captured_weights_sum += weight
+        weighted_total += weight * diff["pct"]
+
+    if captured_weights_sum > 0:
+        overall_pct = weighted_total / captured_weights_sum
+    else:
+        overall_pct = 0.0
+    out["overall_pct"] = round(overall_pct, 2)
+
+    # Headline changes — delegated to formatters.format_headline_changes.
+    from scripts.drift.formatters import format_headline_changes
+    out["headline_changes"] = format_headline_changes(out)
+    return out
