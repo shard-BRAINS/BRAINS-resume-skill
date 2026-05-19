@@ -145,3 +145,58 @@ def test_folder_name_sanitizes_company_and_role():
         recruiter=None,
         role_title="AI/ML — Lead",
     ) == "2026-05-18_R-D-Platform-Ltd_AI-ML-Lead"
+
+
+from scripts.outputs.naming import artifact_filename
+
+
+def test_artifact_filename_resume():
+    assert artifact_filename(
+        first_name="Matthew",
+        last_name="Gell",
+        kind="resume",
+        created_date=date(2026, 5, 19),
+        uid="KX7M9Q",
+    ) == "Matthew_Gell_resume_2026-05-19_KX7M9Q.docx"
+
+
+def test_artifact_filename_cover_letter():
+    assert artifact_filename(
+        first_name="Matthew",
+        last_name="Gell",
+        kind="cover-letter",
+        created_date=date(2026, 5, 19),
+        uid="H8VR3W",
+    ) == "Matthew_Gell_cover-letter_2026-05-19_H8VR3W.docx"
+
+
+def test_artifact_filename_pdf_extension():
+    assert artifact_filename(
+        first_name="Matthew",
+        last_name="Gell",
+        kind="resume",
+        created_date=date(2026, 5, 19),
+        uid="KX7M9Q",
+        ext="pdf",
+    ) == "Matthew_Gell_resume_2026-05-19_KX7M9Q.pdf"
+
+
+def test_artifact_filename_sanitizes_name_with_space():
+    # "Mary Anne" first name becomes "Mary-Anne" — names with spaces.
+    assert artifact_filename(
+        first_name="Mary Anne",
+        last_name="O'Brien",
+        kind="resume",
+        created_date=date(2026, 5, 19),
+        uid="KX7M9Q",
+    ) == "Mary-Anne_OBrien_resume_2026-05-19_KX7M9Q.docx"
+
+
+def test_artifact_filename_invalid_kind_raises():
+    with pytest.raises(ValueError, match="kind must be"):
+        artifact_filename(
+            first_name="Matthew", last_name="Gell",
+            kind="report",  # not allowed
+            created_date=date(2026, 5, 19),
+            uid="KX7M9Q",
+        )

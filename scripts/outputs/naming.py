@@ -87,3 +87,28 @@ def folder_name(
         role = role[: max(0, available)].rstrip("-")
         base = prefix + role
     return base
+
+
+_VALID_KINDS = ("resume", "cover-letter")
+
+
+def artifact_filename(
+    first_name: str,
+    last_name: str,
+    kind: Literal["resume", "cover-letter"],
+    created_date: date,
+    uid: str,
+    ext: str = "docx",
+) -> str:
+    """Compose '<First>_<Last>_<kind>_<YYYY-MM-DD>_<UID>.<ext>'.
+
+    Names are slugified to single hyphen-joined tokens. Kind must be one
+    of 'resume' or 'cover-letter'.
+    """
+    if kind not in _VALID_KINDS:
+        raise ValueError(
+            f"kind must be one of {_VALID_KINDS}, got {kind!r}"
+        )
+    first = slugify(first_name)
+    last = slugify(last_name)
+    return f"{first}_{last}_{kind}_{created_date.isoformat()}_{uid}.{ext}"
