@@ -31,18 +31,32 @@ def _set_diff(left: list, right: list) -> dict:
     return {"added": added, "removed": removed, "total": total, "pct": pct}
 
 
+_IDENTITY_FIELDS = ("name", "location", "email", "phone")
+
+
+def _identity_diff(left: dict, right: dict) -> dict:
+    left = left or {}
+    right = right or {}
+    fields_changed = []
+    for f in _IDENTITY_FIELDS:
+        if (left.get(f) or None) != (right.get(f) or None):
+            fields_changed.append(f)
+    total = len(_IDENTITY_FIELDS)
+    pct = (len(fields_changed) / total) * 100.0 if total else 0.0
+    return {"fields_changed": fields_changed, "fields_total": total, "pct": pct}
+
+
 def compute_class_diff(left: Any, right: Any, kind: str) -> dict:
     """Compute the per-class diff dict for a single class.
 
-    kind: one of 'set' (set-shaped: list[str]).
-          'identity', 'list_object' added in later tasks.
+    kind: one of 'set', 'identity'. 'list_object' added in Task 6.
 
-    Returns {'status': 'not_captured', 'pct': None} if either side is None
-    (spec §5b — null-class handling).
+    Returns {'status': 'not_captured', 'pct': None} if either side is None.
     """
     if left is None or right is None:
         return _null_status()
-
     if kind == "set":
         return _set_diff(left, right)
+    if kind == "identity":
+        return _identity_diff(left, right)
     raise ValueError(f"Unknown class kind: {kind!r}")
