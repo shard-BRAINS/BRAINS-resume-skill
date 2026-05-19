@@ -243,7 +243,7 @@ def get_artifact_by_uid(uid: str) -> ResumeVersion | CoverLetter | None:
         row = conn.execute(
             """SELECT id, file_path, template, focus_areas, parent_id,
                       tagged_jd_id, created_at, archived_at,
-                      artifact_uid, parent_uid
+                      artifact_uid, parent_uid, for_candidate
                FROM resume_versions WHERE artifact_uid = ?""",
             (uid,),
         ).fetchone()
@@ -259,10 +259,12 @@ def get_artifact_by_uid(uid: str) -> ResumeVersion | CoverLetter | None:
                 archived_at=row[7],
                 artifact_uid=row[8],
                 parent_uid=row[9],
+                for_candidate=row[10],
             )
         row = conn.execute(
             """SELECT id, file_path, resume_version_id, jd_id, template,
-                      created_at, archived_at, artifact_uid, parent_uid
+                      created_at, archived_at, artifact_uid, parent_uid,
+                      for_candidate
                FROM cover_letters WHERE artifact_uid = ?""",
             (uid,),
         ).fetchone()
@@ -277,7 +279,47 @@ def get_artifact_by_uid(uid: str) -> ResumeVersion | CoverLetter | None:
                 archived_at=row[6],
                 artifact_uid=row[7],
                 parent_uid=row[8],
+                for_candidate=row[9],
             )
         return None
+    finally:
+        conn.close()
+
+
+def list_artifacts_for_candidate(name: str) -> list:
+    """Return all resume_versions + cover_letters whose for_candidate matches name."""
+    conn = open_db()
+    try:
+        results: list = []
+        for row in conn.execute(
+            """SELECT id, file_path, template, focus_areas, parent_id, tagged_jd_id,
+                      created_at, archived_at, artifact_uid, parent_uid, for_candidate
+               FROM resume_versions WHERE for_candidate = ? AND archived_at IS NULL
+               ORDER BY created_at DESC""",
+            (name,),
+        ):
+            results.append(ResumeVersion(
+                id=row[0], file_path=row[1], template=row[2],
+                focus_areas=json.loads(row[3] or "[]"),
+                parent_id=row[4], tagged_jd_id=row[5],
+                created_at=row[6], archived_at=row[7],
+                artifact_uid=row[8], parent_uid=row[9],
+                for_candidate=row[10],
+            ))
+        for row in conn.execute(
+            """SELECT id, file_path, resume_version_id, jd_id, template,
+                      created_at, archived_at, artifact_uid, parent_uid, for_candidate
+               FROM cover_letters WHERE for_candidate = ? AND archived_at IS NULL
+               ORDER BY created_at DESC""",
+            (name,),
+        ):
+            results.append(CoverLetter(
+                id=row[0], file_path=row[1], resume_version_id=row[2],
+                jd_id=row[3], template=row[4],
+                created_at=row[5], archived_at=row[6],
+                artifact_uid=row[7], parent_uid=row[8],
+                for_candidate=row[9],
+            ))
+        return results
     finally:
         conn.close()
