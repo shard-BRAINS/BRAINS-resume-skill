@@ -188,3 +188,56 @@ def test_read_artifact_uid_returns_none_for_untagged(isolated, tmp_path):
     untagged = tmp_path / "u.docx"
     Document().save(str(untagged))
     assert read_artifact_uid(untagged) is None
+
+
+def test_make_artifact_path_for_candidate_uses_candidate_name_in_filename(isolated):
+    """Override candidate name supersedes profile name for filename construction."""
+    from scripts.outputs.io import make_artifact_path
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+    from scripts.tracker.add import add_jd
+
+    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+    jd_id = add_jd("manual", None, "Acme", "Sales Assistant", "...", {}, [], [])
+
+    path, meta = make_artifact_path(
+        jd_id, "resume", parent_uid=None,
+        for_candidate="Mathilda Gell",
+    )
+    assert "Mathilda" in path.name
+    assert "Gell" in path.name
+    assert "Matthew" not in path.name
+    assert meta.for_candidate == "Mathilda Gell"
+
+
+def test_make_artifact_path_no_override_uses_profile_name(isolated):
+    """No override: behaviour is unchanged from pre-C."""
+    from scripts.outputs.io import make_artifact_path
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+    from scripts.tracker.add import add_jd
+
+    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+    jd_id = add_jd("manual", None, "Acme", "Senior Eng", "...", {}, [], [])
+
+    path, meta = make_artifact_path(jd_id, "resume", parent_uid=None)
+    assert "Matthew" in path.name
+    assert "Gell" in path.name
+    assert meta.for_candidate is None
+
+
+def test_make_artifact_path_single_token_candidate_name(isolated):
+    """Single-token candidate names (Cher, Madonna) still produce a valid filename."""
+    from scripts.outputs.io import make_artifact_path
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+    from scripts.tracker.add import add_jd
+
+    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+    jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+
+    path, meta = make_artifact_path(
+        jd_id, "resume", parent_uid=None, for_candidate="Cher",
+    )
+    assert "Cher" in path.name
+    assert meta.for_candidate == "Cher"
