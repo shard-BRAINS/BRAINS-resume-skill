@@ -101,7 +101,7 @@ This design assumes Approach C (v1.6.0) is already shipped. It is designed to co
 
 ## 4. Fact schema
 
-Stored as JSON in `resume_fact_snapshots.facts`. This is the structured representation of a resume's content, produced either by transforming the workflow's render-time data dict (generated resumes) or by LLM extraction (uploaded baselines).
+Stored as JSON in `resume_fact_snapshots.facts`. This is the structured representation of a candidate's **professional identity baseline** — deliberately broader than any single tailored resume. Produced either by transforming the workflow's render-time data dict (generated resumes — partial coverage by design) or by LLM extraction from an uploaded source (baselines — full coverage).
 
 ```json
 {
@@ -142,22 +142,56 @@ Stored as JSON in `resume_fact_snapshots.facts`. This is the structured represen
   "standalone_achievements": [
     "Netball MVP 2025",
     "1st Youth Nationals Archery 2022"
-  ]
+  ],
+  "hobbies": ["Netball", "Archery", "Tae Kwon Do", "Volleyball", "Touch football"],
+  "languages": [
+    {"language": "English", "proficiency": "native"}
+  ],
+  "publications": null,
+  "portfolio_links": null
 }
 ```
 
 **Conventions:**
-- `entry_id` is a stable identifier assigned at snapshot creation. Format: `exp-N` for experience, `edu-N` for education, monotonically numbered in chronological order (newest first). Survives across versions when the natural key matches.
+- `entry_id` is a stable identifier assigned at snapshot creation. Format: `exp-N`, `edu-N`, `pub-N`, monotonically numbered in chronological order. Survives across versions when the natural key matches.
 - `key_points` is always a list of strings. The workflow already produces these as a list; the LLM extractor reverse-engineers it from prose.
 - Dates use `YYYY-MM` or `YYYY`. Day precision is never used.
 - `completion_status` is one of `"completed"`, `"expected"`, `"in_progress"`, or `null`.
-- All fields are nullable. Absent means `null`, never empty string.
-- Top-level keys are the six fact classes: `identity`, `experience`, `education`, `skills`, `certifications`, `standalone_achievements`.
+- `languages[].proficiency` is from a controlled vocabulary: `"native"`, `"fluent"`, `"professional"`, `"conversational"`, `"basic"`.
+- `publications[]` entries have shape `{title, venue, year, authors[], url}`. `authors` is a list of strings. `year` is `YYYY` or `null`.
+- `portfolio_links[]` entries have shape `{label, url}` (e.g., `{"label": "GitHub", "url": "github.com/mathilda"}`).
+- All scalar fields are nullable. Absent scalar means `null`, never empty string.
+
+**Top-level class semantics — `null` vs `[]`:**
+
+The ten fact classes are all top-level nullable. The distinction between `null` and `[]` is load-bearing:
+
+- `null` = **"this version did not capture this category"**. The baseline may have data here; the derivative simply didn't surface it. Drift compute SKIPS this class entirely — it contributes nothing to either the per-class score or the weighted `overall_pct`.
+- `[]` (or `{}` for `identity`) = **"this version captured the category and it is empty"**. Counts as 0 of the unit type. If the other side has items, those count as "removed" / "added" normally.
+
+This matters because the baseline (broader-than-resume) often holds categories that tailored derivatives legitimately omit. A teen retail-application resume shouldn't be penalized for drifting from a baseline that contains publications — the publications weren't *removed*, they just weren't surfaced for that role.
+
+**Top-level keys (ten fact classes):**
+
+| Class | Type | Workflow captures today? | LLM extractor captures? |
+|---|---|---|---|
+| `identity` | object | Yes (from contact_line) | Yes |
+| `experience` | list[entry] | Yes | Yes |
+| `education` | list[entry] | Yes | Yes |
+| `skills` | list[string] | Yes | Yes |
+| `certifications` | list[entry] | Inconsistent — sometimes folded into skills | Yes |
+| `standalone_achievements` | list[string] | Inconsistent — sometimes folded into experience | Yes |
+| `hobbies` | list[string] | No → `null` | Yes |
+| `languages` | list[entry] | No → `null` | Yes |
+| `publications` | list[entry] | No → `null` | Yes |
+| `portfolio_links` | list[entry] | No → `null` | Yes |
+
+The "broader than the resume" property is enforced by the LLM extractor: when ingesting an uploaded baseline, it captures all ten classes even when the source DOCX only surfaces some. Workflows that don't ask the user for hobbies/languages/publications/portfolio_links produce `null` for those classes in their derivative snapshots, and drift compute correctly treats those absences as "not captured" rather than "removed".
 
 **Out of scope for v1:**
 - Cover-letter facts. Cover letters are derivative; drift on a cover letter doesn't carry the same signal.
 - Image / signature / formatting facts. Content only.
-- Languages spoken / hobbies. Not enough signal; can add later.
+- Workflow enhancements to start asking for hobbies/languages/publications/portfolio_links during the interview. Those workflows can populate the new classes in a future enhancement; v1 just needs the schema to accommodate them and the LLM extractor to fill them on baseline upload.
 
 **Schema versioning:**
 The `resume_fact_snapshots` table includes a `schema_version INTEGER NOT NULL DEFAULT 1` column so future schema evolution can be tracked. Drift compute requires both compared snapshots to share a schema version; if they differ, a one-shot lossless upgrade is applied to the older snapshot. If lossless upgrade is impossible, the drift score returns `{"status": "schema_mismatch", "details": "..."}`. v1 ships at `schema_version = 1`.
@@ -239,35 +273,78 @@ Stored as `vs_parent_score` and `vs_baseline_score` JSON. Shape:
 | `skills` | Per-string | String appears in only one side (added OR removed both count) |
 | `certifications` | Per-entry (by `name`) | Entry added, removed, or any field changed |
 | `standalone_achievements` | Per-string | Same rule as skills |
+| `hobbies` | Per-string | Same rule as skills |
+| `languages` | Per-entry (by `language`) | Entry added, removed, OR `proficiency` field changed |
+| `publications` | Per-entry | Any field on the entry differs, OR the entry was added/removed |
+| `portfolio_links` | Per-entry (by canonicalised `url`) | Entry added, removed, OR `label` field changed |
 
 `total_units` is the **max** of the unit count on the two sides (so a 100% removal still produces a 100% drift, not >100%).
 
-### 5c. Entry matching for experience/education
+**`null`-class handling:** If either side of the comparison has `null` for a class, that class is **skipped**: its per-class output is `{"status": "not_captured", "pct": null}` and it does NOT contribute to the weighted `overall_pct`. The aggregate's denominator (sum of weights) is renormalised across only the classes where both sides are non-null. This is the mechanism that protects tailored resumes from being penalised for legitimately omitting baseline categories.
 
-Natural keys:
-- Experience: `(employer, start_date)`.
-- Education: `(institution, qualification)`.
+### 5c. Entry matching for list-of-object classes
 
-If the natural key doesn't match anything on the other side, fall back to fuzzy matching (token-set ratio ≥ 0.85 — using `rapidfuzz` if available, else a small inline implementation). Unmatched entries on the baseline side count as "removed"; unmatched on the candidate side count as "added". Once an entry is matched, subsequent field-level comparison runs across all entry fields.
+Natural keys per class:
+
+| Class | Natural key | Fuzzy fallback |
+|---|---|---|
+| `experience` | `(employer, start_date)` | Token-set ratio ≥ 0.85 on `employer` + ≥ 0.85 on `title` |
+| `education` | `(institution, qualification)` | Token-set ratio ≥ 0.85 on `institution` |
+| `certifications` | `name` (case-insensitive) | Token-set ratio ≥ 0.85 |
+| `languages` | `language` (canonicalised: lowercase, strip whitespace) | Token-set ratio ≥ 0.90 (language names are short, demand high similarity) |
+| `publications` | `(title, year)` (case-insensitive title) | Token-set ratio ≥ 0.85 on `title` |
+| `portfolio_links` | canonicalised `url` (lowercase, strip trailing slash, strip `https?://` prefix) | None — URLs match exactly or they don't |
+
+Fuzzy matching uses `rapidfuzz` if available, else a small inline implementation in `scripts/drift/compute.py`.
+
+Unmatched entries on the baseline side count as "removed"; unmatched on the candidate side count as "added". Once an entry is matched, subsequent field-level comparison runs across all entry fields.
 
 ### 5d. `overall_pct` (the headline number)
 
-Weighted average of per-class `pct`s:
+Weighted average of per-class `pct`s, with renormalisation across only the classes where both sides are non-null:
 
 | Class | Weight |
 |---|---|
-| `identity` | 0.25 |
-| `experience` | 0.30 |
-| `education` | 0.15 |
-| `skills` | 0.10 |
-| `certifications` | 0.10 |
-| `standalone_achievements` | 0.10 |
+| `identity` | 0.20 |
+| `experience` | 0.25 |
+| `education` | 0.12 |
+| `skills` | 0.08 |
+| `certifications` | 0.08 |
+| `standalone_achievements` | 0.06 |
+| `hobbies` | 0.04 |
+| `languages` | 0.07 |
+| `publications` | 0.06 |
+| `portfolio_links` | 0.04 |
 
-Weights reflect "how alarming is drift here": identity and experience changes are higher-signal of factual problems; skills and standalone achievements drift more legitimately over time. Weights live as a module-level constant `DRIFT_CLASS_WEIGHTS` in `scripts/drift/compute.py`. Per-candidate weight tuning is out of scope for v1; can be added on the `candidates` row when Approach B ships if real users ask for it.
+(Weights sum to 1.00.)
+
+**Rationale for the relative weights:**
+- Identity and experience changes are the highest-signal of factual problems — if employer or role dates have shifted, that's where to look first.
+- Education, certifications, languages all carry credential-like signal (claims about qualifications).
+- Skills, standalone achievements, publications, hobbies, portfolio links drift more legitimately over time — added/removed often reflects real life, not corruption.
+
+**Renormalisation:** classes that are `null` on either side are excluded from both numerator and denominator. If only 4 of the 10 classes have data on both sides, the `overall_pct` is computed using only those 4, and the weights renormalise to sum to 1.0 across them. This is what protects tailored derivatives from being penalised for narrower scope than the baseline.
+
+Weights live as a module-level constant `DRIFT_CLASS_WEIGHTS` in `scripts/drift/compute.py`. Per-candidate weight tuning is out of scope for v1; can be added on the `candidates` row when Approach B ships if real users ask for it.
 
 ### 5e. `headline_changes`
 
-Short human-readable list (max 5 items) for the dashboard tile and per-row tooltip. Generated by `scripts/drift/formatters.py::format_headline_changes(score)`. Selects the most "salient" changes across classes by a fixed priority order (identity > experience field changes > experience entries added/removed > education changes > certification changes > skills added/removed > standalone_achievements added/removed) and stops at 5.
+Short human-readable list (max 5 items) for the dashboard tile and per-row tooltip. Generated by `scripts/drift/formatters.py::format_headline_changes(score)`. Selects the most "salient" changes across classes by a fixed priority order and stops at 5:
+
+1. `identity` field changes
+2. `experience` field changes
+3. `experience` entries added/removed
+4. `education` field changes
+5. `education` entries added/removed
+6. `certifications` changes
+7. `languages` changes (proficiency claims)
+8. `publications` entries added/removed/changed
+9. `skills` added/removed
+10. `standalone_achievements` added/removed
+11. `portfolio_links` changes
+12. `hobbies` added/removed
+
+Within each tier, ordering is by appearance in the snapshot.
 
 ### 5f. Special cases
 
@@ -419,7 +496,12 @@ New top-level tab. Three sub-sections:
 │  │ Skills                 │  20.0%   │  20.0%    │           │
 │  │ Certifications         │   0.0%   │   0.0%    │           │
 │  │ Standalone achievements│  20.0%   │  20.0%    │           │
+│  │ Hobbies                │     —    │   0.0%    │           │
+│  │ Languages              │     —    │   0.0%    │           │
+│  │ Publications           │     —    │     —     │           │
+│  │ Portfolio links        │     —    │     —     │           │
 │  └────────────────────────┴──────────┴───────────┘           │
+│  (— = not captured in this version; class skipped)            │
 │                                                              │
 │  Field-level changes                                         │
 │  • Experience · exp-1 · title:                               │
@@ -476,6 +558,14 @@ def facts_from_workflow_data(data: dict) -> dict:
     Parses contact_line into identity sub-fields (location, email, phone).
     Splits experience/education blocks into entries via line-shape heuristics
     (heading line + bullet lines). Normalises bullet lines into key_points.
+
+    For classes the workflow doesn't capture today (hobbies, languages,
+    publications, portfolio_links) the returned dict has those keys set to
+    null — NOT empty list. This signals to drift compute that the class was
+    not captured and should be skipped in the comparison, rather than being
+    treated as 'user explicitly has zero hobbies'. See Section 5b for the
+    null-vs-empty-list semantics.
+
     Pure function, no I/O. Returns a dict matching Section 4 schema, schema_version 1.
     """
 ```
@@ -502,7 +592,7 @@ New workflow / slash command:
 Pipeline:
 1. User uploads DOCX (or pastes plain text).
 2. `scripts/parsers/docx_to_text.py` extracts the raw text.
-3. `scripts/drift/extract_facts.py::extract_facts_from_text(text)` calls the LLM with a structured-output prompt. Returns a Section 4 dict OR raises `FactExtractionError` on validation failure.
+3. `scripts/drift/extract_facts.py::extract_facts_from_text(text)` calls the LLM with a structured-output prompt asking for all ten fact classes (identity, experience, education, skills, certifications, standalone_achievements, hobbies, languages, publications, portfolio_links). Returns a Section 4 dict OR raises `FactExtractionError` on validation failure. The extractor uses `null` (not `[]`) for classes the source text doesn't mention at all, and `[]` for classes the source explicitly says are empty (e.g., "Languages: English only" → `[{"language": "English", "proficiency": "native"}]`; vs. no mention of languages → `null`).
 4. Implausibility check (`scripts/drift/extract_facts.py::flag_implausible_values(facts)`) — flags placeholder-like values (`John Doe`, `<example>`, dates before 1900 / after 2100, `null` for required fields). User confirms before commit.
 5. `add_resume_version(file_path=..., is_baseline=True, ...)` writes the tracker row.
 6. `write_snapshot_and_compute_drift(artifact_uid, facts)` — `vs_baseline_score` and `vs_parent_score` are both `null` since this IS the baseline.
@@ -624,6 +714,9 @@ The drift module itself stays candidate-agnostic — it cares about `artifact_ui
 | 9.12 | Snapshot schema evolves (e.g., v2 adds a category) | `schema_version` column on snapshots. Drift compute requires matching schema versions; older snapshot upgrades via lossless transform. If lossless impossible, score returns `{"status": "schema_mismatch", ...}`. v1 ships at `schema_version = 1` and doesn't exercise this path. |
 | 9.13 | Two natural keys collide (e.g., two experience entries with same employer + start_date) | Entry matcher pairs them in order of appearance. Practically rare. Loud warning logged. |
 | 9.14 | Active baseline gets archived | The candidate has no baseline. Dashboard Drift tab shows empty state with a picker to promote a new one from the non-archived versions. |
+| 9.15 | Class is `null` on derivative but populated on baseline (e.g., tailored teen resume omits publications, baseline has them) | Class is **skipped** in drift compute. Per-class score is `{"status": "not_captured", "pct": null}`. Doesn't contribute to `overall_pct`. Dashboard renders `—`. The omission is NOT counted as drift. |
+| 9.16 | Class is `[]` on derivative but populated on baseline | Class is compared normally. Items on the baseline count as "removed". Per-class `pct` is 100%. This is the "user genuinely removed all items" case — distinct from 9.15. |
+| 9.17 | LLM extractor returns `[]` for a category the source doesn't mention | Bug. Extractor MUST return `null` when the source is silent. Validation step in `extract_facts.py` flags `[]` results for review when the corresponding region of the source text has no apparent mention of the category. |
 
 ---
 
@@ -632,8 +725,20 @@ The drift module itself stays candidate-agnostic — it cares about `artifact_ui
 Each module gets a dedicated test file under `tests/drift/`:
 
 - `test_snapshot_from_workflow.py` — round-trip the existing workflow `data` dicts; assert the Section 4 schema is produced. Includes Mathilda's session data from `c:\Brains_Resume_Skill\output\resume-2026-05-19-142439.docx` (UID `V9MQZX`) as a fixture.
-- `test_extract_facts.py` — golden-file tests against fixture DOCX text + expected fact schema. Mocked LLM (deterministic stub) so tests don't make network calls.
-- `test_compute.py` — pure-Python diff: per-class `pct` rules, entry matching (natural + fuzzy), `overall_pct` weighted aggregate, `headline_changes` formatter. Hand-built snapshot fixtures cover identity-only changes, experience entries added/removed/edited, education unchanged-vs-changed, skills set diff, certification changes, achievement set diff.
+- `test_extract_facts.py` — golden-file tests against fixture DOCX text + expected fact schema, with mocked LLM (deterministic stub) so tests don't make network calls. Coverage includes the silent-vs-explicitly-empty distinction: when fixture text mentions hobbies → list; when fixture text omits hobbies entirely → `null` (not `[]`). Validation failure paths covered separately (invalid JSON, missing required keys, extra keys, type mismatches).
+- `test_compute.py` — pure-Python diff: per-class `pct` rules, entry matching (natural + fuzzy), `overall_pct` weighted aggregate with renormalisation, `headline_changes` formatter. Hand-built snapshot fixtures cover:
+  - identity-only changes
+  - experience entries added/removed/edited
+  - education unchanged-vs-changed
+  - skills set diff
+  - certification changes
+  - standalone_achievements set diff
+  - hobbies set diff
+  - languages entry add/remove + proficiency-only change
+  - publications entry add + title-fuzzy match
+  - portfolio_links entry add/remove + canonicalised-URL match (`https://github.com/x` matches `github.com/x/`)
+  - **null-class semantics**: baseline has 10 classes populated, derivative has 4; assert `overall_pct` is computed only over the 4 with renormalised weights, and the 6 null-classes show `{"status": "not_captured", "pct": null}`.
+  - **null vs []**: a derivative with `hobbies: []` against a baseline with `hobbies: ["X", "Y"]` produces `pct: 100%` and `removed: ["X", "Y"]`; whereas `hobbies: null` against the same baseline produces `{"status": "not_captured", "pct": null}` and excludes hobbies from `overall_pct`.
 - `test_baseline.py` — `promote_baseline` transaction (single baseline invariant; recompute trigger); `baseline_history` append. Migration 0004 backfill behaviour: oldest non-archived row per `for_candidate` gets `is_baseline=1`.
 - `test_lineage.py` — parent walk skipping archived rows, fork handling, depth cap, no-snapshot ancestor.
 - `test_drift_tab_render.py` — Streamlit AppTest covering the Drift tab's basic render with a fixture snapshot set.
