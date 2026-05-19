@@ -23,3 +23,25 @@ def test_collect_args_passes_strings_through():
 def test_collect_args_all_none_returns_empty():
     from scripts.dashboard.workflows._card import collect_args
     assert collect_args([None, None]) == []
+
+
+def test_jd_analyze_persists_jd_and_analysis_to_folder(monkeypatch, tmp_path):
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
+    monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
+    from scripts.dashboard.workflows.jd_analyze import persist_analyzed_jd
+    findings = {"role_fit_score": 7, "red_flags": []}
+    jd_id, folder = persist_analyzed_jd(
+        raw_text="Senior Data Engineer at Acme...",
+        company="Acme",
+        role_title="Senior Data Engineer",
+        source="manual",
+        source_ref=None,
+        analyzer_findings=findings,
+        focus_areas_required=[],
+        focus_areas_nice=[],
+    )
+    assert (folder / "jd.txt").exists()
+    assert (folder / "jd.txt").read_text(encoding="utf-8").startswith("Senior Data Engineer")
+    assert (folder / "jd-analysis.md").exists()
+    assert "role_fit_score" in (folder / "jd-analysis.md").read_text(encoding="utf-8")

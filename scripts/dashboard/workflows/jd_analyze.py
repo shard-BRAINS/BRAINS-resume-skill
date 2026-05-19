@@ -64,3 +64,60 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "jda") -> None:
     st.markdown("---")
     handoff_arg = jd_url or "(paste-from-clipboard)"
     handoff_button("jd-analyze", [handoff_arg], note="Full coaching report in Claude Code (will load the JD).", key=f"{key_prefix}_handoff_btn")
+
+
+# ---------------------------------------------------------------------------
+# Pure-Python persistence API (no Streamlit dependency)
+# ---------------------------------------------------------------------------
+import json  # noqa: E402 — placed here to keep Streamlit imports grouped above
+
+from scripts.tracker.add import add_jd
+from scripts.outputs.io import ensure_jd_folder
+
+
+def persist_analyzed_jd(
+    raw_text: str,
+    company: str,
+    role_title: str,
+    source: str,
+    source_ref: Optional[str],
+    analyzer_findings: dict,
+    focus_areas_required: list[str],
+    focus_areas_nice: list[str],
+) -> tuple[int, Path]:
+    """Persist the analyzed JD to tracker + outputs folder.
+
+    Creates the per-JD folder, writes the raw JD as jd.txt, writes the
+    analysis findings as jd-analysis.md, and returns the new jd_id and
+    folder path. Called from the Streamlit "Save to tracker" button.
+    """
+    jd_id = add_jd(
+        source=source,
+        source_ref=source_ref,
+        company=company,
+        role_title=role_title,
+        raw_text=raw_text,
+        analyzer_findings=analyzer_findings,
+        focus_areas_required=focus_areas_required,
+        focus_areas_nice=focus_areas_nice,
+    )
+    folder = ensure_jd_folder(jd_id)
+    (folder / "jd.txt").write_text(raw_text, encoding="utf-8")
+    (folder / "jd-analysis.md").write_text(
+        _findings_to_markdown(analyzer_findings, role_title, company),
+        encoding="utf-8",
+    )
+    return jd_id, folder
+
+
+def _findings_to_markdown(findings: dict, role: str, company: str) -> str:
+    """Render analyzer findings as a Markdown report."""
+    lines = [
+        f"# JD analysis — {role} @ {company}",
+        "",
+        "```json",
+        json.dumps(findings, indent=2),
+        "```",
+        "",
+    ]
+    return "\n".join(lines)
