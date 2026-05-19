@@ -190,3 +190,30 @@ def _read_custom_properties_raw(docx_path: Path | str) -> dict[str, str]:
             result[name] = (child.text or "")
             break
     return result
+
+
+def read_artifact_meta(docx_path: Path | str) -> ArtifactMeta | None:
+    """Read the artifact metadata from a DOCX. Returns None if no
+    BrainsArtifactId custom property is present.
+
+    The reader converts placeholder values back to None:
+    - BrainsJDId == "0" or absent -> jd_id = None
+    - BrainsParentId == "" or absent -> parent_uid = None
+    """
+    props = _read_custom_properties_raw(docx_path)
+    if "BrainsArtifactId" not in props:
+        return None
+    jd_id_raw = props.get("BrainsJDId", "0")
+    try:
+        jd_id_int = int(jd_id_raw)
+    except (ValueError, TypeError):
+        jd_id_int = 0
+    parent_raw = props.get("BrainsParentId", "")
+    return ArtifactMeta(
+        artifact_uid=props["BrainsArtifactId"],
+        artifact_kind=props.get("BrainsArtifactKind", ""),
+        jd_id=jd_id_int if jd_id_int else None,
+        parent_uid=parent_raw if parent_raw else None,
+        created_at=props.get("BrainsCreatedAt", ""),
+        skill_version=props.get("BrainsSkillVersion", ""),
+    )

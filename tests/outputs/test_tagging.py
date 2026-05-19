@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from docx import Document
 
-from scripts.outputs.tagging import ArtifactMeta, write_artifact_meta, _read_custom_properties_raw
+from scripts.outputs.tagging import ArtifactMeta, write_artifact_meta, read_artifact_meta, _read_custom_properties_raw
 
 
 @pytest.fixture
@@ -79,3 +79,39 @@ def test_write_artifact_meta_overwrites_existing(minimal_docx):
     write_artifact_meta(minimal_docx, meta2)
     props = _read_custom_properties_raw(minimal_docx)
     assert props["BrainsArtifactId"] == "DIFFRT"
+
+
+def test_read_artifact_meta_round_trip(minimal_docx):
+    original = _meta_for_test()
+    write_artifact_meta(minimal_docx, original)
+    loaded = read_artifact_meta(minimal_docx)
+    assert loaded == original
+
+
+def test_read_artifact_meta_converts_zero_jd_to_none(minimal_docx):
+    meta = _meta_for_test()
+    meta.jd_id = None
+    write_artifact_meta(minimal_docx, meta)
+    loaded = read_artifact_meta(minimal_docx)
+    assert loaded.jd_id is None
+
+
+def test_read_artifact_meta_converts_empty_parent_to_none(minimal_docx):
+    meta = _meta_for_test()
+    meta.parent_uid = None
+    write_artifact_meta(minimal_docx, meta)
+    loaded = read_artifact_meta(minimal_docx)
+    assert loaded.parent_uid is None
+
+
+def test_read_artifact_meta_returns_none_on_untagged_docx(minimal_docx):
+    # No write_artifact_meta call — fresh docx.
+    assert read_artifact_meta(minimal_docx) is None
+
+
+def test_read_artifact_meta_survives_rename(minimal_docx, tmp_path):
+    write_artifact_meta(minimal_docx, _meta_for_test())
+    renamed = tmp_path / "manually-renamed.docx"
+    minimal_docx.rename(renamed)
+    loaded = read_artifact_meta(renamed)
+    assert loaded.artifact_uid == "KX7M9Q"
