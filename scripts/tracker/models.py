@@ -104,6 +104,8 @@ class Profile:
     healthy_weekly_rate: Optional[int] = None
     pacing_notes: Optional[str] = None
     log_handoffs: bool = True
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
 
 @dataclass

@@ -103,3 +103,36 @@ def test_round_trip_log_handoffs_false(monkeypatch, tmp_path):
     write_profile(Profile(focus_areas=["X"], healthy_weekly_rate=4, log_handoffs=False))
     p = read_profile()
     assert p.log_handoffs is False
+
+
+def test_profile_round_trip_with_names(monkeypatch, tmp_path):
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
+    p = Profile(
+        focus_areas=["platform"],
+        first_name="Matthew",
+        last_name="Gell",
+    )
+    write_profile(p)
+    loaded = read_profile()
+    assert loaded.first_name == "Matthew"
+    assert loaded.last_name == "Gell"
+    assert loaded.focus_areas == ["platform"]
+
+
+def test_profile_defaults_names_to_none(monkeypatch, tmp_path):
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
+    write_profile(Profile(focus_areas=["x"]))
+    loaded = read_profile()
+    assert loaded.first_name is None
+    assert loaded.last_name is None
+
+
+def test_read_profile_handles_legacy_file_without_names(monkeypatch, tmp_path):
+    # Simulate a pre-v1.5.0 profile.json.
+    path = tmp_path / "profile.json"
+    path.write_text('{"focus_areas": ["x"], "log_handoffs": true}', encoding="utf-8")
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(path))
+    loaded = read_profile()
+    assert loaded.focus_areas == ["x"]
+    assert loaded.first_name is None
+    assert loaded.last_name is None

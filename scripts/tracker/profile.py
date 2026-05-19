@@ -38,6 +38,8 @@ def read_profile() -> Profile:
         healthy_weekly_rate=data.get("healthy_weekly_rate"),
         pacing_notes=data.get("pacing_notes"),
         log_handoffs=data.get("log_handoffs", True),
+        first_name=data.get("first_name"),
+        last_name=data.get("last_name"),
     )
 
 
@@ -52,6 +54,8 @@ def write_profile(profile: Profile) -> None:
                 "healthy_weekly_rate": profile.healthy_weekly_rate,
                 "pacing_notes": profile.pacing_notes,
                 "log_handoffs": profile.log_handoffs,
+                "first_name": profile.first_name,
+                "last_name": profile.last_name,
             },
             indent=2,
         ),
