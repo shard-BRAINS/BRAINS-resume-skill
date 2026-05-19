@@ -44,3 +44,13 @@ def slugify(text: str, max_len: int = 40) -> str:
     if len(text) > max_len:
         text = text[:max_len].rstrip("-")
     return text
+
+
+def new_uid() -> str:
+    """Generate a 6-char Crockford base32 UID.
+
+    30^6 = ~729 million possibilities. No 0/O/1/I/L (no visual ambiguity).
+    Uses `secrets.choice` for cryptographically-strong randomness so
+    UIDs can't be guessed even if an attacker sees recent ones.
+    """
+    return "".join(secrets.choice(CROCKFORD_BASE32) for _ in range(6))

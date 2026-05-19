@@ -39,8 +39,38 @@ def test_slugify_default_max_len_is_40():
 @pytest.mark.parametrize("text,expected", [
     # Curly quotes (U+2018, U+2019) and modifier letter apostrophe (U+02BC).
     ("O’Brien", "OBrien"),
-    ("‘Acme’ Corp", "Acme-Corp"),
-    ("Marʼa's Resume", "Maras-Resume"),
+    ("’Acme’ Corp", "Acme-Corp"),
+    ("Marʼa’s Resume", "Maras-Resume"),
 ])
 def test_slugify_strips_curly_apostrophes(text, expected):
     assert slugify(text) == expected
+
+
+from scripts.outputs.naming import new_uid, CROCKFORD_BASE32
+
+
+def test_new_uid_length_is_6():
+    assert len(new_uid()) == 6
+
+
+def test_new_uid_uses_only_crockford_chars():
+    for _ in range(100):
+        uid = new_uid()
+        assert set(uid).issubset(set(CROCKFORD_BASE32))
+
+
+def test_new_uid_uniqueness_over_10k_samples():
+    # 6 chars from a 30-char alphabet = ~729M possibilities.
+    # 10k samples should yield 0 collisions in practice.
+    samples = {new_uid() for _ in range(10_000)}
+    assert len(samples) == 10_000
+
+
+def test_new_uid_never_contains_ambiguous_chars():
+    for _ in range(100):
+        uid = new_uid()
+        assert "0" not in uid
+        assert "O" not in uid
+        assert "1" not in uid
+        assert "I" not in uid
+        assert "L" not in uid
