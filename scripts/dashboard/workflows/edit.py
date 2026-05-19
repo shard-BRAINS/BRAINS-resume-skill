@@ -31,7 +31,10 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "edit") -> None:
     )
     st.write(f"Selected: `{file_path}`" if file_path else "_No file selected._")
     if file_path is not None:
-        source_uid = read_artifact_uid(file_path)
+        try:
+            source_uid = read_artifact_uid(file_path)
+        except Exception:
+            source_uid = None
         if jd_id:
             try:
                 target_path, meta = make_artifact_path(
@@ -39,6 +42,9 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "edit") -> None:
                 )
             except ProfileNameMissingError:
                 st.error("Set your first and last name in the sidebar before editing.")
+                return
+            except Exception as exc:
+                st.warning(f"Could not resolve output path: {exc}")
                 return
         else:
             profile = read_profile()

@@ -33,6 +33,9 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "create") -> None
         except ProfileNameMissingError:
             st.error("Set your first and last name in the sidebar before creating.")
             return
+        except Exception as exc:
+            st.warning(f"Could not resolve output path: {exc}")
+            return
     else:
         profile = read_profile()
         if not profile.first_name or not profile.last_name:

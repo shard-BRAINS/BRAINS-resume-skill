@@ -110,7 +110,10 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "check") -> None:
     st.markdown("---")
 
     # Compute output path alongside the source file.
-    source_uid = read_artifact_uid(file_path)
+    try:
+        source_uid = read_artifact_uid(file_path)
+    except Exception:
+        source_uid = None
     profile = read_profile()
     if not profile.first_name or not profile.last_name:
         st.error("Set your first and last name in the sidebar before using the handoff.")

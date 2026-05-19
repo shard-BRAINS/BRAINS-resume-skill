@@ -24,7 +24,10 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "cl") -> None:
     )
     st.write(f"Resume: `{file_path}`" if file_path else "_No resume selected._")
     if file_path is not None and jd_id:
-        resume_uid = read_artifact_uid(file_path)
+        try:
+            resume_uid = read_artifact_uid(file_path)
+        except Exception:
+            resume_uid = None
         try:
             target_path, meta = make_artifact_path(
                 int(jd_id), "cover-letter", parent_uid=resume_uid,
@@ -33,6 +36,9 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "cl") -> None:
             st.error(
                 "Set your first and last name in the sidebar before generating a cover letter."
             )
+            return
+        except Exception as exc:
+            st.warning(f"Could not resolve output path: {exc}")
             return
         st.caption(f"Output will land at: `{target_path}`")
         handoff_button(
