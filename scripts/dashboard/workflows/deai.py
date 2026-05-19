@@ -10,6 +10,7 @@ import streamlit as st
 from scripts.dashboard.file_input import is_docx, pick_file
 from scripts.dashboard.workflows._card import handoff_button
 from scripts.outputs.io import (
+    _SKILL_VERSION,
     read_artifact_uid,
     ProfileNameMissingError,
 )
@@ -85,7 +86,7 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "deai") -> None:
         jd_id=None,
         parent_uid=source_uid,
         created_at=datetime.utcnow().isoformat() + "Z",
-        skill_version="1.5.0",
+        skill_version=_SKILL_VERSION,
     )
     st.caption(f"Cleaned copy will land at: `{target_path}`")
     handoff_button(

@@ -10,6 +10,7 @@ import streamlit as st
 from scripts.dashboard.file_input import pick_file
 from scripts.dashboard.workflows._card import handoff_button
 from scripts.outputs.io import (
+    _SKILL_VERSION,
     make_artifact_path,
     read_artifact_uid,
     get_outputs_root,
@@ -63,7 +64,7 @@ def _resolve_target(
         artifact_uid=uid, artifact_kind="resume",
         jd_id=None, parent_uid=parent_uid,
         created_at=datetime.utcnow().isoformat() + "Z",
-        skill_version="1.5.0",
+        skill_version=_SKILL_VERSION,
         for_candidate=for_candidate,
     )
     return target_path, meta
