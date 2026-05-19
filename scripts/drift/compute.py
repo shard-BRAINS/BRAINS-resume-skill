@@ -11,6 +11,7 @@ overall_pct aggregator (Task 7) extend it.
 """
 from __future__ import annotations
 
+import re as _re
 from typing import Any
 
 
@@ -46,12 +47,232 @@ def _identity_diff(left: dict, right: dict) -> dict:
     return {"fields_changed": fields_changed, "fields_total": total, "pct": pct}
 
 
+def _jaccard_with_prefix(a: str, b: str) -> float:
+    """Greedy token-set Jaccard with prefix-aware matching.
+
+    Tokens are lowercased, trailing punctuation stripped. Two tokens are
+    considered "matched" if they are equal OR one is a prefix of the
+    other (both at least 3 chars). This handles abbreviations such as
+    "Corp." vs "Corporation".
+    """
+    aw = [t.rstrip(".,;:") for t in (a or "").lower().split()]
+    bw = [t.rstrip(".,;:") for t in (b or "").lower().split()]
+    if not aw and not bw:
+        return 1.0
+    if not aw or not bw:
+        return 0.0
+    matched = 0
+    used_b = [False] * len(bw)
+    for ta in aw:
+        for i, tb in enumerate(bw):
+            if used_b[i]:
+                continue
+            if ta == tb or (
+                len(ta) >= 3 and len(tb) >= 3
+                and (ta.startswith(tb) or tb.startswith(ta))
+            ):
+                matched += 1
+                used_b[i] = True
+                break
+    union = len(aw) + len(bw) - matched
+    return matched / union if union else 1.0
+
+
+def _token_set_ratio(a: str, b: str) -> float:
+    """Token-set similarity in [0, 1].
+
+    Uses rapidfuzz.fuzz.token_set_ratio when available for character-level
+    fuzziness, AND a prefix-aware Jaccard for abbreviation handling.
+    Returns the max of the two so we benefit from both regardless of
+    whether rapidfuzz is installed.
+    """
+    prefix_score = _jaccard_with_prefix(a or "", b or "")
+    try:
+        from rapidfuzz.fuzz import token_set_ratio  # type: ignore
+        return max(prefix_score, token_set_ratio(a or "", b or "") / 100.0)
+    except ImportError:
+        return prefix_score
+
+
+def _canonicalise_url(url: str) -> str:
+    """Lowercase, strip http(s)://, strip trailing /."""
+    if not url:
+        return ""
+    s = url.strip().lower()
+    s = _re.sub(r"^https?://", "", s)
+    s = s.rstrip("/")
+    return s
+
+
+def _natural_key(entry: dict, kind: str) -> tuple | str | None:
+    if kind == "experience":
+        if not entry.get("employer") or not entry.get("start_date"):
+            return None
+        return (entry["employer"].strip().lower(), entry["start_date"])
+    if kind == "education":
+        if not entry.get("institution") or not entry.get("qualification"):
+            return None
+        return (entry["institution"].strip().lower(),
+                entry["qualification"].strip().lower())
+    if kind == "certifications":
+        if not entry.get("name"):
+            return None
+        return entry["name"].strip().lower()
+    if kind == "languages":
+        if not entry.get("language"):
+            return None
+        return entry["language"].strip().lower()
+    if kind == "publications":
+        if not entry.get("title"):
+            return None
+        return (entry["title"].strip().lower(), entry.get("year") or "")
+    if kind == "portfolio_links":
+        if not entry.get("url"):
+            return None
+        return _canonicalise_url(entry["url"])
+    raise ValueError(f"No natural key for kind {kind!r}")
+
+
+_FUZZY_FIELDS = {
+    "experience": (["employer", "title"], 0.85),
+    "education": (["institution"], 0.85),
+    "certifications": (["name"], 0.85),
+    "languages": (["language"], 0.90),
+    "publications": (["title"], 0.85),
+    "portfolio_links": (None, None),  # exact-only via canonicalised URL
+}
+
+
+_COMPARE_FIELDS = {
+    "experience": ("employer", "title", "start_date", "end_date", "location", "key_points"),
+    "education":  ("institution", "qualification", "completion_year",
+                   "completion_status", "honours"),
+    "certifications": ("name", "issuer", "year"),
+    "languages": ("language", "proficiency"),
+    "publications": ("title", "venue", "year", "authors", "url"),
+    "portfolio_links": ("label", "url"),
+}
+
+
+def _fuzzy_match(target: dict, candidates: list[dict], kind: str) -> int | None:
+    """Return index in candidates of best fuzzy match, or None if below threshold.
+
+    Used when natural-key match fails. Compares specified text fields.
+    """
+    fields, threshold = _FUZZY_FIELDS[kind]
+    if fields is None:
+        return None
+    best_idx = None
+    best_score = 0.0
+    for i, cand in enumerate(candidates):
+        scores = [_token_set_ratio(target.get(f, "") or "", cand.get(f, "") or "")
+                  for f in fields]
+        score = min(scores) if scores else 0.0
+        if score > best_score and score >= threshold:
+            best_idx = i
+            best_score = score
+    return best_idx
+
+
+def _compare_entries(left: dict, right: dict, kind: str, entry_id: str) -> list[dict]:
+    """Per-field comparison. Returns list of {entry_id, field, from, to}."""
+    changes = []
+    for f in _COMPARE_FIELDS[kind]:
+        l_val = left.get(f)
+        r_val = right.get(f)
+        if (l_val or None) != (r_val or None):
+            changes.append({"entry_id": entry_id, "field": f,
+                            "from": l_val, "to": r_val})
+    return changes
+
+
+def _list_object_diff(left: list[dict], right: list[dict], kind: str) -> dict:
+    left = list(left or [])
+    right = list(right or [])
+
+    # Build natural-key indices.
+    left_by_key: dict = {}
+    left_unkeyed: list[int] = []
+    for i, e in enumerate(left):
+        k = _natural_key(e, kind)
+        if k is None:
+            left_unkeyed.append(i)
+        else:
+            left_by_key.setdefault(k, []).append(i)
+
+    right_consumed = [False] * len(right)
+    left_consumed = [False] * len(left)
+    field_changes: list[dict] = []
+    entries_with_field_changes = 0
+
+    # Pass 1: natural-key matches.
+    for j, r_entry in enumerate(right):
+        rk = _natural_key(r_entry, kind)
+        if rk is None:
+            continue
+        bucket = left_by_key.get(rk)
+        if not bucket:
+            continue
+        i = bucket.pop(0)
+        left_consumed[i] = True
+        right_consumed[j] = True
+        changes = _compare_entries(left[i], r_entry, kind,
+                                   left[i].get("entry_id") or r_entry.get("entry_id") or f"{kind}-{i}")
+        if changes:
+            entries_with_field_changes += 1
+            field_changes.extend(changes)
+
+    # Pass 2: fuzzy fallback for the unmatched.
+    unmatched_left = [i for i, used in enumerate(left_consumed) if not used]
+    unmatched_right = [j for j, used in enumerate(right_consumed) if not used]
+    for j in list(unmatched_right):
+        cand_idxs = [i for i in unmatched_left if not left_consumed[i]]
+        candidates = [left[i] for i in cand_idxs]
+        m = _fuzzy_match(right[j], candidates, kind)
+        if m is None:
+            continue
+        i = cand_idxs[m]
+        left_consumed[i] = True
+        right_consumed[j] = True
+        changes = _compare_entries(left[i], right[j], kind,
+                                   left[i].get("entry_id") or right[j].get("entry_id") or f"{kind}-{i}")
+        if changes:
+            entries_with_field_changes += 1
+            field_changes.extend(changes)
+
+    entries_removed = sum(1 for u in left_consumed if not u)
+    entries_added = sum(1 for u in right_consumed if not u)
+
+    total = max(len(left), len(right))
+    if total == 0:
+        return {"entries_added": 0, "entries_removed": 0,
+                "entries_with_field_changes": 0,
+                "field_changes": [], "entries_total": 0, "pct": 0.0}
+    changed_units = entries_added + entries_removed + entries_with_field_changes
+    pct = (changed_units / total) * 100.0
+    return {
+        "entries_added": entries_added,
+        "entries_removed": entries_removed,
+        "entries_with_field_changes": entries_with_field_changes,
+        "field_changes": field_changes,
+        "entries_total": total,
+        "pct": pct,
+    }
+
+
+_LIST_OBJECT_KINDS = ("experience", "education", "certifications",
+                     "languages", "publications", "portfolio_links")
+
+
 def compute_class_diff(left: Any, right: Any, kind: str) -> dict:
     """Compute the per-class diff dict for a single class.
 
-    kind: one of 'set', 'identity'. 'list_object' added in Task 6.
+    kind: one of 'set', 'identity', or any of the list-of-object classes:
+          experience, education, certifications, languages, publications,
+          portfolio_links.
 
-    Returns {'status': 'not_captured', 'pct': None} if either side is None.
+    Returns {'status': 'not_captured', 'pct': None} if either side is None
+    (spec §5b — null-class handling). [] is NOT the same as None.
     """
     if left is None or right is None:
         return _null_status()
@@ -59,4 +280,6 @@ def compute_class_diff(left: Any, right: Any, kind: str) -> dict:
         return _set_diff(left, right)
     if kind == "identity":
         return _identity_diff(left, right)
+    if kind in _LIST_OBJECT_KINDS:
+        return _list_object_diff(left, right, kind)
     raise ValueError(f"Unknown class kind: {kind!r}")
