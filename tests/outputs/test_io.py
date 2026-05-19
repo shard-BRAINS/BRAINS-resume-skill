@@ -34,3 +34,56 @@ def test_exceptions_are_distinct():
     assert ProfileNameMissingError is not OutputsDirNotWritableError
     assert ProfileNameMissingError is not UIDCollisionError
     assert OutputsDirNotWritableError is not UIDCollisionError
+
+
+from datetime import date
+
+from scripts.outputs.io import ensure_jd_folder
+from scripts.tracker.add import add_jd
+from scripts.tracker.db import open_db
+
+
+def test_ensure_jd_folder_creates_dir(isolated):
+    jd_id = add_jd(
+        source="manual", source_ref=None,
+        company="Acme Corp", role_title="Senior Data Engineer",
+        raw_text="...", analyzer_findings={},
+        focus_areas_required=[], focus_areas_nice=[],
+    )
+    folder = ensure_jd_folder(jd_id)
+    assert folder.exists()
+    assert folder.is_dir()
+    # Folder name is YYYY-MM-DD_<anchor>_<role>
+    assert "Acme-Corp" in folder.name
+    assert "Senior-Data-Engineer" in folder.name
+
+
+def test_ensure_jd_folder_writes_folder_path_to_jd_row(isolated):
+    jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+    folder = ensure_jd_folder(jd_id)
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT folder_path FROM jds WHERE id=?", (jd_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row[0] == str(folder)
+
+
+def test_ensure_jd_folder_idempotent(isolated):
+    jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+    first = ensure_jd_folder(jd_id)
+    second = ensure_jd_folder(jd_id)
+    assert first == second
+
+
+def test_ensure_jd_folder_handles_collision(isolated):
+    """Two JDs added on the same day for the same company/role produce
+    distinct folders via _v2 suffix."""
+    jd_a = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    folder_a = ensure_jd_folder(jd_a)
+    jd_b = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    folder_b = ensure_jd_folder(jd_b)
+    assert folder_a != folder_b
+    assert folder_b.name.endswith("_v2")
