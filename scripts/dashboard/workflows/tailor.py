@@ -13,7 +13,6 @@ from scripts.outputs.io import (
     read_artifact_uid,
     ProfileNameMissingError,
 )
-from scripts.outputs.naming import split_candidate_name  # noqa: F401
 from scripts.outputs.tagging import ArtifactMeta
 
 
