@@ -11,12 +11,33 @@ from scripts.tracker.profile import read_profile, write_profile
 
 def render_sidebar() -> None:
     """Render the persistent sidebar. Called once from app.py before tabs."""
+    from scripts.outputs.io import get_outputs_root
+
     with st.sidebar:
         st.markdown("### BRAINS Resume")
         st.markdown("*Dashboard*")
         st.markdown("---")
 
         profile = read_profile()
+
+        # Your name
+        st.subheader("Your name")
+        first_name = st.text_input(
+            "First name",
+            value=profile.first_name or "",
+            key="sidebar_first_name",
+        )
+        last_name = st.text_input(
+            "Last name",
+            value=profile.last_name or "",
+            key="sidebar_last_name",
+        )
+        profile.first_name = first_name.strip() or None
+        profile.last_name = last_name.strip() or None
+
+        st.caption(f"Outputs: `{get_outputs_root()}`")
+
+        st.markdown("---")
 
         # Focus areas
         st.markdown("**Focus areas**")
@@ -54,6 +75,8 @@ def render_sidebar() -> None:
             new_rate = rate if rate > 0 else None
             new_notes = pacing_notes.strip() if pacing_notes.strip() else None
             write_profile(Profile(
+                first_name=profile.first_name,
+                last_name=profile.last_name,
                 focus_areas=new_focus,
                 healthy_weekly_rate=new_rate,
                 pacing_notes=new_notes,
