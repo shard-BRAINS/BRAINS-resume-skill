@@ -143,3 +143,48 @@ def test_make_artifact_path_two_calls_yield_distinct_uids(isolated):
     _, meta_a = make_artifact_path(jd_id, "resume")
     _, meta_b = make_artifact_path(jd_id, "resume")
     assert meta_a.artifact_uid != meta_b.artifact_uid
+
+
+from docx import Document
+
+from scripts.outputs.io import finalize_docx, read_artifact_uid
+from scripts.outputs.tagging import read_artifact_meta
+
+
+def test_finalize_docx_writes_custom_properties(isolated):
+    _set_profile_name()
+    jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    path, meta = make_artifact_path(jd_id, "resume")
+    # Generator writes the file:
+    doc = Document()
+    doc.add_paragraph("body")
+    doc.save(str(path))
+    # Skill finalizes:
+    finalize_docx(path, meta)
+    loaded = read_artifact_meta(path)
+    assert loaded == meta
+
+
+def test_finalize_docx_raises_when_file_missing(isolated):
+    _set_profile_name()
+    jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    path, meta = make_artifact_path(jd_id, "resume")
+    # Don't actually create the file.
+    with pytest.raises(FileNotFoundError):
+        finalize_docx(path, meta)
+
+
+def test_read_artifact_uid_returns_uid_when_present(isolated):
+    _set_profile_name()
+    jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    path, meta = make_artifact_path(jd_id, "resume")
+    doc = Document()
+    doc.save(str(path))
+    finalize_docx(path, meta)
+    assert read_artifact_uid(path) == meta.artifact_uid
+
+
+def test_read_artifact_uid_returns_none_for_untagged(isolated, tmp_path):
+    untagged = tmp_path / "u.docx"
+    Document().save(str(untagged))
+    assert read_artifact_uid(untagged) is None

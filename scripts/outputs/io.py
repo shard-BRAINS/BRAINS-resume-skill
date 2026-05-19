@@ -153,3 +153,26 @@ def find_artifact_by_uid(uid: str):
     only want the outputs API."""
     from scripts.tracker.query import get_artifact_by_uid
     return get_artifact_by_uid(uid)
+
+
+from scripts.outputs.tagging import read_artifact_meta, write_artifact_meta
+
+
+def finalize_docx(path: Path, meta: ArtifactMeta) -> None:
+    """Write the artifact's UID + metadata into the DOCX custom properties.
+
+    Raises FileNotFoundError if the DOCX doesn't exist (caller must have
+    already invoked the generator).
+    """
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Cannot finalize {path}: file does not exist. "
+            f"Generator must run before finalize_docx."
+        )
+    write_artifact_meta(path, meta)
+
+
+def read_artifact_uid(path: Path) -> str | None:
+    """Convenience: return just the BrainsArtifactId or None."""
+    meta = read_artifact_meta(path)
+    return meta.artifact_uid if meta else None
