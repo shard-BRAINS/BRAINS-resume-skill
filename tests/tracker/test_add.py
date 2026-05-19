@@ -315,3 +315,49 @@ def test_add_resume_version_omitting_uids_inserts_nulls(fresh_db):
     finally:
         conn.close()
     assert row == (None, None)
+
+
+def test_add_resume_version_persists_for_candidate(fresh_db):
+    rv_id = add_resume_version(
+        file_path=None, template="hybrid", focus_areas=[],
+        for_candidate="Mathilda Gell",
+    )
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT for_candidate FROM resume_versions WHERE id=?", (rv_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row[0] == "Mathilda Gell"
+
+
+def test_add_resume_version_defaults_for_candidate_to_null(fresh_db):
+    rv_id = add_resume_version(
+        file_path=None, template="hybrid", focus_areas=[],
+    )
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT for_candidate FROM resume_versions WHERE id=?", (rv_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row[0] is None
+
+
+def test_add_cover_letter_persists_for_candidate(fresh_db):
+    jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+    rv_id = add_resume_version(None, "chronological", [])
+    cl_id = add_cover_letter(
+        file_path=None, resume_version_id=rv_id, jd_id=jd_id,
+        template="formal-business", for_candidate="Mathilda Gell",
+    )
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT for_candidate FROM cover_letters WHERE id=?", (cl_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row[0] == "Mathilda Gell"
