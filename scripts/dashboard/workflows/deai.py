@@ -1,6 +1,7 @@
 """/brains-deai — scan a DOCX for AI-tell signals + optional Claude Code handoff."""
 from __future__ import annotations
 
+from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
@@ -8,7 +9,14 @@ import streamlit as st
 
 from scripts.dashboard.file_input import is_docx, pick_file
 from scripts.dashboard.workflows._card import handoff_button
+from scripts.outputs.io import (
+    read_artifact_uid,
+    ProfileNameMissingError,
+)
+from scripts.outputs.naming import artifact_filename, new_uid
+from scripts.outputs.tagging import ArtifactMeta
 from scripts.parsers.docx_to_text import parse_docx_resume
+from scripts.tracker.profile import read_profile
 from scripts.validators.ai_signal_check import ai_signal_check
 
 
@@ -53,4 +61,34 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "deai") -> None:
             st.success("No de-AI findings.")
 
     st.markdown("---")
-    handoff_button("deai", [file_path], note="Get rewrite suggestions in Claude Code.", key=f"{key_prefix}_handoff_btn")
+
+    # Compute output path alongside the source file.
+    source_uid = read_artifact_uid(file_path)
+    profile = read_profile()
+    if not profile.first_name or not profile.last_name:
+        st.error("Set your first and last name in the sidebar before using the handoff.")
+        return
+    uid = new_uid()
+    target_path = file_path.parent / artifact_filename(
+        first_name=profile.first_name,
+        last_name=profile.last_name,
+        kind="resume",
+        created_date=date.today(),
+        uid=uid,
+    )
+    meta = ArtifactMeta(
+        artifact_uid=uid,
+        artifact_kind="resume",
+        jd_id=None,
+        parent_uid=source_uid,
+        created_at=datetime.utcnow().isoformat() + "Z",
+        skill_version="1.5.0",
+    )
+    st.caption(f"Cleaned copy will land at: `{target_path}`")
+    handoff_button(
+        "deai",
+        [str(file_path), str(target_path), meta.artifact_uid,
+         meta.parent_uid or ""],
+        note="Get rewrite suggestions in Claude Code.",
+        key=f"{key_prefix}_handoff_btn",
+    )
