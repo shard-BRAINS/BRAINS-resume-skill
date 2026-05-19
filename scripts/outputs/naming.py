@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 import secrets
 from datetime import date
+from pathlib import Path
 from typing import Literal
 
 
@@ -112,3 +113,16 @@ def artifact_filename(
     first = slugify(first_name)
     last = slugify(last_name)
     return f"{first}_{last}_{kind}_{created_date.isoformat()}_{uid}.{ext}"
+
+
+def resolve_folder_collision(parent: Path, candidate_name: str) -> str:
+    """If candidate_name exists in parent, return 'name_v2', 'name_v3', ...
+
+    Returns the candidate unchanged when no collision.
+    """
+    if not (parent / candidate_name).exists():
+        return candidate_name
+    n = 2
+    while (parent / f"{candidate_name}_v{n}").exists():
+        n += 1
+    return f"{candidate_name}_v{n}"

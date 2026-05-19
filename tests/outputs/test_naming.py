@@ -201,3 +201,22 @@ def test_artifact_filename_invalid_kind_raises():
             created_date=date(2026, 5, 19),
             uid="KX7M9Q",
         )
+
+
+from scripts.outputs.naming import resolve_folder_collision
+
+
+def test_resolve_folder_collision_no_existing(tmp_path):
+    assert resolve_folder_collision(tmp_path, "abc") == "abc"
+
+
+def test_resolve_folder_collision_one_existing(tmp_path):
+    (tmp_path / "abc").mkdir()
+    assert resolve_folder_collision(tmp_path, "abc") == "abc_v2"
+
+
+def test_resolve_folder_collision_chain(tmp_path):
+    (tmp_path / "abc").mkdir()
+    (tmp_path / "abc_v2").mkdir()
+    (tmp_path / "abc_v3").mkdir()
+    assert resolve_folder_collision(tmp_path, "abc") == "abc_v4"
