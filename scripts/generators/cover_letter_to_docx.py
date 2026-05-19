@@ -8,6 +8,8 @@ from typing import Union
 
 from docx import Document
 
+from scripts.outputs.tagging import ArtifactMeta, write_artifact_meta
+
 
 VALID_TEMPLATES = ("formal-business", "modern-clean")
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "templates" / "cover-letter"
@@ -31,6 +33,7 @@ def render_cover_letter_docx(
     data: dict,
     out_path: Union[str, Path],
     template: str = "formal-business",
+    artifact_meta: ArtifactMeta | None = None,
 ) -> Path:
     """Fill the cover-letter template with letter data and save.
 
@@ -62,4 +65,6 @@ def render_cover_letter_docx(
                     paragraph.runs[0].text = full
 
     doc.save(str(out_path))
+    if artifact_meta is not None:
+        write_artifact_meta(out_path, artifact_meta)
     return out_path

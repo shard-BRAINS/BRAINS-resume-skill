@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from scripts.generators.cover_letter_to_docx import render_cover_letter_docx
+from scripts.outputs.tagging import ArtifactMeta, read_artifact_meta
 from scripts.validators.ats_check import ats_check
 
 
@@ -78,3 +79,24 @@ def test_default_template_unchanged_behaviour(tmp_path):
     text_d = "\n".join(p.text for p in Document(str(out_default)).paragraphs)
     text_e = "\n".join(p.text for p in Document(str(out_explicit)).paragraphs)
     assert text_d == text_e  # byte-equivalent rendering for the same data
+
+
+def test_render_cover_letter_docx_with_meta(tmp_path):
+    """With artifact_meta provided, custom properties are embedded in the DOCX."""
+    out = tmp_path / "cl.docx"
+    meta = ArtifactMeta(
+        artifact_uid="H8VR3W",
+        artifact_kind="cover-letter",
+        jd_id=42,
+        parent_uid="KX7M9Q",
+        created_at="2026-05-19T10:00:00Z",
+        skill_version="1.5.0",
+    )
+    render_cover_letter_docx(
+        data={"candidate_name": "M Gell", "body": "Dear hiring manager"},
+        out_path=out,
+        template="formal-business",
+        artifact_meta=meta,
+    )
+    loaded = read_artifact_meta(out)
+    assert loaded == meta
