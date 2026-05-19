@@ -1,0 +1,40 @@
+name: BRAINS Resume Skill
+status: shipped
+priority: P1
+next_step: v1.6 — disclosure framework polish
+blocker: null
+workstream:
+  label: v1.6 cycle
+  phases:
+  - id: SP
+    label: spec
+    status: upcoming
+  - id: BD
+    label: build
+    status: upcoming
+  - id: RL
+    label: release
+    status: upcoming
+lifecycle:
+  milestones:
+  - v1.0
+  - v1.2
+  - v1.4
+  - v1.5
+  - v1.6
+  - v2.0
+  current_milestone: v1.5
+  overall_pct: 85
+  target_milestone: v1.6
+  target_date: '2026-07-15'
+backlog:
+- Disclosure framework brainstorm (deferred from v1.5)
+notes: 'v1.5.0 released — per-JD folders + traceable artifact UIDs.
+
+  '
+_auto:
+  last_commit: '155449c docs: v1.5.0 — file organization convention + workflow refs'
+  branch: main
+  last_commit_at: '2026-05-19T03:20:08Z'
+  dirty: true
+  refreshed_at: '2026-05-19T03:22:13.832935Z'

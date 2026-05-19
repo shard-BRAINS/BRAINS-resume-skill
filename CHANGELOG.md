@@ -4,6 +4,45 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## [1.5.0] - 2026-05-19
+
+### Added
+- Per-JD output folders at `~/.brains-resume/outputs/YYYY-MM-DD_<Company>_<Role>/`
+  containing the raw JD, JD analysis, and all tailored artifacts.
+- Canonical filename pattern for resumes and cover letters:
+  `<First>_<Last>_<kind>_<YYYY-MM-DD>_<UID>.docx`.
+- Invisible 6-char Crockford base32 UID embedded as a DOCX custom property
+  on every generated artifact (`BrainsArtifactId`, `BrainsArtifactKind`,
+  `BrainsJDId`, `BrainsParentId`, `BrainsCreatedAt`, `BrainsSkillVersion`).
+- Tracker migration 0002: `artifact_uid` + `parent_uid` columns on
+  `resume_versions` and `cover_letters`, `folder_path` column on `jds`.
+- Profile fields: `first_name`, `last_name`. First-use modal in the
+  dashboard sets them on first launch.
+- `BRAINS_OUTPUTS_DIR` env var to override the outputs root.
+- New module `scripts/outputs/` (naming, tagging, io) + tests.
+- `tracker.get_artifact_by_uid` query helper.
+
+### Changed
+- Generators (`render_resume_docx`, `render_cover_letter_docx`) accept
+  optional `artifact_meta` to embed properties on save.
+- Dashboard workflows (`tailor`, `cover-letter`, `edit`, `create`, `deai`,
+  `check`, `jd-analyze`) now reserve their output path via
+  `io.make_artifact_path` before handing off to Claude Code.
+
+### Notes
+- Forward-only: pre-v1.5.0 files keep their existing names and paths;
+  pre-v1.5.0 tracker rows have NULL `artifact_uid`.
+- Disclosure framework polish (previously planned for v1.5) moves to v1.6.
+- DOCX custom properties are written directly via OPC zip manipulation
+  because `python-docx` 1.2.0 does not expose a public custom-properties API.
+
+### Deferred
+- `/brains-relocate` retroactive migration of pre-v1.5.0 files.
+- `/brains-scan` to rebuild tracker links from embedded UIDs.
+- PDF custom-property embedding (PDFs share the DOCX's UID in their
+  filename only).
+- LinkedIn artifact organization.
+
 ## [1.4.1] — 2026-05-18
 
 ### Added
