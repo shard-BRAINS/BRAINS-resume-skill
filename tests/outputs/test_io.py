@@ -87,3 +87,59 @@ def test_ensure_jd_folder_handles_collision(isolated):
     folder_b = ensure_jd_folder(jd_b)
     assert folder_a != folder_b
     assert folder_b.name.endswith("_v2")
+
+
+from datetime import date as _date
+
+from scripts.outputs.io import make_artifact_path
+from scripts.outputs.tagging import ArtifactMeta
+from scripts.tracker.profile import write_profile
+from scripts.tracker.models import Profile
+
+
+def _set_profile_name(first="Matthew", last="Gell"):
+    write_profile(Profile(focus_areas=[], first_name=first, last_name=last))
+
+
+def test_make_artifact_path_resume(isolated):
+    _set_profile_name()
+    jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    path, meta = make_artifact_path(jd_id, "resume")
+    assert path.parent.exists()
+    assert path.name.startswith("Matthew_Gell_resume_")
+    assert path.suffix == ".docx"
+    assert isinstance(meta, ArtifactMeta)
+    assert meta.artifact_uid in path.name
+    assert meta.artifact_kind == "resume"
+    assert meta.jd_id == jd_id
+    assert meta.parent_uid is None
+
+
+def test_make_artifact_path_cover_letter(isolated):
+    _set_profile_name()
+    jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    path, meta = make_artifact_path(jd_id, "cover-letter")
+    assert path.name.startswith("Matthew_Gell_cover-letter_")
+
+
+def test_make_artifact_path_with_parent_uid(isolated):
+    _set_profile_name()
+    jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    path, meta = make_artifact_path(jd_id, "resume", parent_uid="ABCDEF")
+    assert meta.parent_uid == "ABCDEF"
+
+
+def test_make_artifact_path_raises_when_name_missing(isolated):
+    # Profile exists but no first/last name.
+    write_profile(Profile(focus_areas=[]))
+    jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    with pytest.raises(ProfileNameMissingError):
+        make_artifact_path(jd_id, "resume")
+
+
+def test_make_artifact_path_two_calls_yield_distinct_uids(isolated):
+    _set_profile_name()
+    jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
+    _, meta_a = make_artifact_path(jd_id, "resume")
+    _, meta_b = make_artifact_path(jd_id, "resume")
+    assert meta_a.artifact_uid != meta_b.artifact_uid

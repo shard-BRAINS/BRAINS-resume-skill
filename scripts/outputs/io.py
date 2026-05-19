@@ -39,10 +39,13 @@ def get_outputs_root() -> Path:
     return DEFAULT_OUTPUTS_ROOT
 
 
-from datetime import datetime
+from datetime import datetime, date as _date
+from typing import Literal
 
-from scripts.outputs.naming import folder_name, resolve_folder_collision
+from scripts.outputs.naming import folder_name, resolve_folder_collision, artifact_filename, new_uid
+from scripts.outputs.tagging import ArtifactMeta
 from scripts.tracker.db import open_db
+from scripts.tracker.profile import read_profile
 
 
 def ensure_jd_folder(jd_id: int) -> Path:
@@ -89,3 +92,64 @@ def ensure_jd_folder(jd_id: int) -> Path:
         return folder
     finally:
         conn.close()
+
+
+_SKILL_VERSION = "1.5.0"
+_MAX_UID_RETRIES = 5
+
+
+def make_artifact_path(
+    jd_id: int,
+    kind: Literal["resume", "cover-letter"],
+    parent_uid: str | None = None,
+) -> tuple[Path, ArtifactMeta]:
+    """Reserve a new artifact path + UID within the JD folder.
+
+    Does NOT write the tracker row (the workflow does that after the
+    generator succeeds). The caller passes the returned ArtifactMeta
+    into the generator or to finalize_docx after save.
+
+    Raises ProfileNameMissingError if first_name or last_name is unset.
+    """
+    profile = read_profile()
+    if not profile.first_name or not profile.last_name:
+        raise ProfileNameMissingError(
+            "Profile is missing first_name or last_name. "
+            "Set them in the dashboard sidebar."
+        )
+    folder = ensure_jd_folder(jd_id)
+    today = _date.today()
+    for _ in range(_MAX_UID_RETRIES):
+        uid = new_uid()
+        # Collision check across both tables.
+        if find_artifact_by_uid(uid) is None:
+            break
+    else:
+        raise UIDCollisionError(
+            f"5 consecutive UID generations all collided. "
+            f"Database may be saturated; investigate."
+        )
+    filename = artifact_filename(
+        first_name=profile.first_name,
+        last_name=profile.last_name,
+        kind=kind,
+        created_date=today,
+        uid=uid,
+    )
+    path = folder / filename
+    meta = ArtifactMeta(
+        artifact_uid=uid,
+        artifact_kind=kind,
+        jd_id=jd_id,
+        parent_uid=parent_uid,
+        created_at=datetime.utcnow().isoformat() + "Z",
+        skill_version=_SKILL_VERSION,
+    )
+    return path, meta
+
+
+def find_artifact_by_uid(uid: str):
+    """Re-export of tracker.query.get_artifact_by_uid for callers that
+    only want the outputs API."""
+    from scripts.tracker.query import get_artifact_by_uid
+    return get_artifact_by_uid(uid)
