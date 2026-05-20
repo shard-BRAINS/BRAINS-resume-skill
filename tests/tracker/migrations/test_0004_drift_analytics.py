@@ -70,37 +70,55 @@ def test_partial_unique_index_allows_multiple_non_baselines(fresh_db):
 
 
 def test_partial_unique_index_blocks_two_active_baselines(fresh_db):
-    """Two is_baseline=1 rows for the same candidate (both active) must fail."""
+    """Two is_baseline=1 rows for the same candidate (both active) must fail.
+
+    Migration 0005 rebuilt this index to scope on candidate_id (replacing the
+    original COALESCE(for_candidate, '') scoping), so rows must carry an
+    explicit candidate_id for the constraint to engage.
+    """
     import sqlite3
     conn = open_db()
     try:
         conn.execute(
-            "INSERT INTO resume_versions (template, focus_areas, created_at, for_candidate, is_baseline) "
-            "VALUES ('hybrid', '[]', '2026-05-01T00:00:00Z', 'Alice Example', 1)"
+            "INSERT INTO candidates (id, first_name, last_name, created_at) "
+            "VALUES (1, 'Alice', 'Example', '2026-05-01T00:00:00Z')"
+        )
+        conn.execute(
+            "INSERT INTO resume_versions (template, focus_areas, created_at, candidate_id, is_baseline) "
+            "VALUES ('hybrid', '[]', '2026-05-01T00:00:00Z', 1, 1)"
         )
         with pytest.raises(sqlite3.IntegrityError):
             conn.execute(
-                "INSERT INTO resume_versions (template, focus_areas, created_at, for_candidate, is_baseline) "
-                "VALUES ('hybrid', '[]', '2026-05-02T00:00:00Z', 'Alice Example', 1)"
+                "INSERT INTO resume_versions (template, focus_areas, created_at, candidate_id, is_baseline) "
+                "VALUES ('hybrid', '[]', '2026-05-02T00:00:00Z', 1, 1)"
             )
             conn.commit()
     finally:
         conn.close()
 
 
-def test_partial_unique_index_blocks_two_active_baselines_null_scope(fresh_db):
-    """Two is_baseline=1 rows for the NULL (profile-holder) scope must fail."""
+def test_partial_unique_index_blocks_two_active_baselines_distinct_candidate(fresh_db):
+    """Two is_baseline=1 rows for the same candidate_id must fail.
+
+    Migration 0005 rebuilt this index to scope on candidate_id. NULL
+    candidate_id values are treated as distinct by SQLite, so the uniqueness
+    constraint only engages for rows carrying an explicit candidate_id.
+    """
     import sqlite3
     conn = open_db()
     try:
         conn.execute(
-            "INSERT INTO resume_versions (template, focus_areas, created_at, for_candidate, is_baseline) "
-            "VALUES ('hybrid', '[]', '2026-05-01T00:00:00Z', NULL, 1)"
+            "INSERT INTO candidates (id, first_name, last_name, created_at) "
+            "VALUES (2, 'Bob', 'Example', '2026-05-01T00:00:00Z')"
+        )
+        conn.execute(
+            "INSERT INTO resume_versions (template, focus_areas, created_at, candidate_id, is_baseline) "
+            "VALUES ('hybrid', '[]', '2026-05-01T00:00:00Z', 2, 1)"
         )
         with pytest.raises(sqlite3.IntegrityError):
             conn.execute(
-                "INSERT INTO resume_versions (template, focus_areas, created_at, for_candidate, is_baseline) "
-                "VALUES ('hybrid', '[]', '2026-05-02T00:00:00Z', NULL, 1)"
+                "INSERT INTO resume_versions (template, focus_areas, created_at, candidate_id, is_baseline) "
+                "VALUES ('hybrid', '[]', '2026-05-02T00:00:00Z', 2, 1)"
             )
             conn.commit()
     finally:
