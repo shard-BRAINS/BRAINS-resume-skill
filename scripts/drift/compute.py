@@ -1,13 +1,14 @@
 """Drift compute — pure-Python per-class diff + weighted overall_pct.
 
-See spec §5 for the formula. Compute is split into per-class helpers:
+See spec §5 for the formula. This module owns the full drift computation:
+per-class diffing (set, identity, and list-of-object classes), the weighted
+overall_pct aggregator with null-class renormalisation, and the persistence
+wrapper that writes snapshots and drift scores to the tracker DB.
+
+Public API:
 - compute_class_diff(left, right, kind=...) — single class diff.
 - compute_drift_score(left_facts, right_facts) — full snapshot diff.
 - write_snapshot_and_compute_drift(artifact_uid, facts) — persistence wrapper.
-
-This file is grown incrementally across Tasks 4-9. This is the set-shape
-branch (Task 4); identity (Task 5), list-of-object (Task 6), and the
-overall_pct aggregator (Task 7) extend it.
 """
 from __future__ import annotations
 

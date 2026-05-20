@@ -41,7 +41,7 @@ CREATE TABLE baseline_history (
 ALTER TABLE resume_versions ADD COLUMN is_baseline INTEGER NOT NULL DEFAULT 0;
 
 CREATE UNIQUE INDEX ux_resume_versions_baseline_per_candidate
-  ON resume_versions(for_candidate)
+  ON resume_versions(COALESCE(for_candidate, ''))
   WHERE is_baseline = 1 AND archived_at IS NULL;
 """
 

@@ -155,5 +155,6 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "import") -> None
             return
         st.success(
             f"Imported baseline with artifact_uid={result['artifact_uid']!r}. "
-            "It is now the active baseline for this candidate."
+            "If this is the candidate's first resume, it is now their active "
+            "baseline; otherwise use the Drift tab to promote it."
         )

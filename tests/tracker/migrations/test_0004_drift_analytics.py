@@ -88,6 +88,25 @@ def test_partial_unique_index_blocks_two_active_baselines(fresh_db):
         conn.close()
 
 
+def test_partial_unique_index_blocks_two_active_baselines_null_scope(fresh_db):
+    """Two is_baseline=1 rows for the NULL (profile-holder) scope must fail."""
+    import sqlite3
+    conn = open_db()
+    try:
+        conn.execute(
+            "INSERT INTO resume_versions (template, focus_areas, created_at, for_candidate, is_baseline) "
+            "VALUES ('hybrid', '[]', '2026-05-01T00:00:00Z', NULL, 1)"
+        )
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute(
+                "INSERT INTO resume_versions (template, focus_areas, created_at, for_candidate, is_baseline) "
+                "VALUES ('hybrid', '[]', '2026-05-02T00:00:00Z', NULL, 1)"
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
 def test_partial_unique_index_ignores_archived(fresh_db):
     """An archived is_baseline=1 row does not block a new active is_baseline=1 row."""
     conn = open_db()
