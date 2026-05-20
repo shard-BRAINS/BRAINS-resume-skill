@@ -23,13 +23,17 @@ from scripts.dashboard.tabs import (
     resumes,
     workflows,
 )
-from scripts.tracker.models import Profile
-from scripts.tracker.profile import read_profile, write_profile
+from scripts.tracker.candidates import list_candidates
 
 
-def require_user_name() -> None:
-    """If profile.json is missing first_name or last_name, surface a
-    one-shot modal.
+def require_candidate() -> None:
+    """If no candidate exists yet, surface a one-shot modal directing the
+    user to create their first candidate via the sidebar.
+
+    Under Approach B, every artifact is owned by a candidate, so the
+    dashboard needs at least one candidate before it is usable. The
+    sidebar already provides a '+ New candidate' expander; this modal
+    simply blocks and points the user there.
 
     Skipped when there is no active Streamlit script-run context (e.g.
     during unit-test imports in bare mode) to avoid StreamlitAPIException.
@@ -39,29 +43,21 @@ def require_user_name() -> None:
     if get_script_run_ctx() is None:
         return
 
-    profile = read_profile()
-    if profile.first_name and profile.last_name:
+    if list_candidates():
         return
 
-    @st.dialog("Set your name to continue")
-    def _name_modal():
+    @st.dialog("Create a candidate to continue")
+    def _candidate_modal():
         st.write(
-            "BRAINS Resume uses your name in every artifact filename "
-            "(e.g. `Matthew_Gell_resume_2026-05-19_KX7M9Q.docx`). "
-            "Please set it once."
+            "BRAINS Resume organises every artifact under a candidate. "
+            "Use the **+ New candidate** expander in the sidebar to create "
+            "your first one — the candidate's name is used in every "
+            "artifact filename "
+            "(e.g. `Matthew_Gell_resume_2026-05-20_KX7M9Q.docx`)."
         )
-        first = st.text_input("First name", value=profile.first_name or "")
-        last = st.text_input("Last name", value=profile.last_name or "")
-        if st.button("Save", type="primary"):
-            if first.strip() and last.strip():
-                profile.first_name = first.strip()
-                profile.last_name = last.strip()
-                write_profile(profile)
-                st.rerun()
-            else:
-                st.error("Both first and last names are required.")
+        st.info("Open the sidebar on the left and expand **+ New candidate**.")
 
-    _name_modal()
+    _candidate_modal()
 
 
 def main() -> None:
@@ -73,7 +69,7 @@ def main() -> None:
     )
     inject_brand_css()
     render_sidebar()
-    require_user_name()
+    require_candidate()
 
     st.title("BRAINS Resume Dashboard")
 
