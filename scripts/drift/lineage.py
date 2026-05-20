@@ -28,12 +28,12 @@ def _load_snapshot_facts(conn, artifact_uid: str) -> Optional[dict]:
 
 def _resolve_candidate_scope(conn, artifact_uid: str) -> dict:
     row = conn.execute(
-        "SELECT for_candidate FROM resume_versions WHERE artifact_uid=?",
+        "SELECT candidate_id FROM resume_versions WHERE artifact_uid=?",
         (artifact_uid,),
     ).fetchone()
     if row is None:
-        return {"for_candidate": None}
-    return {"for_candidate": row[0]}
+        return {"candidate_id": None}
+    return {"candidate_id": row[0]}
 
 
 def get_parent_snapshot(artifact_uid: str) -> Optional[dict]:
@@ -79,13 +79,13 @@ def get_baseline_snapshot(artifact_uid: str) -> Optional[dict]:
     conn = open_db()
     try:
         scope = _resolve_candidate_scope(conn, artifact_uid)
-        for_candidate = scope["for_candidate"]
+        candidate_id = scope["candidate_id"]
         row = conn.execute(
             """SELECT artifact_uid FROM resume_versions
                WHERE is_baseline = 1 AND archived_at IS NULL
-                 AND ((? IS NULL AND for_candidate IS NULL) OR for_candidate = ?)
+                 AND candidate_id = ?
                LIMIT 1""",
-            (for_candidate, for_candidate),
+            (candidate_id,),
         ).fetchone()
         if row is None:
             return None
@@ -95,21 +95,21 @@ def get_baseline_snapshot(artifact_uid: str) -> Optional[dict]:
 
 
 def get_candidate_lineage(scope: dict) -> list:
-    """Return all non-archived resume_versions rows for the given for_candidate
+    """Return all non-archived resume_versions rows for the given candidate_id
     scope, sorted by created_at ascending."""
     from scripts.tracker.models import ResumeVersion
     conn = open_db()
     try:
-        for_candidate = scope.get("for_candidate")
+        candidate_id = scope.get("candidate_id")
         rows = conn.execute(
             """SELECT id, file_path, template, focus_areas, parent_id,
                       tagged_jd_id, created_at, archived_at, artifact_uid,
                       parent_uid, for_candidate
                FROM resume_versions
                WHERE archived_at IS NULL
-                 AND ((? IS NULL AND for_candidate IS NULL) OR for_candidate = ?)
+                 AND candidate_id = ?
                ORDER BY created_at ASC""",
-            (for_candidate, for_candidate),
+            (candidate_id,),
         ).fetchall()
     finally:
         conn.close()

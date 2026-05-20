@@ -22,10 +22,11 @@ def promote_baseline(artifact_uid: str, reason: str) -> None:
     """Set the given artifact as the active baseline for its candidate scope.
 
     Single transaction:
-      1. Resolve candidate scope from the artifact_uid.
+      1. Resolve candidate scope (candidate_id) from the artifact_uid.
       2. UPDATE: clear is_baseline on any existing active baseline in scope.
       3. UPDATE: set is_baseline=1 on this artifact.
-      4. INSERT into baseline_history (for_candidate, artifact_uid, promoted_at, reason).
+      4. INSERT into baseline_history (for_candidate, candidate_id, artifact_uid,
+         promoted_at, reason). for_candidate is retained as a denormalized cache.
       5. Recompute vs_baseline_score for every non-archived row in scope:
          - The new baseline gets vs_baseline_score = NULL.
          - Every other row gets a fresh compute against the new baseline's snapshot.
@@ -35,30 +36,33 @@ def promote_baseline(artifact_uid: str, reason: str) -> None:
     conn = open_db()
     try:
         scope_row = conn.execute(
-            "SELECT for_candidate FROM resume_versions WHERE artifact_uid=?",
+            "SELECT candidate_id, for_candidate FROM resume_versions "
+            "WHERE artifact_uid=?",
             (artifact_uid,),
         ).fetchone()
         if scope_row is None:
             raise ValueError(f"No resume_versions row for artifact_uid={artifact_uid!r}")
-        for_candidate = scope_row[0]
+        candidate_id = scope_row[0]
+        for_candidate = scope_row[1]
 
         # Step 2: clear existing active baseline(s) in scope.
         conn.execute(
             "UPDATE resume_versions SET is_baseline=0 "
             "WHERE is_baseline=1 AND archived_at IS NULL "
-            "  AND ((? IS NULL AND for_candidate IS NULL) OR for_candidate = ?)",
-            (for_candidate, for_candidate),
+            "  AND candidate_id = ?",
+            (candidate_id,),
         )
         # Step 3: set is_baseline on target.
         conn.execute(
             "UPDATE resume_versions SET is_baseline=1 WHERE artifact_uid=?",
             (artifact_uid,),
         )
-        # Step 4: audit row.
+        # Step 4: audit row. for_candidate kept as a denormalized cache.
         conn.execute(
-            "INSERT INTO baseline_history (for_candidate, artifact_uid, promoted_at, reason) "
-            "VALUES (?, ?, ?, ?)",
-            (for_candidate, artifact_uid, _now_iso(), reason),
+            "INSERT INTO baseline_history "
+            "(for_candidate, candidate_id, artifact_uid, promoted_at, reason) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (for_candidate, candidate_id, artifact_uid, _now_iso(), reason),
         )
 
         # Step 5: recompute vs_baseline_score for every non-archived row in scope.
@@ -66,8 +70,8 @@ def promote_baseline(artifact_uid: str, reason: str) -> None:
         rows = conn.execute(
             "SELECT artifact_uid FROM resume_versions "
             "WHERE archived_at IS NULL "
-            "  AND ((? IS NULL AND for_candidate IS NULL) OR for_candidate = ?)",
-            (for_candidate, for_candidate),
+            "  AND candidate_id = ?",
+            (candidate_id,),
         ).fetchall()
         now = _now_iso()
         for (uid,) in rows:
