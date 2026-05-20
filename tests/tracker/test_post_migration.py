@@ -108,6 +108,43 @@ def test_backfill_assigns_distinct_candidate_for_for_candidate_rows(isolated):
     assert rv[1] == "Mathilda Gell"  # for_candidate cache preserved
 
 
+def test_backfill_handles_profile_holder_also_a_for_candidate(isolated):
+    """Worst case: the profile holder appears as a for_candidate value too,
+    with multiple is_baseline=1 rows that all merge onto one candidate.
+    open_db() must succeed and leave exactly one baseline per candidate."""
+    _write_legacy_profile(isolated / "profile.json", first_name="Mathilda", last_name="Gell")
+    from scripts.tracker.db import open_db
+    conn = open_db()  # creates schema + seed candidate "Mathilda Gell"
+    try:
+        # Two resume_versions rows tagged for_candidate="Mathilda Gell",
+        # both is_baseline=1 — as migration 0004's per-scope backfill could leave.
+        for ts in ("2026-05-01T00:00:00Z", "2026-05-02T00:00:00Z"):
+            conn.execute(
+                "INSERT INTO resume_versions (template, focus_areas, for_candidate, "
+                "is_baseline, created_at) VALUES ('hybrid', '[]', 'Mathilda Gell', 1, ?)",
+                (ts,),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    # Re-open: backfill must NOT crash on the unique index.
+    conn = open_db()
+    try:
+        rows = conn.execute(
+            "SELECT candidate_id, is_baseline FROM resume_versions "
+            "WHERE for_candidate='Mathilda Gell' ORDER BY created_at"
+        ).fetchall()
+        # Both rows linked to the same candidate.
+        cids = {r[0] for r in rows}
+        assert len(cids) == 1 and None not in cids
+        # Exactly one is still is_baseline=1.
+        assert sum(r[1] for r in rows) == 1
+        # The oldest is the surviving baseline.
+        assert rows[0][1] == 1
+    finally:
+        conn.close()
+
+
 def test_backfill_is_idempotent(isolated):
     _write_legacy_profile(isolated / "profile.json")
     from scripts.tracker.db import open_db
