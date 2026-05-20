@@ -4,6 +4,30 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## v2.0.0 — 2026-05-20
+
+### Breaking
+- `Profile` dataclass is trimmed to `{active_candidate_id, log_handoffs}`. Per-user fields (first_name, last_name, focus_areas, healthy_weekly_rate, pacing_notes) now live on the `Candidate` row pointed to by `active_candidate_id`.
+- `make_artifact_path` no longer raises `ProfileNameMissingError`; instead raises `NoActiveCandidateError` when no candidate is selected.
+
+### Added
+- `candidates` table (migration 0005) — first-class multi-candidate support.
+- `scripts.tracker.candidates` module — CRUD + active-candidate accessor.
+- Dashboard sidebar candidate picker; per-tab scoping; JD analyzer scoped to active candidate's focus areas.
+- DOCX custom property `BrainsCandidateId` records the candidate row id.
+
+### Changed
+- The v1.7.0 drift subsystem (`scripts/drift/`, the Drift tab, the Overview drift tile, the Resumes-tab drift columns, `/brains-import`) now scopes candidates by `candidate_id` instead of the `for_candidate` text column.
+- `baseline_history` (added in v1.7.0) gains a `candidate_id` column; the `is_baseline` partial unique index is rebuilt on `candidate_id`.
+
+### Migration
+- Existing v1.5/1.6/1.7 installs are migrated automatically on first `open_db()` after upgrade (migration 0005 + the post-migration backfill hook):
+  - The seed candidate is created from the legacy profile.json fields.
+  - All existing resumes, cover letters, JDs, and baseline-history rows are linked to the seed candidate.
+  - Rows with `for_candidate` populated (v1.6+) link to a per-name candidate created on first read.
+  - profile.json is rewritten to the trimmed shape; legacy fields are dropped.
+- The Approach-C `for_candidate` columns are RETAINED as a denormalized cache for data export and provenance.
+
 ## v1.7.0 — 2026-05-20
 
 ### Added
