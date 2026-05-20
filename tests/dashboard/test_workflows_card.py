@@ -25,143 +25,134 @@ def test_collect_args_all_none_returns_empty():
     assert collect_args([None, None]) == []
 
 
-def test_create_workflow_passes_for_candidate_to_artifact_meta(monkeypatch, tmp_path):
-    """When the user fills the for_candidate text input, it lands on ArtifactMeta."""
-    from scripts.dashboard.workflows import create as create_mod
-    from scripts.outputs.tagging import ArtifactMeta
-
+def _isolate_tracker(monkeypatch, tmp_path):
+    """Point the tracker DB / profile / outputs at tmp_path and return an
+    active candidate id."""
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
     monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
 
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    cid = create_candidate(
+        first_name="Mathilda", last_name="Gell",
+        focus_areas=[], healthy_weekly_rate=None, pacing_notes=None,
+    )
+    set_active_candidate(cid)
+    return cid
+
+
+def test_create_workflow_uses_active_candidate(monkeypatch, tmp_path):
+    """create._resolve_target stamps the active candidate's id onto the meta."""
+    cid = _isolate_tracker(monkeypatch, tmp_path)
+    from scripts.dashboard.workflows import create as create_mod
+    from scripts.outputs.tagging import ArtifactMeta
 
     captured = {}
-    def fake_make_artifact_path(jd_id, kind, parent_uid=None, for_candidate=None):
-        captured["for_candidate"] = for_candidate
+    def fake_make_artifact_path(jd_id, kind, parent_uid=None, candidate_id=None):
+        captured["candidate_id"] = candidate_id
         path = tmp_path / "fake.docx"
         meta = ArtifactMeta(
             artifact_uid="ABC123", artifact_kind=kind,
             jd_id=jd_id, parent_uid=parent_uid,
             created_at="2026-05-19T00:00:00Z", skill_version="1.5.0",
-            for_candidate=for_candidate,
+            candidate_id=candidate_id,
         )
         return path, meta
 
     monkeypatch.setattr(create_mod, "make_artifact_path", fake_make_artifact_path)
-    target_path, meta = create_mod._resolve_target(
-        jd_id=1, for_candidate="Mathilda Gell",
-    )
-    assert captured["for_candidate"] == "Mathilda Gell"
-    assert meta.for_candidate == "Mathilda Gell"
+    target_path, meta = create_mod._resolve_target(jd_id=1)
+    assert captured["candidate_id"] == cid
+    assert meta.candidate_id == cid
 
 
-def test_edit_workflow_passes_for_candidate_to_artifact_meta(monkeypatch, tmp_path):
-    """edit._resolve_target threads for_candidate into make_artifact_path + meta."""
+def test_edit_workflow_uses_active_candidate(monkeypatch, tmp_path):
+    """edit._resolve_target stamps the active candidate's id onto the meta."""
+    cid = _isolate_tracker(monkeypatch, tmp_path)
     from scripts.dashboard.workflows import edit as edit_mod
     from scripts.outputs.tagging import ArtifactMeta
 
-    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
-    monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
-
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
-
     captured = {}
-    def fake_make_artifact_path(jd_id, kind, parent_uid=None, for_candidate=None):
-        captured["for_candidate"] = for_candidate
+    def fake_make_artifact_path(jd_id, kind, parent_uid=None, candidate_id=None):
+        captured["candidate_id"] = candidate_id
         path = tmp_path / "fake.docx"
         meta = ArtifactMeta(
             artifact_uid="EDT123", artifact_kind=kind,
             jd_id=jd_id, parent_uid=parent_uid,
             created_at="2026-05-19T00:00:00Z", skill_version="1.5.0",
-            for_candidate=for_candidate,
+            candidate_id=candidate_id,
         )
         return path, meta
 
     monkeypatch.setattr(edit_mod, "make_artifact_path", fake_make_artifact_path)
-    target_path, meta = edit_mod._resolve_target(
-        jd_id=1, parent_uid="SRC001", for_candidate="Mathilda Gell",
-    )
-    assert captured["for_candidate"] == "Mathilda Gell"
-    assert meta.for_candidate == "Mathilda Gell"
+    target_path, meta = edit_mod._resolve_target(jd_id=1, parent_uid="SRC001")
+    assert captured["candidate_id"] == cid
+    assert meta.candidate_id == cid
 
 
-def test_tailor_workflow_passes_for_candidate_to_artifact_meta(monkeypatch, tmp_path):
-    """tailor._resolve_target threads for_candidate into make_artifact_path + meta."""
+def test_tailor_workflow_uses_active_candidate(monkeypatch, tmp_path):
+    """tailor._resolve_target stamps the active candidate's id onto the meta."""
+    cid = _isolate_tracker(monkeypatch, tmp_path)
     from scripts.dashboard.workflows import tailor as tailor_mod
     from scripts.outputs.tagging import ArtifactMeta
 
-    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
-    monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
-
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
-
     captured = {}
-    def fake_make_artifact_path(jd_id, kind, parent_uid=None, for_candidate=None):
-        captured["for_candidate"] = for_candidate
+    def fake_make_artifact_path(jd_id, kind, parent_uid=None, candidate_id=None):
+        captured["candidate_id"] = candidate_id
         path = tmp_path / "fake.docx"
         meta = ArtifactMeta(
             artifact_uid="TLR123", artifact_kind=kind,
             jd_id=jd_id, parent_uid=parent_uid,
             created_at="2026-05-19T00:00:00Z", skill_version="1.5.0",
-            for_candidate=for_candidate,
+            candidate_id=candidate_id,
         )
         return path, meta
 
     monkeypatch.setattr(tailor_mod, "make_artifact_path", fake_make_artifact_path)
-    target_path, meta = tailor_mod._resolve_target(
-        jd_id=1, parent_uid="SRC001", for_candidate="Mathilda Gell",
-    )
-    assert captured["for_candidate"] == "Mathilda Gell"
-    assert meta.for_candidate == "Mathilda Gell"
+    target_path, meta = tailor_mod._resolve_target(jd_id=1, parent_uid="SRC001")
+    assert captured["candidate_id"] == cid
+    assert meta.candidate_id == cid
 
 
-def test_cover_letter_workflow_passes_for_candidate_to_artifact_meta(monkeypatch, tmp_path):
-    """cover_letter._resolve_target threads for_candidate into make_artifact_path + meta."""
+def test_cover_letter_workflow_uses_active_candidate(monkeypatch, tmp_path):
+    """cover_letter._resolve_target stamps the active candidate's id onto the meta."""
+    cid = _isolate_tracker(monkeypatch, tmp_path)
     from scripts.dashboard.workflows import cover_letter as cl_mod
     from scripts.outputs.tagging import ArtifactMeta
 
-    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
-    monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
-
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
-
     captured = {}
-    def fake_make_artifact_path(jd_id, kind, parent_uid=None, for_candidate=None):
-        captured["for_candidate"] = for_candidate
+    def fake_make_artifact_path(jd_id, kind, parent_uid=None, candidate_id=None):
+        captured["candidate_id"] = candidate_id
         path = tmp_path / "fake.docx"
         meta = ArtifactMeta(
             artifact_uid="CL123", artifact_kind=kind,
             jd_id=jd_id, parent_uid=parent_uid,
             created_at="2026-05-19T00:00:00Z", skill_version="1.5.0",
-            for_candidate=for_candidate,
+            candidate_id=candidate_id,
         )
         return path, meta
 
     monkeypatch.setattr(cl_mod, "make_artifact_path", fake_make_artifact_path)
-    target_path, meta = cl_mod._resolve_target(
-        jd_id=1, parent_uid="SRC001", for_candidate="Mathilda Gell",
-    )
-    assert captured["for_candidate"] == "Mathilda Gell"
-    assert meta.for_candidate == "Mathilda Gell"
+    target_path, meta = cl_mod._resolve_target(jd_id=1, parent_uid="SRC001")
+    assert captured["candidate_id"] == cid
+    assert meta.candidate_id == cid
     assert meta.artifact_kind == "cover-letter"
 
 
-def test_jd_analyze_persists_jd_and_analysis_to_folder(monkeypatch, tmp_path):
+def test_create_workflow_raises_when_no_active_candidate(monkeypatch, tmp_path):
+    """create._resolve_target raises NoActiveCandidateError with no active candidate."""
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
     monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
+    from scripts.dashboard.workflows import create as create_mod
+    from scripts.tracker.add import NoActiveCandidateError
+    import pytest
+
+    with pytest.raises(NoActiveCandidateError):
+        create_mod._resolve_target(jd_id=0)
+
+
+def test_jd_analyze_persists_jd_and_analysis_to_folder(monkeypatch, tmp_path):
+    _isolate_tracker(monkeypatch, tmp_path)
     from scripts.dashboard.workflows.jd_analyze import persist_analyzed_jd
     findings = {"role_fit_score": 7, "red_flags": []}
     jd_id, folder = persist_analyzed_jd(
