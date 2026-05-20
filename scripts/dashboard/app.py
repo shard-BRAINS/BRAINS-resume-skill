@@ -4,8 +4,9 @@ Run via the `brains-resume-dashboard` CLI entry point (see launch.py)
 which invokes `streamlit run scripts/dashboard/app.py`.
 
 Single-page top-tab layout matching the user's TSE Tools visual reference.
-Seven tabs: Overview, Resumes, Cover Letters, JDs, Applications, Analytics,
-Pacing. Persistent sidebar for profile editing. BRAINS Incubator branded.
+Nine tabs: Overview, Resumes, Cover Letters, JDs, Applications, Analytics,
+Pacing, Workflows, Drift. Persistent sidebar for profile editing.
+BRAINS Incubator branded.
 """
 import streamlit as st
 
@@ -15,6 +16,7 @@ from scripts.dashboard.tabs import (
     analytics,
     applications,
     cover_letters,
+    drift as drift_tab,
     jds,
     overview,
     pacing,
@@ -84,6 +86,7 @@ def main() -> None:
         "Analytics",
         "Pacing",
         "Workflows",
+        "Drift",
     ])
 
     with tabs[0]:
@@ -102,6 +105,8 @@ def main() -> None:
         pacing.render()
     with tabs[7]:
         workflows.render()
+    with tabs[8]:
+        drift_tab.render()
 
 
 main()
