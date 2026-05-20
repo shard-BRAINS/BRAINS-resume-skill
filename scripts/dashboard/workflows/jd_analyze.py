@@ -7,7 +7,7 @@ from typing import Optional
 import streamlit as st
 
 from scripts.dashboard.workflows._card import handoff_button
-from scripts.tracker.profile import read_profile
+from scripts.tracker.candidates import get_active_candidate
 from scripts.validators.jd_analyzer import jd_analyze
 
 
@@ -23,7 +23,8 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "jda") -> None:
             st.error("Paste the JD text first (in-dashboard analyzer needs raw text).")
         else:
             try:
-                focus_areas = read_profile().focus_areas or []
+                active = get_active_candidate()
+                focus_areas = active.focus_areas if active else []
             except Exception:
                 focus_areas = []
             try:

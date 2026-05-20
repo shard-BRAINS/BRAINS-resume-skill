@@ -5,9 +5,18 @@ import pandas as pd
 import streamlit as st
 
 from scripts.dashboard.data import cached_list_applications
+from scripts.tracker.candidates import get_active_candidate
 
 
 def render() -> None:
+    active = get_active_candidate()
+    if active is None:
+        st.info(
+            "No active candidate. Select or create one in the sidebar to see "
+            "applications."
+        )
+        return
+
     if st.button("↻ Refresh", key="apps_refresh"):
         cached_list_applications.clear()
 

@@ -68,3 +68,29 @@ def test_overview_includes_drift_trajectory_tile(monkeypatch, tmp_path):
     assert summary["headline_pct"] is not None
     assert isinstance(summary["sparkline"], list)
     assert len(summary["sparkline"]) >= 1
+
+
+@pytest.fixture
+def isolated(monkeypatch, tmp_path):
+    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
+    return tmp_path
+
+
+def test_overview_counts_scope_to_active_candidate(isolated):
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    from scripts.tracker.add import add_jd
+
+    matthew = create_candidate("Matthew", "Gell", [], None, None)
+    mathilda = create_candidate("Mathilda", "Gell", [], None, None)
+    set_active_candidate(matthew)
+    add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+
+    set_active_candidate(mathilda)
+    from scripts.dashboard.tabs.overview import _summary_counts
+    counts = _summary_counts()
+    assert counts["jds"] == 0
+
+    set_active_candidate(matthew)
+    counts = _summary_counts()
+    assert counts["jds"] == 1

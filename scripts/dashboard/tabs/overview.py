@@ -28,29 +28,49 @@ from scripts.dashboard.prep.trends import (
     interview_count_last_n_days,
 )
 from scripts.dashboard.style import INCUBATOR_BLUE
-from scripts.tracker.profile import read_profile
+from scripts.tracker.candidates import get_active_candidate
 
 
 INTERVIEW_EVENT_TYPES = {"phone_screen", "first_round", "second_round", "take_home"}
 TERMINAL_OUTCOMES = {"offer", "rejection", "withdrew"}
 
 
+def _summary_counts() -> dict:
+    """Return active-candidate-scoped headline counts for the Overview tab.
+
+    Pure helper (no Streamlit) so it can be unit-tested directly. The tracker
+    query functions auto-scope to the active candidate (Task 7), so no
+    candidate_id argument is needed here.
+    """
+    from scripts.tracker.query import list_applications, list_jds
+    return {
+        "jds": len(list_jds()),
+        "applications": len(list_applications()),
+    }
+
+
 def render() -> None:
     """Render the Overview tab content."""
+    active = get_active_candidate()
+    if active is None:
+        st.info(
+            "No active candidate. Select or create one in the sidebar to see "
+            "the overview."
+        )
+        return
+
     if st.button("↻ Refresh", key="overview_refresh"):
         cached_list_applications.clear()
         cached_weekly_summary.clear()
 
     rows = cached_list_applications()
     weekly = cached_weekly_summary()
-    profile = read_profile()
     now = datetime.now()
 
-    # Pre-Approach-B: scope is the profile holder. The sidebar candidate
-    # selector can later populate "for_candidate" with a chosen name.
+    # Scope is the active candidate; the tracker query layer auto-scopes.
     scope = {"for_candidate": None}
 
-    _render_summary_tiles(rows, weekly, profile, now)
+    _render_summary_tiles(rows, weekly, active, now)
     render_drift_tile(scope)
     st.markdown("---")
     _render_sparkline_cards(rows, now)
@@ -61,7 +81,7 @@ def render() -> None:
     _render_twin_panels(rows, now)
 
 
-def _render_summary_tiles(rows, weekly, profile, now) -> None:
+def _render_summary_tiles(rows, weekly, candidate, now) -> None:
     """Five-tile row: Applications / Callbacks / Interviews / Offers / Pacing."""
     total_apps = len(rows)
     callbacks_lifetime = sum(1 for r in rows if r.latest_outcome == "callback")
@@ -76,7 +96,7 @@ def _render_summary_tiles(rows, weekly, profile, now) -> None:
         / total_apps * 100
     ) if total_apps else 0
 
-    target = profile.healthy_weekly_rate
+    target = candidate.healthy_weekly_rate if candidate else None
     pacing_label = f"{apps_this_week}"
     if target is not None:
         pacing_label = f"{apps_this_week} / {target}"
