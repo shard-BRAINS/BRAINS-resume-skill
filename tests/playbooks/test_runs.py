@@ -53,11 +53,13 @@ def test_list_active_runs_excludes_completed_and_abandoned(isolated):
 
 
 def test_set_run_jd(isolated):
+    from scripts.tracker.add import add_jd
     cid = create_candidate("A", "B", [], None, None)
     set_active_candidate(cid)
+    jd = add_jd("manual", None, "Acme", "Eng", "x", {}, [], [])
     run_id = start_run(cid, "apply_to_job")
-    set_run_jd(run_id, 42)
-    assert get_run(run_id).jd_id == 42
+    set_run_jd(run_id, jd)
+    assert get_run(run_id).jd_id == jd
 
 
 def test_advance_run_increments_step(isolated):

@@ -77,15 +77,9 @@ def list_active_runs(candidate_id: int) -> List[PlaybookRun]:
 
 
 def set_run_jd(run_id: int, jd_id: int) -> None:
-    """Attach a JD to the run (called when the analyze-JD step produces one).
-
-    Foreign-key enforcement is turned off for this connection so that jd_id
-    can be set speculatively (e.g. during tests or before the JD row is
-    committed by the calling workflow).
-    """
+    """Attach a JD to the run (called when the analyze-JD step produces one)."""
     conn = open_db()
     try:
-        conn.execute("PRAGMA foreign_keys = OFF")
         conn.execute(
             "UPDATE playbook_runs SET jd_id=?, updated_at=? WHERE id=?",
             (jd_id, _now_iso(), run_id),
