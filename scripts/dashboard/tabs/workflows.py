@@ -10,6 +10,7 @@ from scripts.dashboard.workflows import (
     create,
     disclosure,
     edit,
+    import_,
     linkedin,
     linkedin_improve,
     precheck,
@@ -76,6 +77,7 @@ def render() -> None:
     cols = st.columns(3)
     _render_card(cols[0], "cover-letter",  "💌", "Cover letter",   "Generate a cover letter for a JD", cover_letter)
     _render_card(cols[1], "check",         "✅", "Final check",    "ATS + integrity + bias + AI-signal composite", phase3.get("check"))
+    _render_card(cols[2], "import",        "📂", "Import",         "Import an existing resume as a baseline", import_)
 
     st.subheader("3 · Track & LinkedIn")
     cols = st.columns(3)
