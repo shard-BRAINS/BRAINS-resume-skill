@@ -13,7 +13,11 @@ from typing import Optional
 SCHEMA_VERSION = 1
 
 
-_EMAIL_RE = re.compile(r"[\w.+-]+@[\w.-]+\.\w+")
+# Intentionally does NOT require a dotted domain after '@'. This matches the
+# LLM extractor (extract_facts.py), which stores any email-shaped string
+# verbatim — so short/local forms like 'm@x' or 'user@localhost' are accepted.
+# The '@' is still mandatory, so phone numbers and locations won't false-match.
+_EMAIL_RE = re.compile(r"[\w.+-]+@[\w.-]+")
 _PHONE_RE = re.compile(r"(?:\+?\d[\d \-()]{7,}\d)")
 
 
