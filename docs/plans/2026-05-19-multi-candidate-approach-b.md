@@ -2,11 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Prerequisite:** Approach C must be merged first — this plan backfills `candidate_id` from the `for_candidate` text column that Approach C introduced. See `docs/plans/2026-05-19-multi-candidate-approach-c.md`.
+**Prerequisites (both merged to `main`):**
+- Approach C (v1.6.0) — introduced the `for_candidate` text column this plan backfills `candidate_id` from. See `docs/plans/2026-05-19-multi-candidate-approach-c.md`.
+- Resume Drift Analytics (v1.7.0) — shipped migration `0004_drift_analytics.py`, the `baseline_history` table, the `resume_versions.is_baseline` column, and the whole `scripts/drift/` package which scopes candidates by `for_candidate` text. This plan therefore claims migration **0005** and includes tasks to re-scope the drift subsystem onto `candidate_id`.
+
+> **This plan was revised 2026-05-20** after v1.7.0 shipped. The revision: migration renumbered 0004→0005; `baseline_history` added to the migration + backfill; the `is_baseline` partial unique index rebuilt on `candidate_id`; new Tasks 14-15 re-scope the `scripts/drift/` package and its dashboard surfaces; Task 6 reconciles the v1.7.0 auto-`is_baseline` logic; Task 11 also covers `/brains-import`; the end-to-end smoke is now Task 16.
 
 **Goal:** Replace the single-profile model with a first-class `candidates` table so the skill can hold and switch between multiple full candidate profiles (each with their own name, focus areas, healthy weekly rate, and pacing notes), and so the dashboard can show per-candidate views.
 
-**Architecture:** New `candidates` table; new `candidate_id INTEGER` FK column on `jds`, `resume_versions`, `cover_letters`. `profile.json` shrinks to `{active_candidate_id, log_handoffs}` — the existing per-user fields (`first_name`, `last_name`, `focus_areas`, `healthy_weekly_rate`, `pacing_notes`) migrate into the first `candidates` row. The dashboard sidebar grows a candidate picker; workflow cards drop the `for_candidate` text input in favour of the active candidate. A post-migration hook in `db.py` performs idempotent backfill the first time a 0004-or-later schema opens against a pre-B profile.json.
+**Architecture:** New `candidates` table; new `candidate_id INTEGER` FK column on `jds`, `resume_versions`, `cover_letters`, `baseline_history`. `profile.json` shrinks to `{active_candidate_id, log_handoffs}` — the existing per-user fields (`first_name`, `last_name`, `focus_areas`, `healthy_weekly_rate`, `pacing_notes`) migrate into the first `candidates` row. The dashboard sidebar grows a candidate picker; workflow cards drop the `for_candidate` text input in favour of the active candidate. A post-migration hook in `db.py` performs idempotent backfill the first time a 0005-or-later schema opens against a pre-B profile.json. The `scripts/drift/` package (lineage walkers, baseline promotion, sparkline prep, Drift tab) switches its candidate-scope predicate from `for_candidate` text to `candidate_id`.
 
 **Tech Stack:** Python 3.14, SQLite (forward-only migrations + idempotent post-migration backfill), python-docx, reportlab, pytest, Streamlit.
 
@@ -16,8 +20,9 @@
 - Per-candidate output directories. `BRAINS_OUTPUTS_DIR` stays installation-wide; per-candidate scoping happens via JD folders, which are unique anyway.
 
 **Pre-flight:**
-- Approach C is merged to `main` and the `for_candidate` column is populated on at least one row in the user's local tracker (so the backfill path can be exercised on real data).
-- Run the full suite once: all green on `main`.
+- Approach C (v1.6.0) and Resume Drift Analytics (v1.7.0) are both merged to `main`. The migrations directory has `0001`–`0004`; this plan adds `0005`.
+- Run the full suite once for a baseline: `"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest -q` — expect 2 pre-existing baseline failures (`tests/dashboard/test_app_workflows_tab.py::test_workflows_tab_has_three_subheaders`, `tests/tracker/test_query.py::test_weekly_summary_pacing_none_when_no_target`). Those are out of scope; do not fix them. No other failures should exist before starting.
+- Create a feature branch `feature/multi-candidate-approach-b` from `main` before Task 1.
 - Back up `~/.brains-resume/tracker.db` and `~/.brains-resume/profile.json` before starting. The backfill is idempotent but the migration itself is forward-only.
 
 ---
@@ -26,7 +31,7 @@
 
 | File | Action | Responsibility |
 |---|---|---|
-| `scripts/tracker/migrations/0004_candidates_table.py` | **create** | Create `candidates` table; add nullable `candidate_id INTEGER` FK to `jds`, `resume_versions`, `cover_letters`; add index on each |
+| `scripts/tracker/migrations/0005_candidates_table.py` | **create** | Create `candidates` table; add nullable `candidate_id INTEGER` FK to `jds`, `resume_versions`, `cover_letters`, `baseline_history`; add index on each; rebuild the `is_baseline` partial unique index on `candidate_id` |
 | `scripts/tracker/db.py` | modify | After running migrations, call a new idempotent `_run_post_migration_hooks()` that triggers the B-backfill once |
 | `scripts/tracker/_post_migration.py` | **create** | The idempotent backfill: read legacy `profile.json`, create the seed candidate row, link all artifacts to it (or to a new candidate by name from `for_candidate`), rewrite `profile.json` to the trimmed shape |
 | `scripts/tracker/models.py` | modify | Add `Candidate` dataclass; trim `Profile` to `{active_candidate_id, log_handoffs}`; add `candidate_id: Optional[int] = None` to `ResumeVersion`, `CoverLetter`, `JD` |
@@ -48,11 +53,22 @@
 | `scripts/dashboard/tabs/cover_letters.py` | modify | Scope listing by active candidate |
 | `scripts/dashboard/tabs/jds.py` | modify | Scope listing by active candidate |
 | `scripts/validators/jd_analyzer.py` | modify | Role-fit scoring uses active candidate's `focus_areas`, not profile.focus_areas |
+| `scripts/drift/lineage.py` | modify | `_resolve_candidate_scope` returns `{"candidate_id": ...}`; `get_baseline_snapshot` + `get_candidate_lineage` SQL predicates switch from `for_candidate` to `candidate_id` |
+| `scripts/drift/baseline.py` | modify | `promote_baseline` resolves + scopes by `candidate_id`; `baseline_history` insert writes `candidate_id` |
+| `scripts/dashboard/workflows/import_.py` | modify | `/brains-import` drops the "For candidate" text input; the imported baseline is linked to the active candidate (or a candidate the importer creates) |
+| `scripts/dashboard/tabs/drift.py` | modify | Drift tab builds a `{"candidate_id": ...}` scope from the active candidate, not `{"for_candidate": None}` |
+| `scripts/dashboard/prep/drift_sparkline.py` | modify | Pass-through of the `candidate_id`-keyed scope dict; no logic change beyond the key |
 | `references/workflows/create.md` | modify | Replace "For candidate" instruction with "Confirm the active candidate" instruction |
 | `references/workflows/edit.md` | modify | Same |
 | `references/workflows/tailor.md` | modify | Same |
 | `references/workflows/cover-letter.md` | modify | Same |
-| `tests/tracker/migrations/test_0004_candidates_table.py` | **create** | Schema-level migration tests |
+| `references/workflows/import.md` | modify | Replace the "For candidate" step with active-candidate confirmation |
+| `tests/tracker/migrations/test_0005_candidates_table.py` | **create** | Schema-level migration tests |
+| `tests/tracker/migrations/test_0004_drift_analytics.py` | modify | The `is_baseline` index tests assert `candidate_id` scoping after migration 0005 |
+| `tests/drift/test_lineage.py` | modify | Lineage walkers scope by `candidate_id` |
+| `tests/drift/test_baseline.py` | modify | `promote_baseline` scopes by `candidate_id`; `baseline_history.candidate_id` written |
+| `tests/dashboard/tabs/test_drift_tab_render.py` | modify | Drift tab helpers consume a `candidate_id`-keyed scope |
+| `tests/dashboard/prep/test_drift_sparkline.py` | modify | Sparkline prep consumes a `candidate_id`-keyed scope |
 | `tests/tracker/test_post_migration.py` | **create** | Backfill correctness: profile-holder + for_candidate populated + idempotency |
 | `tests/tracker/test_candidates.py` | **create** | CRUD module unit tests |
 | `tests/tracker/test_profile.py` | modify | Trimmed `Profile`; backwards-compat read of legacy shape |
@@ -66,17 +82,21 @@
 
 ---
 
-## Task 1: Migration 0004 schema
+## Task 1: Migration 0005 schema
 
 **Files:**
-- Create: `scripts/tracker/migrations/0004_candidates_table.py`
-- Test: `tests/tracker/migrations/test_0004_candidates_table.py`
+- Create: `scripts/tracker/migrations/0005_candidates_table.py`
+- Test: `tests/tracker/migrations/test_0005_candidates_table.py`
+
+> **Migration number:** v1.7.0 (Resume Drift Analytics) shipped `0004_drift_analytics.py`. This plan therefore claims **0005**. The migrations directory on `main` has `0001`–`0004`; this is `0005`.
+
+> **Drift-subsystem coupling:** v1.7.0 added `baseline_history` (with a `for_candidate` column) and the partial unique index `ux_resume_versions_baseline_per_candidate` scoped on `COALESCE(for_candidate, '')`. This migration must add `candidate_id` to `baseline_history` too, and rebuild that index on `candidate_id`.
 
 - [ ] **Step 1: Write the failing test**
 
 ```python
-# tests/tracker/migrations/test_0004_candidates_table.py
-"""Tests for migration 0004 — candidates table + candidate_id columns."""
+# tests/tracker/migrations/test_0005_candidates_table.py
+"""Tests for migration 0005 — candidates table + candidate_id columns."""
 import pytest
 
 from scripts.tracker.db import open_db
@@ -137,12 +157,37 @@ def test_cover_letters_has_candidate_id(isolated_db):
         conn.close()
 
 
+def test_baseline_history_has_candidate_id(isolated_db):
+    """v1.7.0's baseline_history table gets candidate_id too."""
+    conn = open_db()
+    try:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(baseline_history)")}
+        assert "candidate_id" in cols
+    finally:
+        conn.close()
+
+
+def test_baseline_index_rebuilt_on_candidate_id(isolated_db):
+    """The is_baseline partial unique index is now scoped on candidate_id."""
+    conn = open_db()
+    try:
+        sql = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='index' "
+            "AND name='ux_resume_versions_baseline_per_candidate'"
+        ).fetchone()
+        assert sql is not None
+        assert "candidate_id" in sql[0]
+        assert "for_candidate" not in sql[0]
+    finally:
+        conn.close()
+
+
 def test_migration_recorded(isolated_db):
     conn = open_db()
     try:
         versions = [row[0] for row in conn.execute(
             "SELECT version FROM migrations ORDER BY version")]
-        assert 4 in versions
+        assert 5 in versions
     finally:
         conn.close()
 ```
@@ -150,18 +195,25 @@ def test_migration_recorded(isolated_db):
 - [ ] **Step 2: Run test to verify it fails**
 
 ```
-"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0004_candidates_table.py -v
+"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0005_candidates_table.py -v
 ```
-Expected: 6 FAILs.
+Expected: 8 FAILs.
 
 - [ ] **Step 3: Write the migration**
 
 ```python
-# scripts/tracker/migrations/0004_candidates_table.py
-"""Migration 0004 — candidates table + candidate_id FK columns.
+# scripts/tracker/migrations/0005_candidates_table.py
+"""Migration 0005 — candidates table + candidate_id FK columns.
 
 Schema-only. Backfill is performed by scripts.tracker._post_migration.run_b_backfill,
 which db.py invokes after migrations apply.
+
+This migration is drift-aware: v1.7.0 (migration 0004) added the
+`baseline_history` table and the partial unique index
+`ux_resume_versions_baseline_per_candidate` scoped on `COALESCE(for_candidate, '')`.
+This migration adds `candidate_id` to `baseline_history` and rebuilds that index
+on `candidate_id` so the single-baseline-per-candidate invariant tracks the new
+scoping key.
 
 See docs/plans/2026-05-19-multi-candidate-approach-b.md.
 """
@@ -180,40 +232,54 @@ CREATE TABLE candidates (
     archived_at TEXT
 );
 
-ALTER TABLE jds             ADD COLUMN candidate_id INTEGER REFERENCES candidates(id);
-ALTER TABLE resume_versions ADD COLUMN candidate_id INTEGER REFERENCES candidates(id);
-ALTER TABLE cover_letters   ADD COLUMN candidate_id INTEGER REFERENCES candidates(id);
+ALTER TABLE jds              ADD COLUMN candidate_id INTEGER REFERENCES candidates(id);
+ALTER TABLE resume_versions  ADD COLUMN candidate_id INTEGER REFERENCES candidates(id);
+ALTER TABLE cover_letters    ADD COLUMN candidate_id INTEGER REFERENCES candidates(id);
+ALTER TABLE baseline_history ADD COLUMN candidate_id INTEGER REFERENCES candidates(id);
 
-CREATE INDEX idx_jds_candidate_id             ON jds(candidate_id);
-CREATE INDEX idx_resume_versions_candidate_id ON resume_versions(candidate_id);
-CREATE INDEX idx_cover_letters_candidate_id   ON cover_letters(candidate_id);
+CREATE INDEX idx_jds_candidate_id              ON jds(candidate_id);
+CREATE INDEX idx_resume_versions_candidate_id  ON resume_versions(candidate_id);
+CREATE INDEX idx_cover_letters_candidate_id    ON cover_letters(candidate_id);
+CREATE INDEX idx_baseline_history_candidate_id ON baseline_history(candidate_id);
+
+DROP INDEX ux_resume_versions_baseline_per_candidate;
+CREATE UNIQUE INDEX ux_resume_versions_baseline_per_candidate
+  ON resume_versions(candidate_id)
+  WHERE is_baseline = 1 AND archived_at IS NULL;
 """
 
 
 def apply(conn: sqlite3.Connection) -> None:
-    """Apply the candidates schema. Backfill runs separately."""
+    """Apply the candidates schema. Backfill runs separately.
+
+    Note: immediately after this migration every resume_versions.candidate_id
+    is NULL, so the rebuilt partial unique index enforces nothing yet (SQLite
+    treats each NULL as distinct). The post-migration backfill (Task 5)
+    populates candidate_id; if the backfill ever tried to set two is_baseline=1
+    rows for one candidate the index would reject it — a useful safety net.
+    """
     conn.executescript(SCHEMA_SQL)
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 ```
-"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0004_candidates_table.py -v
+"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0005_candidates_table.py -v
 ```
-Expected: all PASS.
+Expected: all 8 PASS.
 
 - [ ] **Step 5: Run the full tracker test suite (regressions)**
 
 ```
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker -q
 ```
-Expected: all green. (Some pre-existing tests may need to drop `archived_at IS NULL` assumptions if the new index changes plan ordering — fix inline if so.)
+Expected: only the pre-existing `test_weekly_summary_pacing_none_when_no_target` baseline failure. Note: `tests/tracker/migrations/test_0004_drift_analytics.py` has tests that assert the OLD `for_candidate`-scoped index — after this migration those still pass because migration 0004's tests run against a DB at the 0004 schema level (the migration runner applies them in order; 0004's tests build their own isolated DB and only 0004 has run at assert time... actually NO — `open_db()` runs ALL migrations including 0005). If `test_0004_drift_analytics.py::test_partial_unique_index_*` tests fail because the index is now on `candidate_id`, update those tests to reflect that the index moved (the v1.7.0 behaviour is now superseded by 0005). Fix them inline and include in this task's commit.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/tracker/migrations/0004_candidates_table.py tests/tracker/migrations/test_0004_candidates_table.py
-git commit -m "feat(tracker): migration 0004 adds candidates table + candidate_id FKs"
+git add scripts/tracker/migrations/0005_candidates_table.py tests/tracker/migrations/test_0005_candidates_table.py tests/tracker/migrations/test_0004_drift_analytics.py
+git commit -m "feat(tracker): migration 0005 adds candidates table + candidate_id FKs"
 ```
 
 ---
@@ -651,7 +717,7 @@ healthy weekly rate, pacing notes) lives in the candidates table.
 
 Backwards-compat: a legacy-shape file (with first_name/focus_areas/etc) is
 read as an empty Profile. The legacy fields are NOT lost — they are consumed
-by scripts.tracker._post_migration.run_b_backfill when the schema reaches v4.
+by scripts.tracker._post_migration.run_b_backfill when the schema reaches v5.
 """
 import json
 import os
@@ -897,14 +963,18 @@ from scripts.tracker.profile import get_profile_path
 
 
 def run_b_backfill(conn: sqlite3.Connection) -> None:
-    """Backfill candidates + candidate_id links the first time a v4-schema DB
+    """Backfill candidates + candidate_id links the first time a v5-schema DB
     opens against a pre-B profile.json.
 
     Idempotency contract: this function may be called repeatedly. On a fully
     backfilled DB it is a no-op. On a partially backfilled DB it picks up
     where it left off.
+
+    Drift-aware: `baseline_history` (added by v1.7.0 migration 0004) is
+    backfilled alongside `resume_versions` / `cover_letters` so the v1.7.0
+    baseline-promotion audit trail is also candidate-scoped.
     """
-    # 1. Confirm schema is at v4+ (else: nothing to backfill).
+    # 1. Confirm schema is at v5+ (else: nothing to backfill).
     tables = {row[0] for row in conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table'")}
     if "candidates" not in tables:
@@ -914,7 +984,8 @@ def run_b_backfill(conn: sqlite3.Connection) -> None:
     seed_id = _ensure_seed_candidate(conn, profile_path)
 
     # 2. Link rows with for_candidate set to a per-name candidate row.
-    for table in ("resume_versions", "cover_letters"):
+    #    baseline_history is included — it carries a for_candidate column too.
+    for table in ("resume_versions", "cover_letters", "baseline_history"):
         for row in conn.execute(
             f"SELECT id, for_candidate FROM {table} "
             f"WHERE candidate_id IS NULL AND for_candidate IS NOT NULL"
@@ -927,8 +998,12 @@ def run_b_backfill(conn: sqlite3.Connection) -> None:
             )
 
     # 3. Link rows with NULL candidate_id (and NULL for_candidate) to seed.
+    #    jds has no for_candidate column — all its NULL-candidate_id rows go
+    #    to the seed. baseline_history with a NULL for_candidate (profile-holder
+    #    scope promotions) also goes to the seed.
     if seed_id is not None:
-        for table in ("resume_versions", "cover_letters", "jds"):
+        for table in ("resume_versions", "cover_letters", "jds",
+                      "baseline_history"):
             conn.execute(
                 f"UPDATE {table} SET candidate_id=? "
                 f"WHERE candidate_id IS NULL",
@@ -1064,6 +1139,8 @@ git commit -m "feat(tracker): idempotent post-migration backfill for candidates 
 
 Goal: every insert function takes `candidate_id: Optional[int] = None`. When `None`, the function looks up the active candidate via `get_active_candidate()` and uses that id. If neither is available, raises `NoActiveCandidateError`. The `for_candidate` parameter remains accepted but is now derived from the candidate row when not explicitly provided.
 
+**Drift reconciliation:** v1.7.0 added an `is_baseline: Optional[bool] = None` parameter to `add_resume_version` whose auto-detection ran a `for_candidate`-scoped `COUNT`. This task KEEPS `is_baseline` and re-scopes its auto-count by the resolved `candidate_id`. Do not drop the parameter — the drift subsystem and migration 0005's partial unique index both depend on it.
+
 - [ ] **Step 1: Write the failing test**
 
 Append to `tests/tracker/test_add.py`:
@@ -1156,22 +1233,39 @@ def add_resume_version(
     parent_uid: Optional[str] = None,
     for_candidate: Optional[str] = None,
     candidate_id: Optional[int] = None,
+    is_baseline: Optional[bool] = None,
 ) -> int:
-    """Insert a resume_versions row, return the new id."""
+    """Insert a resume_versions row, return the new id.
+
+    is_baseline (carried over from v1.7.0 drift analytics):
+      - None (default): auto — set to 1 if this is the first non-archived row
+        for the resolved candidate_id, else 0.
+      - True / False: explicit override.
+    """
     resolved_cid = _resolve_candidate_id(candidate_id)
     conn = open_db()
     try:
+        if is_baseline is None:
+            existing = conn.execute(
+                "SELECT COUNT(*) FROM resume_versions "
+                "WHERE archived_at IS NULL AND candidate_id = ?",
+                (resolved_cid,),
+            ).fetchone()[0]
+            resolved_baseline = 1 if existing == 0 else 0
+        else:
+            resolved_baseline = 1 if is_baseline else 0
+
         cur = conn.execute(
             """
             INSERT INTO resume_versions
                 (file_path, template, focus_areas, parent_id, tagged_jd_id,
                  created_at, artifact_uid, parent_uid, for_candidate,
-                 candidate_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 candidate_id, is_baseline)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (file_path, template, json.dumps(focus_areas), parent_id,
              tagged_jd_id, _now_iso(), artifact_uid, parent_uid,
-             for_candidate, resolved_cid),
+             for_candidate, resolved_cid, resolved_baseline),
         )
         conn.commit()
         return cur.lastrowid
@@ -1179,7 +1273,9 @@ def add_resume_version(
         conn.close()
 ```
 
-Apply the same pattern to `add_jd` and `add_cover_letter`. `add_application` and `record_outcome` do not need a `candidate_id` — they inherit candidate scoping via their FK to `applications.jd_id` → `jds.candidate_id`. (Confirm this is sufficient for query scoping in Task 7.)
+Apply the `candidate_id` pattern to `add_jd` and `add_cover_letter` as well (neither has `is_baseline` — that column is unique to `resume_versions`). `add_application` and `record_outcome` do not need a `candidate_id` — they inherit candidate scoping via their FK to `applications.jd_id` → `jds.candidate_id`. (Confirm this is sufficient for query scoping in Task 7.)
+
+Add one test to `tests/tracker/test_add.py` covering the reconciled auto-baseline: the first `add_resume_version` for a given `candidate_id` gets `is_baseline=1`, the second gets `0`, and two different candidate_ids each get their own baseline.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
@@ -1712,23 +1808,31 @@ git commit -m "feat(dashboard): sidebar candidate picker replaces name inputs"
 ## Task 11: Workflow cards drop `for_candidate` input; use active candidate
 
 **Files:**
-- Modify: `scripts/dashboard/workflows/create.py`, `edit.py`, `tailor.py`, `cover_letter.py`
-- Test: `tests/dashboard/test_workflows_card.py`
+- Modify: `scripts/dashboard/workflows/create.py`, `edit.py`, `tailor.py`, `cover_letter.py`, `import_.py`
+- Test: `tests/dashboard/test_workflows_card.py`, `tests/dashboard/workflows/test_import.py`
 
-For each workflow card:
+For each of the four generator workflow cards (`create.py`, `edit.py`, `tailor.py`, `cover_letter.py`):
 
 1. Remove the `st.text_input("For candidate (optional)")` introduced by Plan C.
 2. Remove the `_resolve_target(for_candidate=...)` parameter — replace with a call that reads the active candidate.
 3. Drop the `ProfileNameMissingError` catch (no longer raised by `make_artifact_path` — Task 8 removed that path). Replace with a `NoActiveCandidateError` catch that points the user to the sidebar.
 4. Add a "Switch candidate" caption that names the currently active candidate so users know who the resume will be FOR.
 
+For the fifth workflow, `/brains-import` (`import_.py`, added by v1.7.0 Task 18):
+
+5. Remove its `st.text_input("For candidate (optional — leave blank for yourself)")`.
+6. `_resolve_target` and `run_import` resolve the candidate from `get_active_candidate()` instead of the `for_candidate` text. The imported baseline is linked to the active candidate. To import a resume for a brand-new person, the user creates that candidate in the sidebar and switches to them first — consistent with the four generator workflows.
+7. `run_import`'s `add_resume_version(...)` call passes `candidate_id=<active>` (the v1.7.0 version passed `for_candidate=<name>`). The auto-`is_baseline` logic (Task 6) then makes it the baseline iff it's the candidate's first resume.
+
 - [ ] **Step 1: Update tests**
 
-Modify the tests added in Task 9 of Plan C: instead of asserting `captured["for_candidate"]`, assert that `make_artifact_path` was called without a `for_candidate` kwarg and that the resulting `meta.candidate_id` matches the active candidate set via `set_active_candidate(...)` in the test setup.
+Modify the tests added in Task 9 of Plan C (`test_workflows_card.py`): instead of asserting `captured["for_candidate"]`, assert that `make_artifact_path` was called without a `for_candidate` kwarg and that the resulting `meta.candidate_id` matches the active candidate set via `set_active_candidate(...)` in the test setup.
+
+Modify `tests/dashboard/workflows/test_import.py`: the `_resolve_target` / `run_import` tests no longer pass `for_candidate=`; they `set_active_candidate(...)` in setup and assert the imported row's `candidate_id` matches the active candidate.
 
 - [ ] **Step 2: Run tests to verify they fail.**
 
-- [ ] **Step 3: Update each workflow file** per the four changes listed above. The active-candidate caption goes in the card body before the handoff button:
+- [ ] **Step 3: Update each workflow file** per the changes listed above. The active-candidate caption goes in the card body before the handoff button (for the four generators) / before the import button (for `import_.py`):
 
 ```python
 active = get_active_candidate()
@@ -1743,8 +1847,8 @@ st.caption(f"This resume will be for: **{active.first_name} {active.last_name}**
 - [ ] **Step 5: Commit:**
 
 ```bash
-git add scripts/dashboard/workflows/create.py scripts/dashboard/workflows/edit.py scripts/dashboard/workflows/tailor.py scripts/dashboard/workflows/cover_letter.py tests/dashboard/test_workflows_card.py
-git commit -m "feat(dashboard): workflows use active candidate; drop for_candidate input"
+git add scripts/dashboard/workflows/create.py scripts/dashboard/workflows/edit.py scripts/dashboard/workflows/tailor.py scripts/dashboard/workflows/cover_letter.py scripts/dashboard/workflows/import_.py tests/dashboard/test_workflows_card.py tests/dashboard/workflows/test_import.py
+git commit -m "feat(dashboard): all 5 workflows use active candidate; drop for_candidate input"
 ```
 
 ---
@@ -1838,11 +1942,88 @@ git commit -m "docs(workflows): replace for_candidate prompt with active-candida
 
 ---
 
-## Task 14: End-to-end smoke + version bump + CHANGELOG
+## Task 14: Re-scope the drift tracker layer (`lineage.py` + `baseline.py`)
+
+**Files:**
+- Modify: `scripts/drift/lineage.py`, `scripts/drift/baseline.py`
+- Test: `tests/drift/test_lineage.py`, `tests/drift/test_baseline.py`
+
+The `scripts/drift/` package (shipped in v1.7.0) scopes candidates by the `for_candidate` text column. Approach B demotes that column in favour of `candidate_id`. This task switches the drift tracker layer's candidate-scope predicates.
+
+**`scripts/drift/lineage.py`:**
+- `_resolve_candidate_scope(conn, artifact_uid)` — currently `SELECT for_candidate ...` and returns `{"for_candidate": <value>}`. Change to `SELECT candidate_id ...` returning `{"candidate_id": <value>}`.
+- `get_baseline_snapshot(artifact_uid)` — the baseline lookup `WHERE is_baseline = 1 AND archived_at IS NULL AND ((? IS NULL AND for_candidate IS NULL) OR for_candidate = ?)` becomes `WHERE is_baseline = 1 AND archived_at IS NULL AND candidate_id = ?`. `candidate_id` is a non-null FK after the Task 5 backfill, so the NULL-tolerant predicate is no longer needed — a plain `candidate_id = ?` is correct.
+- `get_candidate_lineage(scope)` — `scope` now carries `candidate_id`; the SQL `WHERE archived_at IS NULL AND ((? IS NULL AND for_candidate IS NULL) OR for_candidate = ?)` becomes `WHERE archived_at IS NULL AND candidate_id = ?`.
+
+**`scripts/drift/baseline.py`:**
+- `promote_baseline(artifact_uid, reason)` — resolve scope via `SELECT candidate_id FROM resume_versions WHERE artifact_uid=?`.
+- The "clear existing baseline" `UPDATE ... SET is_baseline=0 WHERE ... for_candidate = ?` becomes `WHERE is_baseline=1 AND archived_at IS NULL AND candidate_id = ?`.
+- The `baseline_history` INSERT now also writes `candidate_id` (keep writing `for_candidate` too — it's a retained denorm cache per the Out-of-scope section): `INSERT INTO baseline_history (for_candidate, candidate_id, artifact_uid, promoted_at, reason) VALUES (?, ?, ?, ?, ?)`.
+- The recompute loop `SELECT artifact_uid FROM resume_versions WHERE ... for_candidate = ?` becomes `WHERE archived_at IS NULL AND candidate_id = ?`.
+
+- [ ] **Step 1: Update the tests**
+
+`tests/drift/test_lineage.py` and `tests/drift/test_baseline.py` currently call `add_resume_version(..., for_candidate="X")`. Post-Approach-B, `add_resume_version` resolves `candidate_id` (from the explicit arg or the active candidate). Rewrite each test's setup to: `create_candidate(...)` → `set_active_candidate(...)` (or pass `candidate_id=` explicitly) instead of `for_candidate="X"`. The assertions about lineage membership, baseline resolution, and `promote_baseline` behaviour stay the same — only the scoping mechanism in the fixtures changes. Add one assertion to a `promote_baseline` test that `baseline_history.candidate_id` is written.
+
+- [ ] **Step 2: Run the tests to verify they fail** (the rewritten fixtures call `candidate_id`-based APIs that the un-rescoped lineage/baseline code doesn't yet honour).
+
+- [ ] **Step 3: Apply the re-scoping** to `lineage.py` and `baseline.py` per the bullets above.
+
+- [ ] **Step 4: Run `"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift -v`** — all drift tests pass.
+
+- [ ] **Step 5: Commit:**
+
+```bash
+git add scripts/drift/lineage.py scripts/drift/baseline.py tests/drift/test_lineage.py tests/drift/test_baseline.py
+git commit -m "feat(drift): re-scope lineage + baseline from for_candidate to candidate_id"
+```
+
+---
+
+## Task 15: Re-scope the drift dashboard surfaces
+
+**Files:**
+- Modify: `scripts/dashboard/tabs/drift.py`, `scripts/dashboard/tabs/overview.py` (drift tile), `scripts/dashboard/tabs/resumes.py` (drift columns)
+- Test: `tests/dashboard/tabs/test_drift_tab_render.py`, `tests/dashboard/prep/test_drift_sparkline.py`
+
+The drift dashboard surfaces build a candidate-scope dict (`{"for_candidate": None}`) and pass it to the drift functions re-scoped in Task 14. This task switches those scope-dict builders to `{"candidate_id": <active candidate id>}`.
+
+- `scripts/dashboard/tabs/drift.py` — `render()` builds `scope = {"for_candidate": None}`. Change to:
+  ```python
+  from scripts.tracker.candidates import get_active_candidate
+  active = get_active_candidate()
+  if active is None:
+      st.info("No active candidate. Select or create one in the sidebar.")
+      return
+  scope = {"candidate_id": active.id}
+  ```
+  `_lineage_data(scope)`, `_selected_summary`, and `_field_level_changes` are unchanged — `_lineage_data` just forwards `scope` to `get_candidate_lineage`.
+- `scripts/dashboard/tabs/overview.py` — the `render_drift_tile(scope)` call in `render()` is currently passed `{"for_candidate": None}`. Build `{"candidate_id": active.id}` from the active candidate (the rest of `overview.py`'s active-candidate wiring lands in Task 12 — reuse whatever active-candidate accessor Task 12 established).
+- `scripts/dashboard/tabs/resumes.py` — `_build_resume_rows(scope)` is called with a scope dict; build it as `{"candidate_id": active.id}`.
+- `scripts/dashboard/prep/drift_sparkline.py` — **no code change needed**: `drift_trajectory_last_n(scope, n)` forwards `scope` straight to `get_candidate_lineage`, which Task 14 already re-scoped. Confirm by inspection.
+
+- [ ] **Step 1: Update the tests** — `test_drift_tab_render.py` and `test_drift_sparkline.py` build scope dicts as `{"for_candidate": "X"}`. Change to `{"candidate_id": <id>}` and create the candidate in the fixture. Assertions unchanged.
+
+- [ ] **Step 2: Run the tests to verify they fail.**
+
+- [ ] **Step 3: Apply the re-scoping** to the three dashboard files.
+
+- [ ] **Step 4: Run `"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard -q`** — only the pre-existing baseline failure remains.
+
+- [ ] **Step 5: Commit:**
+
+```bash
+git add scripts/dashboard/tabs/drift.py scripts/dashboard/tabs/overview.py scripts/dashboard/tabs/resumes.py tests/dashboard/tabs/test_drift_tab_render.py tests/dashboard/prep/test_drift_sparkline.py
+git commit -m "feat(dashboard): drift surfaces scope by candidate_id"
+```
+
+---
+
+## Task 16: End-to-end smoke + version bump + CHANGELOG
 
 **Files:**
 - Create: `tests/test_smoke_two_candidate_session.py`
-- Modify: `scripts/outputs/io.py` (`_SKILL_VERSION = "2.0.0"`)
+- Modify: `scripts/outputs/io.py` (`_SKILL_VERSION`)
 - Modify: `CHANGELOG.md`
 
 - [ ] **Step 1: Write the smoke test**
@@ -1941,7 +2122,7 @@ Expected: all green.
 
 - [ ] **Step 4: Bump version**
 
-In `scripts/outputs/io.py`, change `_SKILL_VERSION = "1.6.0"` to `_SKILL_VERSION = "2.0.0"`.
+In `scripts/outputs/io.py`, change `_SKILL_VERSION = "1.7.0"` to `_SKILL_VERSION = "2.0.0"`. Also bump `pyproject.toml` `version` to `"2.0.0"`. Grep `scripts/dashboard/workflows/*.py` for any leftover hardcoded version literals and replace with the `_SKILL_VERSION` constant.
 
 - [ ] **Step 5: Update CHANGELOG**
 
@@ -1955,15 +2136,19 @@ Add at the top of `CHANGELOG.md`:
 - `make_artifact_path` no longer raises `ProfileNameMissingError`; instead raises `NoActiveCandidateError` when no candidate is selected.
 
 ### Added
-- `candidates` table (migration 0004) — first-class multi-candidate support.
+- `candidates` table (migration 0005) — first-class multi-candidate support.
 - `scripts.tracker.candidates` module — CRUD + active-candidate accessor.
 - Dashboard sidebar candidate picker; per-tab scoping; JD analyzer scoped to active candidate's focus areas.
 - DOCX custom property `BrainsCandidateId` records the candidate row id.
 
+### Changed
+- The v1.7.0 drift subsystem (`scripts/drift/`, the Drift tab, the Overview drift tile, the Resumes-tab drift columns, `/brains-import`) now scopes candidates by `candidate_id` instead of the `for_candidate` text column.
+- `baseline_history` (added in v1.7.0) gains a `candidate_id` column; the `is_baseline` partial unique index is rebuilt on `candidate_id`.
+
 ### Migration
-- Existing v1.5/1.6 installs are migrated automatically on first `open_db()` after upgrade:
+- Existing v1.5/1.6/1.7 installs are migrated automatically on first `open_db()` after upgrade (migration 0005 + the post-migration backfill hook):
   - The seed candidate is created from the legacy profile.json fields.
-  - All existing resumes, cover letters, and JDs are linked to the seed candidate.
+  - All existing resumes, cover letters, JDs, and baseline-history rows are linked to the seed candidate.
   - Rows with `for_candidate` populated (v1.6+) link to a per-name candidate created on first read.
   - profile.json is rewritten to the trimmed shape; legacy fields are dropped.
 - The Approach-C `for_candidate` columns are RETAINED as a denormalized cache for data export and provenance.
@@ -1972,7 +2157,7 @@ Add at the top of `CHANGELOG.md`:
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/outputs/io.py CHANGELOG.md tests/test_smoke_two_candidate_session.py
+git add scripts/outputs/io.py pyproject.toml CHANGELOG.md tests/test_smoke_two_candidate_session.py
 git commit -m "feat: v2.0.0 — first-class multi-candidate support (Approach B)"
 ```
 
@@ -1982,7 +2167,7 @@ git commit -m "feat: v2.0.0 — first-class multi-candidate support (Approach B)
 
 A. `pytest -q` is green across the full suite.
 
-B. A v1.6 install upgraded to v2.0 opens cleanly: the seed candidate is created from `profile.json`, all existing JDs / resumes / cover letters are linked to it, and `profile.json` is rewritten without legacy fields.
+B. A v1.7 install upgraded to v2.0 opens cleanly: the seed candidate is created from `profile.json`, all existing JDs / resumes / cover letters / baseline-history rows are linked to it, and `profile.json` is rewritten without legacy fields.
 
 C. Creating a second candidate ("Mathilda Gell") in the dashboard sidebar, switching active, and running `/brains-create` produces a DOCX with `BrainsCandidateId` matching her row id and `Mathilda_Gell_*` in the filename.
 
@@ -2004,7 +2189,9 @@ write_artifact_meta(path, meta)
 
 ## Self-Review
 
-**Spec coverage:** every architectural element from the memory entry maps to a task — candidates table (Task 1), Candidate dataclass (Task 2), CRUD module (Task 3), profile.json trim (Task 4), backfill (Task 5), candidate-aware inserts (Task 6), candidate-aware reads (Task 7), filename construction via candidate row (Task 8), DOCX BrainsCandidateId (Task 9), sidebar picker (Task 10), workflow cards (Task 11), per-tab scope + JD analyzer (Task 12), doc updates (Task 13), end-to-end + versioning (Task 14). No gap.
+**Spec coverage:** every architectural element maps to a task — candidates table + drift-aware migration 0005 (Task 1), Candidate dataclass (Task 2), CRUD module (Task 3), profile.json trim (Task 4), backfill incl. baseline_history (Task 5), candidate-aware inserts + reconciled auto-`is_baseline` (Task 6), candidate-aware reads (Task 7), filename construction via candidate row (Task 8), DOCX BrainsCandidateId (Task 9), sidebar picker (Task 10), all 5 workflow cards incl. /brains-import (Task 11), per-tab scope + JD analyzer (Task 12), doc updates (Task 13), drift tracker-layer re-scoping (Task 14), drift dashboard-surface re-scoping (Task 15), end-to-end + versioning (Task 16). No gap.
+
+**v1.7.0 coupling (added in the 2026-05-20 revision):** the drift subsystem shipped after this plan was first written. The revision covers every drift touchpoint — the `baseline_history` table (migration 0005 + Task 5 backfill), the `is_baseline` partial unique index (rebuilt on `candidate_id` in migration 0005), the v1.7.0 auto-`is_baseline` logic in `add_resume_version` (reconciled in Task 6), the `scripts/drift/` tracker layer (Task 14), the drift dashboard surfaces (Task 15), and `/brains-import` (Task 11). `scripts/drift/compute.py` and `snapshot_from_workflow.py` need no change — they key off `artifact_uid` chains and the workflow data dict, neither of which is candidate-scoped.
 
 **Placeholder scan:** Tasks 9 and 11 reference "mirror Task X of Plan Y" — that is acceptable per the writing-plans skill's guidance on cross-references when the pattern is precisely defined in the referenced task. Task 9 specifies the exact additions (`BrainsCandidateId` vt:i4, "0"→None mapping); Task 11 specifies the exact four changes per file. No vague language remains.
 
