@@ -26,9 +26,43 @@ def render() -> None:
         )
         return
 
+    # Drift columns (v1.7.0): join per-resume drift scores by artifact_uid.
+    drift_by_uid = {
+        r["artifact_uid"]: r
+        for r in _build_resume_rows({"for_candidate": None})
+        if r.get("artifact_uid")
+    }
+    for row in rows:
+        d = drift_by_uid.get(row.get("artifact_uid"))
+        vp = d.get("drift_vs_parent") if d else None
+        vb = d.get("drift_vs_baseline") if d else None
+        row["drift_vs_parent"] = f"{vp:.1f}%" if vp is not None else "—"
+        row["drift_vs_baseline"] = f"{vb:.1f}%" if vb is not None else "—"
+        row["_drift_parent_changes"] = (
+            "; ".join(d.get("headline_changes_vs_parent", [])) if d else ""
+        )
+        row["_drift_baseline_changes"] = (
+            "; ".join(d.get("headline_changes_vs_baseline", [])) if d else ""
+        )
+
     df = pd.DataFrame(rows)
+    # Tooltip columns are data only — drop them from the visible frame.
+    parent_help = "Set-shape % change vs the parent resume version."
+    baseline_help = "Set-shape % change vs the active baseline resume."
+    if "_drift_parent_changes" in df.columns:
+        parent_changes = [c for c in df["_drift_parent_changes"] if c]
+        if parent_changes:
+            parent_help += " Headline changes: " + " | ".join(parent_changes[:3])
+    if "_drift_baseline_changes" in df.columns:
+        baseline_changes = [c for c in df["_drift_baseline_changes"] if c]
+        if baseline_changes:
+            baseline_help += " Headline changes: " + " | ".join(baseline_changes[:3])
+    display_df = df.drop(
+        columns=[c for c in ("artifact_uid", "_drift_parent_changes",
+                             "_drift_baseline_changes") if c in df.columns]
+    )
     st.dataframe(
-        df,
+        display_df,
         use_container_width=True,
         column_config={
             "id": st.column_config.NumberColumn("ID", width="small"),
@@ -42,6 +76,12 @@ def render() -> None:
             "parent_id": st.column_config.NumberColumn("Parent", width="small"),
             "tagged_jd_id": st.column_config.NumberColumn("JD", width="small"),
             "created_at": st.column_config.TextColumn("Created", width="small"),
+            "drift_vs_parent": st.column_config.TextColumn(
+                "Drift vs parent", help=parent_help, width="small",
+            ),
+            "drift_vs_baseline": st.column_config.TextColumn(
+                "Drift vs baseline", help=baseline_help, width="small",
+            ),
         },
         hide_index=True,
     )
@@ -110,7 +150,7 @@ def _list_resume_versions() -> list:
         cur = conn.execute(
             """
             SELECT id, file_path, template, focus_areas, parent_id,
-                   tagged_jd_id, created_at
+                   tagged_jd_id, created_at, artifact_uid
             FROM resume_versions
             WHERE archived_at IS NULL
             ORDER BY created_at DESC
@@ -143,7 +183,72 @@ def _list_resume_versions() -> list:
                 "parent_id": row[4],
                 "tagged_jd_id": row[5],
                 "created_at": row[6][:10] if row[6] else "",
+                "artifact_uid": row[7],
             })
     finally:
         conn.close()
     return rows
+
+
+def _build_resume_rows(scope: dict) -> list[dict]:
+    """Build the per-resume row dicts for the Resumes-tab table.
+
+    Pure helper (no Streamlit) so it can be unit-tested directly. Each row
+    includes the existing fields (file, created, template, jd) plus the new
+    drift columns:
+      - drift_vs_parent: float | None — overall_pct from vs_parent_score
+      - drift_vs_baseline: float | None — overall_pct from vs_baseline_score
+      - headline_changes_vs_parent: list[str]
+      - headline_changes_vs_baseline: list[str]
+    """
+    import json
+
+    from scripts.drift.lineage import get_candidate_lineage
+
+    lineage = get_candidate_lineage(scope)
+    if not lineage:
+        return []
+    uids = [v.artifact_uid for v in lineage if v.artifact_uid]
+    if not uids:
+        return [_resume_to_row_dict(v, None, None) for v in lineage]
+
+    placeholders = ",".join("?" * len(uids))
+    conn = open_db()
+    try:
+        score_rows = conn.execute(
+            f"SELECT artifact_uid, vs_parent_score, vs_baseline_score "
+            f"FROM resume_drift_scores WHERE artifact_uid IN ({placeholders})",
+            uids,
+        ).fetchall()
+    finally:
+        conn.close()
+    by_uid = {}
+    for uid, vp, vb in score_rows:
+        by_uid[uid] = {
+            "vs_parent": json.loads(vp) if vp else None,
+            "vs_baseline": json.loads(vb) if vb else None,
+        }
+    out = []
+    for v in lineage:
+        scores = by_uid.get(
+            v.artifact_uid or "", {"vs_parent": None, "vs_baseline": None}
+        )
+        out.append(_resume_to_row_dict(
+            v, scores.get("vs_parent"), scores.get("vs_baseline")
+        ))
+    return out
+
+
+def _resume_to_row_dict(rv, vs_parent, vs_baseline) -> dict:
+    """Map a ResumeVersion + (optional) scores into a row dict for the table."""
+    return {
+        "artifact_uid": rv.artifact_uid,
+        "file_path": rv.file_path,
+        "template": rv.template,
+        "created_at": rv.created_at,
+        "tagged_jd_id": rv.tagged_jd_id,
+        "drift_vs_parent": (vs_parent or {}).get("overall_pct"),
+        "drift_vs_baseline": (vs_baseline or {}).get("overall_pct"),
+        "headline_changes_vs_parent": (vs_parent or {}).get("headline_changes", []),
+        "headline_changes_vs_baseline": (vs_baseline or {}).get("headline_changes", []),
+    }
