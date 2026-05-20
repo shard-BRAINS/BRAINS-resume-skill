@@ -109,7 +109,9 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "edit") -> None:
                 "Claude Code will load the resume and apply review findings. "
                 "After save, call `scripts.outputs.io.finalize_docx(target_path, meta)` "
                 "and register the new version in the tracker with `for_candidate` "
-                "set to the same value if provided."
+                "set to the same value if provided. "
+                "Then call `scripts.drift.on_artifact_finalised(meta.artifact_uid, data)` "
+                "to persist a fact snapshot and compute drift."
             ),
             key=f"{key_prefix}_btn",
         )

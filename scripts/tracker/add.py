@@ -24,27 +24,41 @@ def add_resume_version(
     artifact_uid: Optional[str] = None,
     parent_uid: Optional[str] = None,
     for_candidate: Optional[str] = None,
+    is_baseline: Optional[bool] = None,
 ) -> int:
-    """Insert a resume_versions row, return the new id."""
+    """Insert a resume_versions row, return the new id.
+
+    is_baseline:
+      - None (default): auto — set to 1 if this is the first non-archived row
+        in this for_candidate scope, else 0.
+      - True / False: explicit override; the caller controls the flag.
+    """
     conn = open_db()
     try:
+        if is_baseline is None:
+            existing = conn.execute(
+                "SELECT COUNT(*) FROM resume_versions "
+                "WHERE archived_at IS NULL AND "
+                "((? IS NULL AND for_candidate IS NULL) OR for_candidate = ?)",
+                (for_candidate, for_candidate),
+            ).fetchone()[0]
+            resolved_baseline = 1 if existing == 0 else 0
+        else:
+            resolved_baseline = 1 if is_baseline else 0
+
         cur = conn.execute(
             """
             INSERT INTO resume_versions
                 (file_path, template, focus_areas, parent_id, tagged_jd_id,
-                 created_at, artifact_uid, parent_uid, for_candidate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 created_at, artifact_uid, parent_uid, for_candidate,
+                 is_baseline)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                file_path,
-                template,
-                json.dumps(focus_areas),
-                parent_id,
-                tagged_jd_id,
-                _now_iso(),
-                artifact_uid,
-                parent_uid,
-                for_candidate,
+                file_path, template, json.dumps(focus_areas),
+                parent_id, tagged_jd_id, _now_iso(),
+                artifact_uid, parent_uid, for_candidate,
+                resolved_baseline,
             ),
         )
         conn.commit()

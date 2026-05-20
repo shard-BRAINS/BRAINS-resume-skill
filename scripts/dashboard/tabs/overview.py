@@ -46,7 +46,12 @@ def render() -> None:
     profile = read_profile()
     now = datetime.now()
 
+    # Pre-Approach-B: scope is the profile holder. The sidebar candidate
+    # selector can later populate "for_candidate" with a chosen name.
+    scope = {"for_candidate": None}
+
     _render_summary_tiles(rows, weekly, profile, now)
+    render_drift_tile(scope)
     st.markdown("---")
     _render_sparkline_cards(rows, now)
     st.markdown("---")
@@ -207,3 +212,75 @@ def _render_twin_panels(rows, now) -> None:
                 st.markdown(
                     f"**{r.company}** — {r.role_title} · {r.latest_outcome}"
                 )
+
+
+def _drift_tile_summary(scope: dict) -> dict:
+    """Pure helper: return the data the drift trajectory tile renders.
+
+    Returns:
+        headline_pct: float | None — overall_pct of the most-recent resume,
+            or None if the most-recent IS the baseline or no scored resume exists.
+        sparkline: list[float | None] — last 12 vs_baseline overall_pct values,
+            oldest first, with None for the baseline row.
+        headline_changes: list[str] — top headline_changes from the latest
+            non-baseline score.
+        count: int — number of resumes in the lineage.
+    """
+    from scripts.dashboard.prep.drift_sparkline import drift_trajectory_last_n
+
+    points = drift_trajectory_last_n(scope, n=12)
+    if not points:
+        return {"headline_pct": None, "sparkline": [], "headline_changes": [], "count": 0}
+
+    latest = points[-1]
+    headline_pct = latest["overall_pct"]
+    sparkline = [p["overall_pct"] for p in points]
+
+    # Latest version's headline_changes (read from the stored score).
+    import json
+    from scripts.tracker.db import open_db
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT vs_baseline_score FROM resume_drift_scores WHERE artifact_uid=?",
+            (latest["artifact_uid"],),
+        ).fetchone()
+    finally:
+        conn.close()
+    headline_changes = []
+    if row and row[0]:
+        try:
+            headline_changes = json.loads(row[0]).get("headline_changes", [])
+        except json.JSONDecodeError:
+            pass
+
+    return {
+        "headline_pct": headline_pct,
+        "sparkline": sparkline,
+        "headline_changes": headline_changes,
+        "count": len(points),
+    }
+
+
+def render_drift_tile(scope: dict) -> None:
+    """Render the drift trajectory tile in the Overview layout.
+
+    Called from the main render() function alongside the other summary tiles.
+    """
+    summary = _drift_tile_summary(scope)
+    with st.container(border=True):
+        st.caption("Drift from baseline · active candidate")
+        if summary["headline_pct"] is None:
+            st.markdown("**—**")
+            st.caption("No baseline yet")
+            return
+        st.markdown(f"**{summary['headline_pct']:.1f}%**")
+        if summary["sparkline"]:
+            # Use Streamlit's line_chart for a minimal sparkline.
+            import pandas as pd
+            chart_data = pd.DataFrame({
+                "drift": [v if v is not None else 0.0 for v in summary["sparkline"]],
+            })
+            st.line_chart(chart_data, height=60, use_container_width=True)
+        if summary["headline_changes"]:
+            st.caption(summary["headline_changes"][0])

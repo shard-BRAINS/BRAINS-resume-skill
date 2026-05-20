@@ -76,7 +76,10 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "cl") -> None:
                 "After save, call `scripts.outputs.io.finalize_docx(target_path, meta)` "
                 "and `tracker.add_cover_letter(file_path=target_path, ..., "
                 "artifact_uid=meta.artifact_uid, parent_uid=<resume uid or None>, "
-                "for_candidate=<same value as above, if set>)`."
+                "for_candidate=<same value as above, if set>)`. "
+                "Then call `scripts.drift.on_artifact_finalised(meta.artifact_uid, data, "
+                "kind=\"cover-letter\")` — a no-op for cover letters, kept uniform "
+                "with the resume workflows."
             ),
             key=f"{key_prefix}_btn",
         )

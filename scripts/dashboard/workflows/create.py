@@ -96,7 +96,9 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "create") -> None
             "Open Claude Code; paste this command to start the interview. "
             "After save, call `scripts.outputs.io.finalize_docx(target_path, meta)` "
             "and register the new resume in the tracker with `for_candidate` set "
-            "to the same value if provided."
+            "to the same value if provided. "
+            "Then call `scripts.drift.on_artifact_finalised(meta.artifact_uid, data)` "
+            "to persist a fact snapshot and compute drift."
         ),
         key=f"{key_prefix}_btn",
     )
