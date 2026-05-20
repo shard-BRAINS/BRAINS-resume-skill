@@ -127,10 +127,14 @@ def test_duplicate_application_check_missing_db_does_not_crash(monkeypatch, tmp_
 def test_duplicate_application_check_detects_recent_application(monkeypatch, tmp_path):
     """Seed an application via the tracker, then ensure the analyzer flags it."""
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
     from datetime import datetime
     from scripts.tracker.add import (
         add_resume_version, add_jd, add_application,
     )
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    cid = create_candidate("Example", "Candidate", [], None, None)
+    set_active_candidate(cid)
     rv_id = add_resume_version(file_path=None, template="hybrid", focus_areas=[])
     jd_id = add_jd(
         source="paste", source_ref=None,

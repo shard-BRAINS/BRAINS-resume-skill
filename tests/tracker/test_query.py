@@ -10,9 +10,31 @@ from scripts.tracker.query import list_applications, find_duplicates
 
 
 @pytest.fixture
-def fresh_db(monkeypatch, tmp_path):
+def isolated(monkeypatch, tmp_path):
+    """Isolate BOTH the tracker DB and the profile.json paths to tmp_path.
+
+    The candidate-scoping tests call set_active_candidate/get_active_candidate,
+    which read+write profile.json — so the profile path must be isolated too.
+    """
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
     return tmp_path / "test.db"
+
+
+@pytest.fixture
+def fresh_db(isolated):
+    """Each test gets an isolated empty db + an active candidate.
+
+    Builds on `isolated` (both DB and profile paths isolated). Since every
+    insert now defaults candidate_id to the active candidate, this fixture
+    creates one and sets it active so pre-existing tests keep working without
+    passing candidate_id explicitly.
+    """
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+
+    cid = create_candidate("Matthew", "Gell", [], None, None)
+    set_active_candidate(cid)
+    return isolated
 
 
 def _make_app(company, days_ago=0, role="Engineer", channel="direct"):
@@ -160,37 +182,31 @@ def test_weekly_summary_outcomes_by_type(fresh_db):
     assert s.outcomes_by_type.get("withdrew", 0) == 1
 
 
-def test_weekly_summary_pacing_above_target(monkeypatch, tmp_path):
+def test_weekly_summary_pacing_above_target(isolated):
     from scripts.tracker.query import weekly_summary
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
-    write_profile(Profile(focus_areas=[], healthy_weekly_rate=2))
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    cid = create_candidate("Matthew", "Gell", [], 2, None)  # healthy_weekly_rate=2
+    set_active_candidate(cid)
     _make_app("A"); _make_app("B"); _make_app("C")  # 3 in last week
     s = weekly_summary()
     assert s.pacing_vs_target == "above"
 
 
-def test_weekly_summary_pacing_at_target(monkeypatch, tmp_path):
+def test_weekly_summary_pacing_at_target(isolated):
     from scripts.tracker.query import weekly_summary
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
-    write_profile(Profile(focus_areas=[], healthy_weekly_rate=2))
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    cid = create_candidate("Matthew", "Gell", [], 2, None)  # healthy_weekly_rate=2
+    set_active_candidate(cid)
     _make_app("A"); _make_app("B")
     s = weekly_summary()
     assert s.pacing_vs_target == "at"
 
 
-def test_weekly_summary_pacing_below_target(monkeypatch, tmp_path):
+def test_weekly_summary_pacing_below_target(isolated):
     from scripts.tracker.query import weekly_summary
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
-    write_profile(Profile(focus_areas=[], healthy_weekly_rate=5))
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    cid = create_candidate("Matthew", "Gell", [], 5, None)  # healthy_weekly_rate=5
+    set_active_candidate(cid)
     _make_app("A")
     s = weekly_summary()
     assert s.pacing_vs_target == "below"
@@ -303,16 +319,58 @@ def test_get_artifact_by_uid_returns_for_candidate(fresh_db):
 
 def test_list_artifacts_for_candidate(fresh_db):
     from scripts.tracker.add import add_resume_version
+    from scripts.tracker.candidates import create_candidate
     from scripts.tracker.query import list_artifacts_for_candidate
 
-    add_resume_version(None, "hybrid", [], for_candidate="Mathilda Gell")
-    add_resume_version(None, "chronological", [], for_candidate="Mathilda Gell")
-    add_resume_version(None, "chronological", [])  # profile holder, NULL
+    mathilda = create_candidate("Mathilda", "Gell", [], None, None)
+    add_resume_version(None, "hybrid", [], candidate_id=mathilda)
+    add_resume_version(None, "chronological", [], candidate_id=mathilda)
+    add_resume_version(None, "chronological", [])  # active candidate (Matthew)
     rows = list_artifacts_for_candidate("Mathilda Gell")
     assert len(rows) == 2
-    assert all(r.for_candidate == "Mathilda Gell" for r in rows)
+    assert all(r.candidate_id == mathilda for r in rows)
 
 
 def test_list_artifacts_for_candidate_empty_when_no_match(fresh_db):
     from scripts.tracker.query import list_artifacts_for_candidate
     assert list_artifacts_for_candidate("Nobody") == []
+
+
+# --- Task 7 (multi-candidate Approach B): reads scope to active candidate ---
+
+
+def test_list_jds_default_filters_to_active_candidate(isolated):
+    from scripts.tracker.add import add_jd
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    from scripts.tracker.query import list_jds
+
+    matthew = create_candidate("Matthew", "Gell", [], None, None)
+    mathilda = create_candidate("Mathilda", "Gell", [], None, None)
+    set_active_candidate(matthew)
+    add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+    set_active_candidate(mathilda)
+    add_jd("manual", None, "Big W", "Sales Asst", "...", {}, [], [])
+
+    set_active_candidate(matthew)
+    rows = list_jds()
+    assert {r.company for r in rows} == {"Acme"}
+
+    set_active_candidate(mathilda)
+    rows = list_jds()
+    assert {r.company for r in rows} == {"Big W"}
+
+
+def test_list_jds_explicit_candidate_id_override(isolated):
+    from scripts.tracker.add import add_jd
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    from scripts.tracker.query import list_jds
+
+    matthew = create_candidate("Matthew", "Gell", [], None, None)
+    mathilda = create_candidate("Mathilda", "Gell", [], None, None)
+    set_active_candidate(matthew)
+    add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+    set_active_candidate(mathilda)
+    add_jd("manual", None, "Big W", "Sales Asst", "...", {}, [], [])
+
+    rows_all = list_jds(candidate_id=0)
+    assert {r.company for r in rows_all} == {"Acme", "Big W"}

@@ -8,14 +8,19 @@ from datetime import datetime, timedelta
 from scripts.tracker.add import (
     add_application, add_jd, add_resume_version,
 )
-from scripts.tracker.models import Profile
-from scripts.tracker.profile import write_profile
+from scripts.tracker.candidates import (
+    create_candidate, set_active_candidate, update_candidate,
+)
 from scripts.tracker.query import find_duplicates, weekly_summary
 
 
 def test_precheck_smoke_no_duplicates_no_pacing(monkeypatch, tmp_path):
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+
+    # Active candidate with no healthy rate yet.
+    cid = create_candidate("Example", "Candidate", ["python"], None, None)
+    set_active_candidate(cid)
 
     # Q1: no duplicates yet
     assert find_duplicates("Example Corp", "Senior Engineer") == []
@@ -24,7 +29,7 @@ def test_precheck_smoke_no_duplicates_no_pacing(monkeypatch, tmp_path):
     assert weekly_summary().pacing_vs_target is None
 
     # Q4 follow-up: user sets healthy rate
-    write_profile(Profile(focus_areas=["python"], healthy_weekly_rate=3))
+    update_candidate(cid, healthy_weekly_rate=3)
 
     # Q6: register the application
     rv = add_resume_version(file_path="/tmp/r.docx", template="hybrid", focus_areas=["python"])

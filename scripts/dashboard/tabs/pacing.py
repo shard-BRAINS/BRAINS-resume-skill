@@ -7,17 +7,24 @@ from scripts.dashboard.data import cached_list_applications
 from scripts.dashboard.prep.sparkline import applications_per_week_8w
 from scripts.dashboard.prep.trends import applications_this_week_count
 from scripts.dashboard.style import INCUBATOR_BLUE
-from scripts.tracker.profile import read_profile
+from scripts.tracker.candidates import get_active_candidate
 
 
 def render() -> None:
+    active = get_active_candidate()
+    if active is None:
+        st.info(
+            "No active candidate. Select or create one in the sidebar to see "
+            "pacing."
+        )
+        return
+
     if st.button("↻ Refresh", key="pacing_refresh"):
         cached_list_applications.clear()
 
     rows = cached_list_applications()
-    profile = read_profile()
     apps_this_week = applications_this_week_count(rows)
-    target = profile.healthy_weekly_rate
+    target = active.healthy_weekly_rate
 
     # Tile: this-week count vs target
     col1, col2 = st.columns(2)
@@ -83,8 +90,8 @@ def render() -> None:
     # Sensory-load notes — read-only in this tab; edited from sidebar
     st.markdown("---")
     st.subheader("Sensory-load notes")
-    if profile.pacing_notes:
-        st.markdown(profile.pacing_notes)
+    if active.pacing_notes:
+        st.markdown(active.pacing_notes)
     else:
         st.caption(
             "Edit your sensory-load notes in the sidebar. Track what's been "

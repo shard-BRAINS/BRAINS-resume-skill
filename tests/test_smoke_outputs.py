@@ -13,8 +13,7 @@ from scripts.outputs.io import (
 )
 from scripts.outputs.tagging import read_artifact_meta
 from scripts.tracker.add import add_jd, add_resume_version
-from scripts.tracker.models import Profile
-from scripts.tracker.profile import write_profile
+from scripts.tracker.candidates import create_candidate, set_active_candidate
 
 
 @pytest.fixture
@@ -26,8 +25,9 @@ def isolated(monkeypatch, tmp_path):
 
 
 def test_smoke_full_chain(isolated):
-    # Set up profile.
-    write_profile(Profile(focus_areas=[], first_name="Matthew", last_name="Gell"))
+    # Set up the active candidate.
+    cid = create_candidate("Matthew", "Gell", [], None, None)
+    set_active_candidate(cid)
 
     # Add a JD; folder is created and path recorded.
     jd_id = add_jd(

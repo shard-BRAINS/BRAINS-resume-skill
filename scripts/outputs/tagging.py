@@ -17,10 +17,11 @@ so this module manipulates the underlying ZIP/XML directly.
 | BrainsCreatedAt       | string  | ISO 8601 UTC                       |
 | BrainsSkillVersion    | string  | e.g. '1.6.0'                       |
 | BrainsForCandidate    | string  | candidate name; '' if unset        |
+| BrainsCandidateId     | integer | tracker candidate row id; 0 if unset |
 
 Absent jd_id stored as 0; absent parent_uid stored as ''; absent
-for_candidate stored as ''. The reader (read_artifact_meta in Task 7)
-converts these back to None.
+for_candidate stored as ''; absent candidate_id stored as 0. The reader
+(read_artifact_meta in Task 7) converts these back to None.
 """
 from __future__ import annotations
 
@@ -64,6 +65,7 @@ class ArtifactMeta:
     created_at: str
     skill_version: str
     for_candidate: str | None = None
+    candidate_id: int | None = None
 
 
 def _meta_to_property_dict(meta: ArtifactMeta) -> dict[str, tuple[str, str]]:
@@ -76,6 +78,7 @@ def _meta_to_property_dict(meta: ArtifactMeta) -> dict[str, tuple[str, str]]:
         "BrainsCreatedAt":     ("lpwstr", meta.created_at),
         "BrainsSkillVersion":  ("lpwstr", meta.skill_version),
         "BrainsForCandidate":  ("lpwstr", meta.for_candidate if meta.for_candidate is not None else ""),
+        "BrainsCandidateId":   ("i4",     str(meta.candidate_id if meta.candidate_id is not None else 0)),
     }
 
 
@@ -200,6 +203,7 @@ def read_artifact_meta(docx_path: Path | str) -> ArtifactMeta | None:
     - BrainsJDId == "0" or absent -> jd_id = None
     - BrainsParentId == "" or absent -> parent_uid = None
     - BrainsForCandidate == "" or absent -> for_candidate = None
+    - BrainsCandidateId == "0" or absent -> candidate_id = None
     """
     props = _read_custom_properties_raw(docx_path)
     if "BrainsArtifactId" not in props:
@@ -211,6 +215,11 @@ def read_artifact_meta(docx_path: Path | str) -> ArtifactMeta | None:
         jd_id_int = 0
     parent_raw = props.get("BrainsParentId", "")
     for_candidate_raw = props.get("BrainsForCandidate", "")
+    candidate_id_raw = props.get("BrainsCandidateId", "0")
+    try:
+        candidate_id_int = int(candidate_id_raw)
+    except (ValueError, TypeError):
+        candidate_id_int = 0
     return ArtifactMeta(
         artifact_uid=props["BrainsArtifactId"],
         artifact_kind=props.get("BrainsArtifactKind", ""),
@@ -219,4 +228,5 @@ def read_artifact_meta(docx_path: Path | str) -> ArtifactMeta | None:
         created_at=props.get("BrainsCreatedAt", ""),
         skill_version=props.get("BrainsSkillVersion", ""),
         for_candidate=for_candidate_raw if for_candidate_raw else None,
+        candidate_id=candidate_id_int if candidate_id_int else None,
     )

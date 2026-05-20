@@ -1,13 +1,18 @@
 """JDs tab — table of analyzed job descriptions with findings."""
-import json
-
 import pandas as pd
 import streamlit as st
 
-from scripts.tracker.db import open_db
+from scripts.tracker.candidates import get_active_candidate
 
 
 def render() -> None:
+    active = get_active_candidate()
+    if active is None:
+        st.info(
+            "No active candidate. Select or create one in the sidebar to see JDs."
+        )
+        return
+
     if st.button("↻ Refresh", key="jds_refresh"):
         st.rerun()
 
@@ -89,40 +94,28 @@ def render() -> None:
 
 
 def _list_jds() -> list:
-    conn = open_db()
-    try:
-        cur = conn.execute(
-            """
-            SELECT id, company, role_title, source,
-                   analyzer_findings, created_at
-            FROM jds
-            WHERE archived_at IS NULL
-            ORDER BY created_at DESC
-            """
-        )
-        rows = []
-        for row in cur.fetchall():
-            findings = json.loads(row[4]) if row[4] else {}
-            finding_count = (
-                len(findings.get("findings", []))
-                if isinstance(findings, dict) else 0
-            )
-            role_fit_score = (
-                findings.get("role_fit_score")
-                if isinstance(findings, dict) else None
-            )
-            rows.append({
-                "id": row[0],
-                "company": row[1],
-                "role_title": row[2],
-                "source": row[3],
-                "finding_count": finding_count,
-                "role_fit_score": role_fit_score,
-                "created_at": row[5][:10] if row[5] else "",
-                "_analyzer_findings": findings,
-            })
-    finally:
-        conn.close()
+    """Return JD row dicts for the active candidate.
+
+    Routes through scripts.tracker.query.list_jds, which auto-scopes to the
+    active candidate (Task 7).
+    """
+    from scripts.tracker.query import list_jds
+
+    rows = []
+    for jd in list_jds():
+        findings = jd.analyzer_findings if isinstance(jd.analyzer_findings, dict) else {}
+        finding_count = len(findings.get("findings", []))
+        role_fit_score = findings.get("role_fit_score")
+        rows.append({
+            "id": jd.id,
+            "company": jd.company,
+            "role_title": jd.role_title,
+            "source": jd.source,
+            "finding_count": finding_count,
+            "role_fit_score": role_fit_score,
+            "created_at": jd.created_at[:10] if jd.created_at else "",
+            "_analyzer_findings": findings,
+        })
     return rows
 
 

@@ -12,12 +12,11 @@ from scripts.dashboard.workflows._card import handoff_button
 from scripts.outputs.io import (
     _SKILL_VERSION,
     read_artifact_uid,
-    ProfileNameMissingError,
 )
 from scripts.outputs.naming import artifact_filename, new_uid
 from scripts.outputs.tagging import ArtifactMeta
 from scripts.parsers.docx_to_text import parse_docx_resume
-from scripts.tracker.profile import read_profile
+from scripts.tracker.candidates import get_active_candidate
 from scripts.validators.ai_signal_check import ai_signal_check
 from scripts.validators.ats_check import ats_check
 from scripts.validators.bias_scan import bias_scan
@@ -115,14 +114,14 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "check") -> None:
         source_uid = read_artifact_uid(file_path)
     except Exception:
         source_uid = None
-    profile = read_profile()
-    if not profile.first_name or not profile.last_name:
-        st.error("Set your first and last name in the sidebar before using the handoff.")
+    active = get_active_candidate()
+    if active is None:
+        st.error("No active candidate. Select or create one in the sidebar.")
         return
     uid = new_uid()
     target_path = file_path.parent / artifact_filename(
-        first_name=profile.first_name,
-        last_name=profile.last_name,
+        first_name=active.first_name,
+        last_name=active.last_name,
         kind="resume",
         created_date=date.today(),
         uid=uid,
@@ -134,6 +133,7 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "check") -> None:
         parent_uid=source_uid,
         created_at=datetime.utcnow().isoformat() + "Z",
         skill_version=_SKILL_VERSION,
+        candidate_id=active.id,
     )
     st.caption(f"Output will land at: `{target_path}`")
     handoff_button(

@@ -11,8 +11,50 @@ from datetime import datetime, timedelta, date
 from typing import List, Optional
 
 from scripts.tracker.db import get_db_path, open_db
-from scripts.tracker.models import WeeklySummary, EfficacyRow, ResumeVersion, CoverLetter
-from scripts.tracker.profile import read_profile
+from scripts.tracker.models import (
+    WeeklySummary, EfficacyRow, ResumeVersion, CoverLetter, JD,
+)
+
+
+# --- Candidate scoping --------------------------------------------------------
+
+def _scope_candidate_clause(candidate_id):
+    """Return (WHERE-fragment, params) for the candidate scope.
+
+    None  -> filter by active candidate (or no filter if none set)
+    0     -> no filter (all candidates)
+    int>0 -> filter by that candidate
+    """
+    if candidate_id == 0:
+        return ("", ())
+    if candidate_id is None:
+        from scripts.tracker.candidates import get_active_candidate
+        active = get_active_candidate()
+        if active is None:
+            return ("", ())  # no active candidate: behave like 0 for read paths
+        candidate_id = active.id
+    return ("candidate_id = ?", (candidate_id,))
+
+
+def _resolve_scope_candidate_id(candidate_id):
+    """Resolve a candidate scope to a concrete id (or None for 'all').
+
+    Mirrors `_scope_candidate_clause` but yields an id rather than a SQL
+    fragment — used where the column name must be table-qualified inside
+    a JOIN (e.g. `j.candidate_id`).
+
+    Returns:
+        None  -> no filter (all candidates), for the 0 sentinel or when no
+                 active candidate is set.
+        int   -> the candidate id to filter by.
+    """
+    if candidate_id == 0:
+        return None
+    if candidate_id is None:
+        from scripts.tracker.candidates import get_active_candidate
+        active = get_active_candidate()
+        return active.id if active is not None else None
+    return candidate_id
 
 
 # --- Result types (lightweight DTOs distinct from the row dataclasses) --------
@@ -42,6 +84,7 @@ def list_applications(
     company: Optional[str] = None,
     since: Optional[datetime] = None,
     status: Optional[str] = None,
+    candidate_id: Optional[int] = None,
 ) -> List[ApplicationRow]:
     """Return active applications (archived_at IS NULL), filtered by criteria.
 
@@ -49,7 +92,13 @@ def list_applications(
         - None or 'all' — no filter
         - 'open' — applications with no rejection/offer/withdrew outcome yet
         - 'closed' — applications with a terminal outcome
+
+    candidate_id (scoped via the JD that the application targets):
+        - None — the active candidate (no filter if none set)
+        - 0    — all candidates
+        - int  — that candidate
     """
+    scope_cid = _resolve_scope_candidate_id(candidate_id)
     conn = open_db()
     try:
         sql = """
@@ -66,6 +115,9 @@ def list_applications(
             WHERE a.archived_at IS NULL
         """
         params: list = []
+        if scope_cid is not None:
+            sql += " AND j.candidate_id = ?"
+            params.append(scope_cid)
         if company is not None:
             sql += " AND LOWER(j.company) = LOWER(?)"
             params.append(company)
@@ -115,14 +167,68 @@ def find_duplicates(
             or r.role_title.lower() in role_lower]
 
 
+def list_jds(candidate_id: Optional[int] = None) -> List[JD]:
+    """Return active JDs (archived_at IS NULL), scoped to a candidate.
+
+    candidate_id:
+        - None — the active candidate (no filter if none set)
+        - 0    — all candidates
+        - int  — that candidate
+
+    Gracefully returns [] when the db file doesn't exist (tracker never used).
+    """
+    if not get_db_path().exists():
+        return []
+    scope_sql, scope_params = _scope_candidate_clause(candidate_id)
+    conn = open_db()
+    try:
+        sql = """SELECT id, source, source_ref, company, role_title, raw_text,
+                        analyzer_findings, focus_areas_required,
+                        focus_areas_nice, created_at, archived_at,
+                        folder_path, candidate_id
+                 FROM jds
+                 WHERE archived_at IS NULL"""
+        if scope_sql:
+            sql += f" AND {scope_sql}"
+        sql += " ORDER BY created_at DESC"
+        rows = conn.execute(sql, scope_params).fetchall()
+    finally:
+        conn.close()
+    return [
+        JD(
+            id=r[0], source=r[1], source_ref=r[2], company=r[3],
+            role_title=r[4], raw_text=r[5],
+            analyzer_findings=json.loads(r[6] or "{}"),
+            focus_areas_required=json.loads(r[7] or "[]"),
+            focus_areas_nice=json.loads(r[8] or "[]"),
+            created_at=r[9], archived_at=r[10],
+            folder_path=r[11], candidate_id=r[12],
+        )
+        for r in rows
+    ]
+
+
 # --- Task 8: weekly_summary + efficacy_by_template ----
 
 INTERVIEW_EVENT_TYPES = {"phone_screen", "first_round", "second_round", "take_home"}
 
 
-def weekly_summary(now: Optional[datetime] = None) -> WeeklySummary:
+def weekly_summary(
+    now: Optional[datetime] = None,
+    candidate_id: Optional[int] = None,
+) -> WeeklySummary:
     """Return a summary of the last 7 days: application count, outcomes by
-    type, and pacing vs the user's healthy_weekly_rate (if set)."""
+    type, and pacing vs the candidate's healthy_weekly_rate (if set).
+
+    candidate_id (scoped via the JD that each application targets):
+        - None — the active candidate (no filter if none set)
+        - 0    — all candidates
+        - int  — that candidate
+
+    The pacing target is the resolved candidate's healthy_weekly_rate. When
+    the scope is 'all candidates' (0) or no active candidate is set, there is
+    no single target, so pacing is None.
+    """
     if now is None:
         now = datetime.now()
     week_ago = now - timedelta(days=7)
@@ -135,25 +241,46 @@ def weekly_summary(now: Optional[datetime] = None) -> WeeklySummary:
             pacing_vs_target=None,
         )
 
+    scope_cid = _resolve_scope_candidate_id(candidate_id)
+
     conn = open_db()
     try:
-        app_count = conn.execute(
-            "SELECT COUNT(*) FROM applications "
-            "WHERE archived_at IS NULL AND submitted_at >= ?",
-            (week_ago.isoformat(),),
-        ).fetchone()[0]
+        app_sql = (
+            "SELECT COUNT(*) FROM applications a "
+            "JOIN jds j ON j.id = a.jd_id "
+            "WHERE a.archived_at IS NULL AND a.submitted_at >= ?"
+        )
+        app_params: list = [week_ago.isoformat()]
+        if scope_cid is not None:
+            app_sql += " AND j.candidate_id = ?"
+            app_params.append(scope_cid)
+        app_count = conn.execute(app_sql, app_params).fetchone()[0]
 
-        outcome_rows = conn.execute(
-            "SELECT event_type, COUNT(*) FROM outcomes "
-            "WHERE archived_at IS NULL AND event_date >= ? "
-            "GROUP BY event_type",
-            (week_ago.isoformat(),),
-        ).fetchall()
+        outcome_sql = (
+            "SELECT o.event_type, COUNT(*) FROM outcomes o "
+            "JOIN applications a ON a.id = o.application_id "
+            "JOIN jds j ON j.id = a.jd_id "
+            "WHERE o.archived_at IS NULL AND o.event_date >= ?"
+        )
+        outcome_params: list = [week_ago.isoformat()]
+        if scope_cid is not None:
+            outcome_sql += " AND j.candidate_id = ?"
+            outcome_params.append(scope_cid)
+        outcome_sql += " GROUP BY o.event_type"
+        outcome_rows = conn.execute(outcome_sql, outcome_params).fetchall()
         outcomes_by_type = {row[0]: row[1] for row in outcome_rows}
     finally:
         conn.close()
 
-    target = read_profile().healthy_weekly_rate
+    # Pacing target lives on the candidate. Only meaningful for a single
+    # resolved candidate; 'all candidates' has no single target.
+    target = None
+    if scope_cid is not None:
+        from scripts.tracker.candidates import get_candidate
+        candidate = get_candidate(scope_cid)
+        if candidate is not None:
+            target = candidate.healthy_weekly_rate
+
     if target is None:
         pacing = None
     elif app_count > target:
@@ -171,7 +298,7 @@ def weekly_summary(now: Optional[datetime] = None) -> WeeklySummary:
     )
 
 
-def efficacy_by_template() -> List[EfficacyRow]:
+def efficacy_by_template(candidate_id: Optional[int] = None) -> List[EfficacyRow]:
     """Return per-template counts of submitted/callback/interview/offer/rejection.
 
     Each application contributes once to each event-type count it has produced.
@@ -179,14 +306,19 @@ def efficacy_by_template() -> List[EfficacyRow]:
       - submitted_count: 1
       - interview_count: 2 (phone_screen + first_round)
       - offer_count: 1
+
+    candidate_id (scoped via the JD that each application targets):
+        - None — the active candidate (no filter if none set)
+        - 0    — all candidates
+        - int  — that candidate
     """
     if not get_db_path().exists():
         return []
 
+    scope_cid = _resolve_scope_candidate_id(candidate_id)
     conn = open_db()
     try:
-        rows = conn.execute(
-            """
+        sql = """
             SELECT rv.template,
                    a.id,
                    (SELECT GROUP_CONCAT(event_type, ',')
@@ -195,9 +327,14 @@ def efficacy_by_template() -> List[EfficacyRow]:
                    AS event_types
             FROM applications a
             JOIN resume_versions rv ON rv.id = a.resume_version_id
+            JOIN jds j ON j.id = a.jd_id
             WHERE a.archived_at IS NULL
-            """
-        ).fetchall()
+        """
+        params: list = []
+        if scope_cid is not None:
+            sql += " AND j.candidate_id = ?"
+            params.append(scope_cid)
+        rows = conn.execute(sql, params).fetchall()
     finally:
         conn.close()
 
@@ -287,16 +424,27 @@ def get_artifact_by_uid(uid: str) -> ResumeVersion | CoverLetter | None:
 
 
 def list_artifacts_for_candidate(name: str) -> list:
-    """Return all resume_versions + cover_letters whose for_candidate matches name."""
+    """Return all resume_versions + cover_letters whose candidate matches the name.
+
+    Matches by candidate first+last name (split via outputs.naming.split_candidate_name)
+    JOINed on the candidates table.
+    """
+    from scripts.outputs.naming import split_candidate_name
+    first, last = split_candidate_name(name)
     conn = open_db()
     try:
         results: list = []
         for row in conn.execute(
-            """SELECT id, file_path, template, focus_areas, parent_id, tagged_jd_id,
-                      created_at, archived_at, artifact_uid, parent_uid, for_candidate
-               FROM resume_versions WHERE for_candidate = ? AND archived_at IS NULL
-               ORDER BY created_at DESC""",
-            (name,),
+            """SELECT rv.id, rv.file_path, rv.template, rv.focus_areas,
+                      rv.parent_id, rv.tagged_jd_id, rv.created_at,
+                      rv.archived_at, rv.artifact_uid, rv.parent_uid,
+                      rv.for_candidate, rv.candidate_id
+               FROM resume_versions rv
+               JOIN candidates c ON c.id = rv.candidate_id
+               WHERE c.first_name = ? AND c.last_name = ?
+                 AND rv.archived_at IS NULL
+               ORDER BY rv.created_at DESC""",
+            (first, last),
         ):
             results.append(ResumeVersion(
                 id=row[0], file_path=row[1], template=row[2],
@@ -304,21 +452,26 @@ def list_artifacts_for_candidate(name: str) -> list:
                 parent_id=row[4], tagged_jd_id=row[5],
                 created_at=row[6], archived_at=row[7],
                 artifact_uid=row[8], parent_uid=row[9],
-                for_candidate=row[10],
+                for_candidate=row[10], candidate_id=row[11],
             ))
         for row in conn.execute(
-            """SELECT id, file_path, resume_version_id, jd_id, template,
-                      created_at, archived_at, artifact_uid, parent_uid, for_candidate
-               FROM cover_letters WHERE for_candidate = ? AND archived_at IS NULL
-               ORDER BY created_at DESC""",
-            (name,),
+            """SELECT cl.id, cl.file_path, cl.resume_version_id, cl.jd_id,
+                      cl.template, cl.created_at, cl.archived_at,
+                      cl.artifact_uid, cl.parent_uid, cl.for_candidate,
+                      cl.candidate_id
+               FROM cover_letters cl
+               JOIN candidates c ON c.id = cl.candidate_id
+               WHERE c.first_name = ? AND c.last_name = ?
+                 AND cl.archived_at IS NULL
+               ORDER BY cl.created_at DESC""",
+            (first, last),
         ):
             results.append(CoverLetter(
                 id=row[0], file_path=row[1], resume_version_id=row[2],
                 jd_id=row[3], template=row[4],
                 created_at=row[5], archived_at=row[6],
                 artifact_uid=row[7], parent_uid=row[8],
-                for_candidate=row[9],
+                for_candidate=row[9], candidate_id=row[10],
             ))
         return results
     finally:

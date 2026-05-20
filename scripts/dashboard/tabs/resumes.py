@@ -10,10 +10,19 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from scripts.tracker.candidates import get_active_candidate
 from scripts.tracker.db import open_db
 
 
 def render() -> None:
+    active = get_active_candidate()
+    if active is None:
+        st.info(
+            "No active candidate. Select or create one in the sidebar to see "
+            "resume versions."
+        )
+        return
+
     if st.button("↻ Refresh", key="resumes_refresh"):
         st.rerun()
 
@@ -27,9 +36,10 @@ def render() -> None:
         return
 
     # Drift columns (v1.7.0): join per-resume drift scores by artifact_uid.
+    # Drift surfaces scope by candidate_id (Task 15).
     drift_by_uid = {
         r["artifact_uid"]: r
-        for r in _build_resume_rows({"for_candidate": None})
+        for r in _build_resume_rows({"candidate_id": active.id})
         if r.get("artifact_uid")
     }
     for row in rows:
@@ -140,10 +150,18 @@ def render() -> None:
 
 
 def _list_resume_versions() -> list:
-    """Read-only direct query for resume versions + computed AI-signal score."""
+    """Read-only direct query for resume versions + computed AI-signal score.
+
+    Scoped to the active candidate (Task 12). When no active candidate is set,
+    returns an empty list.
+    """
     import json
 
     from scripts.validators.ai_signal_check import ai_signal_check
+
+    active = get_active_candidate()
+    if active is None:
+        return []
 
     conn = open_db()
     try:
@@ -152,9 +170,10 @@ def _list_resume_versions() -> list:
             SELECT id, file_path, template, focus_areas, parent_id,
                    tagged_jd_id, created_at, artifact_uid
             FROM resume_versions
-            WHERE archived_at IS NULL
+            WHERE archived_at IS NULL AND candidate_id = ?
             ORDER BY created_at DESC
-            """
+            """,
+            (active.id,),
         )
         rows = []
         for row in cur.fetchall():
