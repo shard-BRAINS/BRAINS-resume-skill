@@ -4,6 +4,58 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## v1.7.0 — 2026-05-20
+
+### Added
+- **Resume drift analytics** — per-fact-class drift scoring across the existing
+  `artifact_uid` + `parent_uid` lineage. Tracks how far each tailored resume has
+  moved from (a) its immediate parent and (b) the candidate's current baseline.
+- Ten fact classes captured per snapshot: identity, experience, education,
+  skills, certifications, standalone achievements, hobbies, languages,
+  publications, portfolio links. The fact schema is deliberately broader than
+  any single resume so the baseline acts as a "professional-identity record."
+- New tables: `resume_fact_snapshots` (artifact_uid → fact JSON),
+  `resume_drift_scores` (artifact_uid → vs_parent + vs_baseline JSON),
+  `baseline_history` (audit log of baseline promotions).
+- New column on `resume_versions`: `is_baseline`. Exactly one active baseline
+  per candidate, enforced by a partial unique index.
+- New module `scripts/drift/` containing `snapshot_from_workflow`, `compute`,
+  `lineage`, `baseline`, `extract_facts`, `formatters`.
+- New slash command **`/brains-import`** for uploading an existing DOCX as the
+  candidate's baseline. The LLM-backed extractor produces the structured fact
+  snapshot; implausible values are flagged for review before commit.
+- Dashboard:
+  - Drift trajectory tile on the Overview tab (active candidate's
+    drift-from-baseline sparkline + headline drift %).
+  - "Drift vs parent" and "Drift vs baseline" sortable columns on the
+    Resumes tab.
+  - New top-level **Drift tab** with lineage strip, per-fact-class table,
+    field-level diff, and "Make this my baseline" promotion.
+
+### Changed
+- `add_resume_version` now auto-sets `is_baseline=1` for the first non-archived
+  row in each candidate scope. Override with `is_baseline=False` if needed.
+- `_SKILL_VERSION` bumped to `"1.7.0"`. New artifacts stamp the new version
+  into the `BrainsSkillVersion` DOCX custom property.
+
+### Migration
+- Migration `0004_drift_analytics` runs automatically on first `open_db()`
+  after upgrade. The backfill marks the oldest non-archived row per
+  `for_candidate` scope as the active baseline. No snapshots are backfilled
+  for pre-existing resumes — they show `—` in the drift columns until either
+  (a) the user runs `/brains-import` on them, or (b) a future batch-backfill
+  job extracts facts from the historical DOCX files.
+
+### Notes
+- This is preparatory for Approach B (proper `candidates` table) — when that
+  ships, `baseline_history.for_candidate` migrates to `candidate_id`
+  alongside the rest of the candidate-scoped columns. Snapshot and drift-score
+  tables are unaffected (UID-keyed).
+- Cover letters do NOT get snapshots in v1.7.0 — derivative artifacts, low
+  signal value. Out of scope per design spec §4.
+- PDF metadata still doesn't carry artifact UIDs — same pre-existing gap as
+  v1.5.0/1.6.0.
+
 ## v1.6.0 — 2026-05-19
 
 ### Added

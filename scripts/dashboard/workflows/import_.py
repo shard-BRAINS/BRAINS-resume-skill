@@ -14,7 +14,7 @@ from typing import Optional, Tuple
 
 import streamlit as st
 
-from scripts.outputs.io import get_outputs_root, ProfileNameMissingError
+from scripts.outputs.io import get_outputs_root, ProfileNameMissingError, _SKILL_VERSION
 from scripts.outputs.naming import artifact_filename, new_uid, split_candidate_name
 from scripts.outputs.tagging import ArtifactMeta
 from scripts.tracker.profile import read_profile
@@ -55,7 +55,7 @@ def _resolve_target(
         artifact_uid=uid, artifact_kind="resume",
         jd_id=None, parent_uid=None,
         created_at=datetime.utcnow().isoformat() + "Z",
-        skill_version="1.7.0",
+        skill_version=_SKILL_VERSION,
         for_candidate=for_candidate,
     )
     return target_path, meta, for_candidate
