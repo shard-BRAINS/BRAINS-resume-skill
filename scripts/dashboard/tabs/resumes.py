@@ -36,9 +36,10 @@ def render() -> None:
         return
 
     # Drift columns (v1.7.0): join per-resume drift scores by artifact_uid.
+    # Drift surfaces scope by candidate_id (Task 15).
     drift_by_uid = {
         r["artifact_uid"]: r
-        for r in _build_resume_rows({"for_candidate": None})
+        for r in _build_resume_rows({"candidate_id": active.id})
         if r.get("artifact_uid")
     }
     for row in rows:

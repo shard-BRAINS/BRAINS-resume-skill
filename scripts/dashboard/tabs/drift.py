@@ -131,15 +131,22 @@ def _field_level_changes(artifact_uid: str) -> list[str]:
 def render(scope: dict | None = None) -> None:
     import streamlit as st
     from scripts.drift.baseline import promote_baseline
+    from scripts.tracker.candidates import get_active_candidate
 
-    scope = scope or {"for_candidate": None}
+    if scope is None:
+        active = get_active_candidate()
+        if active is None:
+            st.info("No active candidate. Select or create one in the sidebar.")
+            return
+        scope = {"candidate_id": active.id}
+
     st.header("Drift")
     data = _lineage_data(scope)
     if not data["nodes"]:
         st.caption("No resumes for this candidate yet. Use /brains-import to upload a baseline.")
         return
 
-    st.subheader(f"Drift · {scope.get('for_candidate') or 'profile holder'}")
+    st.subheader("Drift · active candidate")
     st.caption(f"Lineage: {len(data['nodes'])} versions · baseline {data['baseline_uid'] or '—'}")
 
     selected = st.selectbox(

@@ -67,8 +67,8 @@ def render() -> None:
     weekly = cached_weekly_summary()
     now = datetime.now()
 
-    # Scope is the active candidate; the tracker query layer auto-scopes.
-    scope = {"for_candidate": None}
+    # Drift surfaces scope by candidate_id (Task 15).
+    scope = {"candidate_id": active.id}
 
     _render_summary_tiles(rows, weekly, active, now)
     render_drift_tile(scope)
