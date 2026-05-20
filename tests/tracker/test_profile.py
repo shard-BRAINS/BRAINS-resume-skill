@@ -1,4 +1,10 @@
-"""Tests for the profile.json read/write helpers."""
+"""Tests for the profile.json read/write helpers.
+
+Post-Approach-B: the profile holds two fields only — active_candidate_id and
+log_handoffs. Per-candidate data lives in the candidates table. A legacy-shape
+profile.json (with first_name/focus_areas/etc) reads as an empty Profile; the
+legacy fields are consumed by the Task 5 backfill hook, not here.
+"""
 from pathlib import Path
 
 from scripts.tracker.models import Profile
@@ -19,32 +25,8 @@ def test_get_profile_path_honours_env_override(monkeypatch, tmp_path):
 def test_read_profile_when_file_missing_returns_empty(monkeypatch, tmp_path):
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "missing.json"))
     p = read_profile()
-    assert p.focus_areas == []
-    assert p.healthy_weekly_rate is None
-
-
-def test_write_then_read_round_trip(monkeypatch, tmp_path):
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
-    write_profile(Profile(focus_areas=["platform", "observability"], healthy_weekly_rate=4))
-    p = read_profile()
-    assert p.focus_areas == ["platform", "observability"]
-    assert p.healthy_weekly_rate == 4
-
-
-def test_write_profile_creates_parent_dir(monkeypatch, tmp_path):
-    target = tmp_path / "newdir" / "p.json"
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(target))
-    write_profile(Profile(focus_areas=["x"], healthy_weekly_rate=None))
-    assert target.exists()
-
-
-def test_write_profile_overwrites_existing(monkeypatch, tmp_path):
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
-    write_profile(Profile(focus_areas=["a"], healthy_weekly_rate=3))
-    write_profile(Profile(focus_areas=["b", "c"], healthy_weekly_rate=5))
-    p = read_profile()
-    assert p.focus_areas == ["b", "c"]
-    assert p.healthy_weekly_rate == 5
+    assert p.active_candidate_id is None
+    assert p.log_handoffs is True
 
 
 def test_read_profile_malformed_json_returns_empty(monkeypatch, tmp_path):
@@ -53,29 +35,8 @@ def test_read_profile_malformed_json_returns_empty(monkeypatch, tmp_path):
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(path))
     p = read_profile()
     # Defensive default — corrupt file should not crash, just return empty.
-    assert p.focus_areas == []
-    assert p.healthy_weekly_rate is None
-
-
-def test_pacing_notes_round_trip(monkeypatch, tmp_path):
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
-    write_profile(Profile(
-        focus_areas=["python"], healthy_weekly_rate=3,
-        pacing_notes="Felt overwhelming this week.",
-    ))
-    p = read_profile()
-    assert p.pacing_notes == "Felt overwhelming this week."
-
-
-def test_pacing_notes_backward_compat_missing_field(monkeypatch, tmp_path):
-    """Old profile.json files without pacing_notes should still read cleanly."""
-    path = tmp_path / "p.json"
-    path.write_text('{"focus_areas": ["x"], "healthy_weekly_rate": 5}', encoding="utf-8")
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(path))
-    p = read_profile()
-    assert p.pacing_notes is None
-    assert p.focus_areas == ["x"]
-    assert p.healthy_weekly_rate == 5
+    assert p.active_candidate_id is None
+    assert p.log_handoffs is True
 
 
 def test_profile_default_log_handoffs_is_true():
@@ -83,56 +44,70 @@ def test_profile_default_log_handoffs_is_true():
     assert p.log_handoffs is True
 
 
-def test_read_profile_missing_log_handoffs_defaults_to_true(monkeypatch, tmp_path):
-    path = tmp_path / "p.json"
-    path.write_text('{"focus_areas": ["A"], "healthy_weekly_rate": 5}', encoding="utf-8")
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(path))
+def test_read_profile_trimmed_shape(tmp_path, monkeypatch):
+    """A profile.json in the post-B trimmed shape reads cleanly."""
+    p = tmp_path / "profile.json"
+    p.write_text('{"active_candidate_id": 5, "log_handoffs": false}', encoding="utf-8")
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(p))
+
+    from scripts.tracker.profile import read_profile
+    prof = read_profile()
+    assert prof.active_candidate_id == 5
+    assert prof.log_handoffs is False
+
+
+def test_read_profile_legacy_shape_returns_empty(tmp_path, monkeypatch):
+    """A profile.json in the pre-B legacy shape reads as an empty Profile.
+
+    The legacy fields (first_name/last_name/focus_areas/...) are not on the
+    new Profile dataclass; they are consumed by the backfill hook only.
+    """
+    p = tmp_path / "profile.json"
+    p.write_text(
+        '{"first_name": "Matthew", "last_name": "Gell",'
+        ' "focus_areas": ["data eng"], "healthy_weekly_rate": 5,'
+        ' "log_handoffs": true}',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(p))
+
+    from scripts.tracker.profile import read_profile
+    prof = read_profile()
+    assert prof.active_candidate_id is None
+    assert prof.log_handoffs is True
+
+
+def test_write_profile_writes_trimmed_shape(tmp_path, monkeypatch):
+    from scripts.tracker.profile import write_profile
+    from scripts.tracker.models import Profile
+
+    p = tmp_path / "profile.json"
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(p))
+    write_profile(Profile(active_candidate_id=7, log_handoffs=False))
+
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert data == {"active_candidate_id": 7, "log_handoffs": False}
+
+
+def test_write_then_read_round_trip(monkeypatch, tmp_path):
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+    write_profile(Profile(active_candidate_id=3, log_handoffs=True))
     p = read_profile()
+    assert p.active_candidate_id == 3
     assert p.log_handoffs is True
 
 
-def test_write_profile_persists_log_handoffs_false(monkeypatch, tmp_path):
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
-    write_profile(Profile(focus_areas=["X"], healthy_weekly_rate=4, log_handoffs=False))
-    data = (tmp_path / "p.json").read_text(encoding="utf-8")
-    assert '"log_handoffs": false' in data
+def test_write_profile_creates_parent_dir(monkeypatch, tmp_path):
+    target = tmp_path / "newdir" / "p.json"
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(target))
+    write_profile(Profile())
+    assert target.exists()
 
 
-def test_round_trip_log_handoffs_false(monkeypatch, tmp_path):
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
-    write_profile(Profile(focus_areas=["X"], healthy_weekly_rate=4, log_handoffs=False))
-    p = read_profile()
-    assert p.log_handoffs is False
-
-
-def test_profile_round_trip_with_names(monkeypatch, tmp_path):
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
-    p = Profile(
-        focus_areas=["platform"],
-        first_name="Matthew",
-        last_name="Gell",
-    )
-    write_profile(p)
-    loaded = read_profile()
-    assert loaded.first_name == "Matthew"
-    assert loaded.last_name == "Gell"
-    assert loaded.focus_areas == ["platform"]
-
-
-def test_profile_defaults_names_to_none(monkeypatch, tmp_path):
-    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
-    write_profile(Profile(focus_areas=["x"]))
-    loaded = read_profile()
-    assert loaded.first_name is None
-    assert loaded.last_name is None
-
-
-def test_read_profile_handles_legacy_file_without_names(monkeypatch, tmp_path):
-    # Simulate a pre-v1.5.0 profile.json.
-    path = tmp_path / "profile.json"
-    path.write_text('{"focus_areas": ["x"], "log_handoffs": true}', encoding="utf-8")
+def test_read_profile_missing_log_handoffs_defaults_to_true(monkeypatch, tmp_path):
+    path = tmp_path / "p.json"
+    path.write_text('{"active_candidate_id": 2}', encoding="utf-8")
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(path))
-    loaded = read_profile()
-    assert loaded.focus_areas == ["x"]
-    assert loaded.first_name is None
-    assert loaded.last_name is None
+    p = read_profile()
+    assert p.log_handoffs is True
