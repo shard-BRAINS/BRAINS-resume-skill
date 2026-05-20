@@ -15,6 +15,23 @@ def _now_iso() -> str:
     return datetime.utcnow().isoformat() + "Z"
 
 
+class NoActiveCandidateError(Exception):
+    """Raised when an insert has no candidate_id override AND no active candidate is set."""
+
+
+def _resolve_candidate_id(candidate_id: Optional[int]) -> int:
+    if candidate_id is not None:
+        return candidate_id
+    from scripts.tracker.candidates import get_active_candidate
+    active = get_active_candidate()
+    if active is None:
+        raise NoActiveCandidateError(
+            "No active candidate is set. Pass candidate_id explicitly or "
+            "select a candidate in the dashboard sidebar."
+        )
+    return active.id
+
+
 def add_resume_version(
     file_path: Optional[str],
     template: str,
@@ -24,23 +41,24 @@ def add_resume_version(
     artifact_uid: Optional[str] = None,
     parent_uid: Optional[str] = None,
     for_candidate: Optional[str] = None,
+    candidate_id: Optional[int] = None,
     is_baseline: Optional[bool] = None,
 ) -> int:
     """Insert a resume_versions row, return the new id.
 
-    is_baseline:
+    is_baseline (carried over from v1.7.0 drift analytics):
       - None (default): auto — set to 1 if this is the first non-archived row
-        in this for_candidate scope, else 0.
-      - True / False: explicit override; the caller controls the flag.
+        for the resolved candidate_id, else 0.
+      - True / False: explicit override.
     """
+    resolved_cid = _resolve_candidate_id(candidate_id)
     conn = open_db()
     try:
         if is_baseline is None:
             existing = conn.execute(
                 "SELECT COUNT(*) FROM resume_versions "
-                "WHERE archived_at IS NULL AND "
-                "((? IS NULL AND for_candidate IS NULL) OR for_candidate = ?)",
-                (for_candidate, for_candidate),
+                "WHERE archived_at IS NULL AND candidate_id = ?",
+                (resolved_cid,),
             ).fetchone()[0]
             resolved_baseline = 1 if existing == 0 else 0
         else:
@@ -51,15 +69,12 @@ def add_resume_version(
             INSERT INTO resume_versions
                 (file_path, template, focus_areas, parent_id, tagged_jd_id,
                  created_at, artifact_uid, parent_uid, for_candidate,
-                 is_baseline)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 candidate_id, is_baseline)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (
-                file_path, template, json.dumps(focus_areas),
-                parent_id, tagged_jd_id, _now_iso(),
-                artifact_uid, parent_uid, for_candidate,
-                resolved_baseline,
-            ),
+            (file_path, template, json.dumps(focus_areas), parent_id,
+             tagged_jd_id, _now_iso(), artifact_uid, parent_uid,
+             for_candidate, resolved_cid, resolved_baseline),
         )
         conn.commit()
         return cur.lastrowid
@@ -77,8 +92,10 @@ def add_jd(
     focus_areas_required: List[str],
     focus_areas_nice: List[str],
     folder_path: Optional[str] = None,
+    candidate_id: Optional[int] = None,
 ) -> int:
     """Insert a jds row, return the new id."""
+    resolved_cid = _resolve_candidate_id(candidate_id)
     conn = open_db()
     try:
         cur = conn.execute(
@@ -86,8 +103,8 @@ def add_jd(
             INSERT INTO jds
                 (source, source_ref, company, role_title, raw_text,
                  analyzer_findings, focus_areas_required, focus_areas_nice,
-                 created_at, folder_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 created_at, folder_path, candidate_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 source,
@@ -100,6 +117,7 @@ def add_jd(
                 json.dumps(focus_areas_nice),
                 _now_iso(),
                 folder_path,
+                resolved_cid,
             ),
         )
         conn.commit()
@@ -116,19 +134,21 @@ def add_cover_letter(
     artifact_uid: Optional[str] = None,
     parent_uid: Optional[str] = None,
     for_candidate: Optional[str] = None,
+    candidate_id: Optional[int] = None,
 ) -> int:
     """Insert a cover_letters row, return the new id."""
+    resolved_cid = _resolve_candidate_id(candidate_id)
     conn = open_db()
     try:
         cur = conn.execute(
             """
             INSERT INTO cover_letters
                 (file_path, resume_version_id, jd_id, template, created_at,
-                 artifact_uid, parent_uid, for_candidate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 artifact_uid, parent_uid, for_candidate, candidate_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (file_path, resume_version_id, jd_id, template, _now_iso(),
-             artifact_uid, parent_uid, for_candidate),
+             artifact_uid, parent_uid, for_candidate, resolved_cid),
         )
         conn.commit()
         return cur.lastrowid

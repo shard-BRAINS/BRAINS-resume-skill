@@ -12,10 +12,31 @@ from scripts.tracker.add import (
 
 
 @pytest.fixture
-def fresh_db(monkeypatch, tmp_path):
-    """Each test gets an isolated empty db."""
+def isolated(monkeypatch, tmp_path):
+    """Isolate BOTH the tracker DB and the profile.json paths to tmp_path.
+
+    The candidate-scoping tests call set_active_candidate/get_active_candidate,
+    which read+write profile.json — so the profile path must be isolated too.
+    """
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
     return tmp_path / "test.db"
+
+
+@pytest.fixture
+def fresh_db(isolated):
+    """Each test gets an isolated empty db + an active candidate.
+
+    Builds on `isolated` (both DB and profile paths isolated). Since every
+    insert now defaults candidate_id to the active candidate, this fixture
+    creates one and sets it active so pre-existing tests keep working without
+    passing candidate_id explicitly.
+    """
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+
+    cid = create_candidate("Matthew", "Gell", [], None, None)
+    set_active_candidate(cid)
+    return isolated
 
 
 def test_add_resume_version_returns_id(fresh_db):
@@ -400,10 +421,13 @@ def test_add_resume_version_second_row_per_candidate_is_not_baseline(fresh_db):
 
 def test_add_resume_version_separate_candidates_each_get_a_baseline(fresh_db):
     from scripts.tracker.add import add_resume_version
+    from scripts.tracker.candidates import create_candidate
     from scripts.tracker.db import open_db
 
-    a = add_resume_version(None, "hybrid", [], for_candidate="Matthew Gell")
-    b = add_resume_version(None, "hybrid", [], for_candidate="Mathilda Gell")
+    cid_a = create_candidate("Matthew", "Gell", [], None, None)
+    cid_b = create_candidate("Mathilda", "Gell", [], None, None)
+    a = add_resume_version(None, "hybrid", [], candidate_id=cid_a)
+    b = add_resume_version(None, "hybrid", [], candidate_id=cid_b)
     conn = open_db()
     try:
         rows = conn.execute(
@@ -433,3 +457,70 @@ def test_add_resume_version_explicit_is_baseline_false_overrides_auto(fresh_db):
     finally:
         conn.close()
     assert row[0] == 0
+
+
+def test_add_resume_version_defaults_to_active_candidate(isolated):
+    from scripts.tracker.add import add_resume_version
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    from scripts.tracker.db import open_db
+
+    cid = create_candidate("Matthew", "Gell", [], None, None)
+    set_active_candidate(cid)
+    rv_id = add_resume_version(None, "hybrid", [])
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT candidate_id FROM resume_versions WHERE id=?", (rv_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row[0] == cid
+
+
+def test_add_resume_version_explicit_candidate_id(isolated):
+    from scripts.tracker.add import add_resume_version
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    from scripts.tracker.db import open_db
+
+    active = create_candidate("Matthew", "Gell", [], None, None)
+    other  = create_candidate("Mathilda", "Gell", [], None, None)
+    set_active_candidate(active)
+    rv_id = add_resume_version(None, "hybrid", [], candidate_id=other)
+    conn = open_db()
+    try:
+        row = conn.execute(
+            "SELECT candidate_id FROM resume_versions WHERE id=?", (rv_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row[0] == other
+
+
+def test_add_resume_version_no_active_no_override_raises(isolated):
+    from scripts.tracker.add import add_resume_version, NoActiveCandidateError
+    with pytest.raises(NoActiveCandidateError):
+        add_resume_version(None, "hybrid", [])
+
+
+def test_add_resume_version_auto_baseline_scoped_by_candidate(isolated):
+    """Reconciled auto-is_baseline: first row per candidate_id is the baseline."""
+    from scripts.tracker.add import add_resume_version
+    from scripts.tracker.candidates import create_candidate
+    from scripts.tracker.db import open_db
+
+    a = create_candidate("Matthew", "Gell", [], None, None)
+    b = create_candidate("Mathilda", "Gell", [], None, None)
+    a1 = add_resume_version(None, "hybrid", [], candidate_id=a)
+    a2 = add_resume_version(None, "hybrid", [], candidate_id=a)
+    b1 = add_resume_version(None, "hybrid", [], candidate_id=b)
+    conn = open_db()
+    try:
+        rows = {r[0]: r[1] for r in conn.execute(
+            "SELECT id, is_baseline FROM resume_versions WHERE id IN (?, ?, ?)",
+            (a1, a2, b1),
+        )}
+    finally:
+        conn.close()
+    assert rows[a1] == 1   # first for candidate a
+    assert rows[a2] == 0   # second for candidate a
+    assert rows[b1] == 1   # first for candidate b
