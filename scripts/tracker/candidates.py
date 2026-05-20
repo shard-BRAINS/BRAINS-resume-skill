@@ -141,3 +141,31 @@ def get_active_candidate() -> Optional[Candidate]:
     if profile.active_candidate_id is None:
         return None
     return get_candidate(profile.active_candidate_id)
+
+
+def find_or_create_by_name(name: str) -> int:
+    """Find a candidate by free-text name; create with empty focus areas if missing."""
+    from scripts.outputs.naming import split_candidate_name
+    from scripts.tracker.db import open_db
+    first, last = split_candidate_name(name)
+    conn = open_db()
+    try:
+        row = conn.execute(
+            """SELECT id FROM candidates
+               WHERE first_name=? AND last_name=? AND archived_at IS NULL
+               ORDER BY id LIMIT 1""",
+            (first, last),
+        ).fetchone()
+        if row is not None:
+            return row[0]
+        cur = conn.execute(
+            """INSERT INTO candidates
+                 (first_name, last_name, focus_areas, healthy_weekly_rate,
+                  pacing_notes, created_at)
+               VALUES (?, ?, '[]', NULL, NULL, ?)""",
+            (first, last, _now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()

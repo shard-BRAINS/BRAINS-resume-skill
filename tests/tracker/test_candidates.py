@@ -58,3 +58,12 @@ def test_update_candidate(isolated):
     c = get_candidate(cid)
     assert c.focus_areas == ["data eng"]
     assert c.healthy_weekly_rate == 5
+
+
+def test_find_or_create_by_name_creates_then_finds(isolated):
+    from scripts.tracker.candidates import find_or_create_by_name, get_candidate
+    cid = find_or_create_by_name("Mathilda Gell")
+    c = get_candidate(cid)
+    assert c.first_name == "Mathilda" and c.last_name == "Gell"
+    # second call finds the same row, no duplicate
+    assert find_or_create_by_name("Mathilda Gell") == cid

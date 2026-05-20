@@ -40,10 +40,19 @@ from datetime import date
 
 from scripts.outputs.io import ensure_jd_folder
 from scripts.tracker.add import add_jd
+from scripts.tracker.candidates import create_candidate, set_active_candidate
 from scripts.tracker.db import open_db
 
 
+def _ensure_active_candidate():
+    """add_jd requires an active candidate; provide one for JD-only tests."""
+    cid = create_candidate("Matthew", "Gell", [], None, None)
+    set_active_candidate(cid)
+    return cid
+
+
 def test_ensure_jd_folder_creates_dir(isolated):
+    _ensure_active_candidate()
     jd_id = add_jd(
         source="manual", source_ref=None,
         company="Acme Corp", role_title="Senior Data Engineer",
@@ -59,6 +68,7 @@ def test_ensure_jd_folder_creates_dir(isolated):
 
 
 def test_ensure_jd_folder_writes_folder_path_to_jd_row(isolated):
+    _ensure_active_candidate()
     jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
     folder = ensure_jd_folder(jd_id)
     conn = open_db()
@@ -72,6 +82,7 @@ def test_ensure_jd_folder_writes_folder_path_to_jd_row(isolated):
 
 
 def test_ensure_jd_folder_idempotent(isolated):
+    _ensure_active_candidate()
     jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
     first = ensure_jd_folder(jd_id)
     second = ensure_jd_folder(jd_id)
@@ -81,6 +92,7 @@ def test_ensure_jd_folder_idempotent(isolated):
 def test_ensure_jd_folder_handles_collision(isolated):
     """Two JDs added on the same day for the same company/role produce
     distinct folders via _v2 suffix."""
+    _ensure_active_candidate()
     jd_a = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
     folder_a = ensure_jd_folder(jd_a)
     jd_b = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
@@ -93,16 +105,19 @@ from datetime import date as _date
 
 from scripts.outputs.io import make_artifact_path
 from scripts.outputs.tagging import ArtifactMeta
-from scripts.tracker.profile import write_profile
-from scripts.tracker.models import Profile
+from scripts.tracker.add import NoActiveCandidateError
+from scripts.tracker.candidates import create_candidate, set_active_candidate
 
 
-def _set_profile_name(first="Matthew", last="Gell"):
-    write_profile(Profile(focus_areas=[], first_name=first, last_name=last))
+def _activate_candidate(first="Matthew", last="Gell"):
+    """Create a candidate and mark it active; return its id."""
+    cid = create_candidate(first, last, [], None, None)
+    set_active_candidate(cid)
+    return cid
 
 
 def test_make_artifact_path_resume(isolated):
-    _set_profile_name()
+    _activate_candidate()
     jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
     path, meta = make_artifact_path(jd_id, "resume")
     assert path.parent.exists()
@@ -116,29 +131,33 @@ def test_make_artifact_path_resume(isolated):
 
 
 def test_make_artifact_path_cover_letter(isolated):
-    _set_profile_name()
+    _activate_candidate()
     jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
     path, meta = make_artifact_path(jd_id, "cover-letter")
     assert path.name.startswith("Matthew_Gell_cover-letter_")
 
 
 def test_make_artifact_path_with_parent_uid(isolated):
-    _set_profile_name()
+    _activate_candidate()
     jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
     path, meta = make_artifact_path(jd_id, "resume", parent_uid="ABCDEF")
     assert meta.parent_uid == "ABCDEF"
 
 
-def test_make_artifact_path_raises_when_name_missing(isolated):
-    # Profile exists but no first/last name.
-    write_profile(Profile(focus_areas=[]))
-    jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
-    with pytest.raises(ProfileNameMissingError):
+def test_make_artifact_path_raises_when_no_active_candidate(isolated):
+    # A JD exists (created against its own candidate) but no active candidate
+    # is set and no override is passed.
+    cid = create_candidate("Matthew", "Gell", [], None, None)
+    jd_id = add_jd(
+        "manual", None, "Acme", "Engineer", "...", {}, [], [],
+        candidate_id=cid,
+    )
+    with pytest.raises(NoActiveCandidateError):
         make_artifact_path(jd_id, "resume")
 
 
 def test_make_artifact_path_two_calls_yield_distinct_uids(isolated):
-    _set_profile_name()
+    _activate_candidate()
     jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
     _, meta_a = make_artifact_path(jd_id, "resume")
     _, meta_b = make_artifact_path(jd_id, "resume")
@@ -152,7 +171,7 @@ from scripts.outputs.tagging import read_artifact_meta
 
 
 def test_finalize_docx_writes_custom_properties(isolated):
-    _set_profile_name()
+    _activate_candidate()
     jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
     path, meta = make_artifact_path(jd_id, "resume")
     # Generator writes the file:
@@ -166,7 +185,7 @@ def test_finalize_docx_writes_custom_properties(isolated):
 
 
 def test_finalize_docx_raises_when_file_missing(isolated):
-    _set_profile_name()
+    _activate_candidate()
     jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
     path, meta = make_artifact_path(jd_id, "resume")
     # Don't actually create the file.
@@ -175,7 +194,7 @@ def test_finalize_docx_raises_when_file_missing(isolated):
 
 
 def test_read_artifact_uid_returns_uid_when_present(isolated):
-    _set_profile_name()
+    _activate_candidate()
     jd_id = add_jd("manual", None, "Acme", "Engineer", "...", {}, [], [])
     path, meta = make_artifact_path(jd_id, "resume")
     doc = Document()
@@ -191,13 +210,8 @@ def test_read_artifact_uid_returns_none_for_untagged(isolated, tmp_path):
 
 
 def test_make_artifact_path_for_candidate_uses_candidate_name_in_filename(isolated):
-    """Override candidate name supersedes profile name for filename construction."""
-    from scripts.outputs.io import make_artifact_path
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    from scripts.tracker.add import add_jd
-
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+    """for_candidate name supersedes the active candidate for filename construction."""
+    _activate_candidate("Matthew", "Gell")
     jd_id = add_jd("manual", None, "Acme", "Sales Assistant", "...", {}, [], [])
 
     path, meta = make_artifact_path(
@@ -210,14 +224,9 @@ def test_make_artifact_path_for_candidate_uses_candidate_name_in_filename(isolat
     assert meta.for_candidate == "Mathilda Gell"
 
 
-def test_make_artifact_path_no_override_uses_profile_name(isolated):
-    """No override: behaviour is unchanged from pre-C."""
-    from scripts.outputs.io import make_artifact_path
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    from scripts.tracker.add import add_jd
-
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+def test_make_artifact_path_no_override_uses_active_candidate_name(isolated):
+    """No override: the active candidate's name is used."""
+    _activate_candidate("Matthew", "Gell")
     jd_id = add_jd("manual", None, "Acme", "Senior Eng", "...", {}, [], [])
 
     path, meta = make_artifact_path(jd_id, "resume", parent_uid=None)
@@ -228,12 +237,7 @@ def test_make_artifact_path_no_override_uses_profile_name(isolated):
 
 def test_make_artifact_path_single_token_candidate_name(isolated):
     """Single-token candidate names (Cher, Madonna) still produce a valid filename."""
-    from scripts.outputs.io import make_artifact_path
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    from scripts.tracker.add import add_jd
-
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+    _activate_candidate("Matthew", "Gell")
     jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
 
     path, meta = make_artifact_path(
@@ -241,3 +245,52 @@ def test_make_artifact_path_single_token_candidate_name(isolated):
     )
     assert "Cher" in path.name
     assert meta.for_candidate == "Cher"
+
+
+def test_make_artifact_path_uses_active_candidate_name(isolated):
+    from scripts.outputs.io import make_artifact_path
+    from scripts.tracker.add import add_jd
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+
+    cid = create_candidate("Mathilda", "Gell", [], None, None)
+    set_active_candidate(cid)
+    jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+
+    path, meta = make_artifact_path(jd_id, "resume")
+    assert "Mathilda" in path.name
+    assert "Gell" in path.name
+    assert meta.candidate_id == cid
+
+
+def test_make_artifact_path_explicit_candidate_id_override(isolated):
+    from scripts.outputs.io import make_artifact_path
+    from scripts.tracker.add import add_jd
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+
+    matthew = create_candidate("Matthew", "Gell", [], None, None)
+    mathilda = create_candidate("Mathilda", "Gell", [], None, None)
+    set_active_candidate(matthew)
+    jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+
+    path, meta = make_artifact_path(jd_id, "resume", candidate_id=mathilda)
+    assert "Mathilda" in path.name
+    assert meta.candidate_id == mathilda
+
+
+def test_make_artifact_path_for_candidate_alias_resolves_to_candidate_id(isolated):
+    """v1.6 callers passing for_candidate still work; we resolve it to candidate_id."""
+    from scripts.outputs.io import make_artifact_path
+    from scripts.tracker.add import add_jd
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+
+    cid = create_candidate("Matthew", "Gell", [], None, None)
+    set_active_candidate(cid)
+    jd_id = add_jd("manual", None, "Acme", "Eng", "...", {}, [], [])
+
+    path, meta = make_artifact_path(
+        jd_id, "resume", for_candidate="Mathilda Gell",
+    )
+    assert "Mathilda" in path.name
+    assert meta.for_candidate == "Mathilda Gell"
+    assert meta.candidate_id is not None
+    assert meta.candidate_id != cid  # not Matthew
