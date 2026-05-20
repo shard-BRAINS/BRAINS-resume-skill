@@ -5,7 +5,7 @@ and consumers. They map 1:1 to SQLite rows for the 5 entity tables, plus
 Profile (lives in profile.json), WeeklySummary (computed), and EfficacyRow
 (computed).
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Dict, Optional
 
 
@@ -47,6 +47,19 @@ class ResumeVersion:
     artifact_uid: Optional[str] = None
     parent_uid: Optional[str] = None
     for_candidate: Optional[str] = None
+    candidate_id: Optional[int] = None
+
+
+@dataclass
+class Candidate:
+    id: Optional[int]
+    first_name: str
+    last_name: str
+    focus_areas: List[str]
+    healthy_weekly_rate: Optional[int]
+    pacing_notes: Optional[str]
+    created_at: str
+    archived_at: Optional[str]
 
 
 @dataclass
@@ -61,6 +74,7 @@ class CoverLetter:
     artifact_uid: Optional[str] = None
     parent_uid: Optional[str] = None
     for_candidate: Optional[str] = None
+    candidate_id: Optional[int] = None
 
 
 @dataclass
@@ -77,6 +91,7 @@ class JD:
     created_at: str
     archived_at: Optional[str]
     folder_path: Optional[str] = None
+    candidate_id: Optional[int] = None
 
 
 @dataclass
@@ -107,12 +122,8 @@ class Outcome:
 
 @dataclass
 class Profile:
-    focus_areas: List[str] = field(default_factory=list)
-    healthy_weekly_rate: Optional[int] = None
-    pacing_notes: Optional[str] = None
+    active_candidate_id: Optional[int] = None
     log_handoffs: bool = True
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
 
 
 @dataclass
