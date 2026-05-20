@@ -12,9 +12,6 @@ def isolated(monkeypatch, tmp_path):
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
     monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
     return tmp_path
 
 
@@ -23,6 +20,7 @@ def test_drift_pipeline_end_to_end(monkeypatch, isolated):
     from scripts.dashboard.workflows import import_ as import_mod
     from scripts.drift import extract_facts, on_artifact_finalised
     from scripts.tracker.add import add_resume_version
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
 
     BASELINE_FACTS = {
         "identity": {"name": "Mathilda Gell", "location": "Rochedale, QLD",
@@ -49,10 +47,12 @@ def test_drift_pipeline_end_to_end(monkeypatch, isolated):
     }
     monkeypatch.setattr(extract_facts, "_call_llm", lambda prompt: BASELINE_FACTS)
 
+    cid = create_candidate("Mathilda", "Gell", [], None, None)
+    set_active_candidate(cid)
+
     # 1. Import the baseline.
     result = import_mod.run_import(
         source_text="Mathilda's baseline resume text",
-        for_candidate="Mathilda Gell",
         confirm_despite_warnings=False,
     )
     assert result["status"] == "imported"
@@ -75,7 +75,7 @@ def test_drift_pipeline_end_to_end(monkeypatch, isolated):
         ),
     }
     add_resume_version(None, "hybrid", [], artifact_uid="DERIV",
-                       parent_uid=baseline_uid, for_candidate="Mathilda Gell")
+                       parent_uid=baseline_uid, candidate_id=cid)
     on_artifact_finalised("DERIV", derivative_data, kind="resume")
 
     # 3. Assert drift compute results.
@@ -111,6 +111,7 @@ def test_promote_baseline_recompute_end_to_end(monkeypatch, isolated):
     from scripts.drift.baseline import promote_baseline
     from scripts.drift.compute import write_snapshot_and_compute_drift
     from scripts.tracker.add import add_resume_version
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
 
     facts_a = {
         "identity": {"name": "X", "location": "Q", "email": "x@y", "phone": "0"},
@@ -122,13 +123,16 @@ def test_promote_baseline_recompute_end_to_end(monkeypatch, isolated):
     facts_b = {**facts_a, "skills": ["A", "B"]}
     facts_c = {**facts_a, "skills": ["A", "B", "C"]}
 
-    add_resume_version(None, "hybrid", [], artifact_uid="A", for_candidate="X")
+    cid = create_candidate("X", "Candidate", [], None, None)
+    set_active_candidate(cid)
+
+    add_resume_version(None, "hybrid", [], artifact_uid="A", candidate_id=cid)
     write_snapshot_and_compute_drift("A", facts_a)
     add_resume_version(None, "hybrid", [], artifact_uid="B",
-                       parent_uid="A", for_candidate="X")
+                       parent_uid="A", candidate_id=cid)
     write_snapshot_and_compute_drift("B", facts_b)
     add_resume_version(None, "hybrid", [], artifact_uid="C",
-                       parent_uid="B", for_candidate="X")
+                       parent_uid="B", candidate_id=cid)
     write_snapshot_and_compute_drift("C", facts_c)
 
     # Before promotion: C's vs_baseline_score is computed against A.

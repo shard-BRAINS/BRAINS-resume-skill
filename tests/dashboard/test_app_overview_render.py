@@ -44,10 +44,10 @@ def test_overview_includes_drift_trajectory_tile(monkeypatch, tmp_path):
 
     from scripts.drift.compute import write_snapshot_and_compute_drift
     from scripts.tracker.add import add_resume_version
-    from scripts.tracker.profile import write_profile
-    from scripts.tracker.models import Profile
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
 
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
+    cid = create_candidate("Matthew", "Gell", [], None, None)
+    set_active_candidate(cid)
 
     facts = {
         "identity": {"name": "Matthew Gell", "location": "X",
@@ -57,13 +57,14 @@ def test_overview_includes_drift_trajectory_tile(monkeypatch, tmp_path):
         "hobbies": None, "languages": None, "publications": None,
         "portfolio_links": None,
     }
-    add_resume_version(None, "hybrid", [], artifact_uid="BL")
+    add_resume_version(None, "hybrid", [], artifact_uid="BL", candidate_id=cid)
     write_snapshot_and_compute_drift("BL", facts)
-    add_resume_version(None, "hybrid", [], artifact_uid="V2", parent_uid="BL")
+    add_resume_version(None, "hybrid", [], artifact_uid="V2", parent_uid="BL",
+                       candidate_id=cid)
     write_snapshot_and_compute_drift("V2", {**facts, "skills": ["A", "B"]})
 
     from scripts.dashboard.tabs.overview import _drift_tile_summary
-    summary = _drift_tile_summary({"for_candidate": None})
+    summary = _drift_tile_summary({"candidate_id": cid})
     # The most-recent (V2) drift, plus sparkline series.
     assert summary["headline_pct"] is not None
     assert isinstance(summary["sparkline"], list)

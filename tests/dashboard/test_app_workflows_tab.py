@@ -36,9 +36,9 @@ def test_workflows_tab_has_three_subheaders(empty_tracker):
     at = AppTest.from_file(str(APP_PATH))
     at.run(timeout=15)
     subheaders = [s.value for s in at.subheader]
-    assert "Resume workflows" in subheaders
-    assert "JD & application workflows" in subheaders
-    assert "LinkedIn & coaching workflows" in subheaders
+    assert "1 · Pre-application & decisions" in subheaders
+    assert "2 · Resume & cover docs" in subheaders
+    assert "3 · Track & LinkedIn" in subheaders
 
 
 def test_phase3_workflow_modules_import():

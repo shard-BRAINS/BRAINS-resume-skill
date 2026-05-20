@@ -7,6 +7,7 @@ from datetime import datetime
 from scripts.tracker.add import (
     add_application, add_jd, add_resume_version, record_outcome,
 )
+from scripts.tracker.candidates import create_candidate, set_active_candidate
 from scripts.tracker.query import (
     efficacy_by_template, list_applications, weekly_summary,
 )
@@ -15,6 +16,9 @@ from scripts.tracker.query import (
 def test_track_smoke_full_lifecycle(monkeypatch, tmp_path):
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+
+    cid = create_candidate("Example", "Candidate", [], None, None)
+    set_active_candidate(cid)
 
     # Seed two applications with different outcomes
     rv1 = add_resume_version(file_path=None, template="hybrid", focus_areas=[])
