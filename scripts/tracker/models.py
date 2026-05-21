@@ -5,7 +5,7 @@ and consumers. They map 1:1 to SQLite rows for the 5 entity tables, plus
 Profile (lives in profile.json), WeeklySummary (computed), and EfficacyRow
 (computed).
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 
 
@@ -60,6 +60,18 @@ class Candidate:
     pacing_notes: Optional[str]
     created_at: str
     archived_at: Optional[str]
+    email: Optional[str] = None
+    career_stage: Optional[str] = None
+    direction: Optional[str] = None
+    target_roles: List[str] = field(default_factory=list)
+    target_industries: List[str] = field(default_factory=list)
+    leadership_intent: Optional[str] = None
+    work_preferences: List[str] = field(default_factory=list)
+    location: Optional[str] = None
+    relocation_open: Optional[int] = None
+    role_priorities: Optional[str] = None
+    timeline: Optional[str] = None
+    intent_collected_at: Optional[str] = None
 
 
 @dataclass

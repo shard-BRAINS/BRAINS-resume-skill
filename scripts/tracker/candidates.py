@@ -17,12 +17,28 @@ def _now_iso() -> str:
     return datetime.utcnow().isoformat() + "Z"
 
 
+_CANDIDATE_COLS = (
+    "id, first_name, last_name, focus_areas, healthy_weekly_rate, "
+    "pacing_notes, created_at, archived_at, email, career_stage, direction, "
+    "target_roles, target_industries, leadership_intent, work_preferences, "
+    "location, relocation_open, role_priorities, timeline, intent_collected_at"
+)
+
+
 def _row_to_candidate(row) -> Candidate:
     return Candidate(
         id=row[0], first_name=row[1], last_name=row[2],
         focus_areas=json.loads(row[3] or "[]"),
         healthy_weekly_rate=row[4], pacing_notes=row[5],
         created_at=row[6], archived_at=row[7],
+        email=row[8], career_stage=row[9], direction=row[10],
+        target_roles=json.loads(row[11] or "[]"),
+        target_industries=json.loads(row[12] or "[]"),
+        leadership_intent=row[13],
+        work_preferences=json.loads(row[14] or "[]"),
+        location=row[15], relocation_open=row[16],
+        role_priorities=row[17], timeline=row[18],
+        intent_collected_at=row[19],
     )
 
 
@@ -32,16 +48,17 @@ def create_candidate(
     focus_areas: List[str],
     healthy_weekly_rate: Optional[int],
     pacing_notes: Optional[str],
+    email: Optional[str] = None,
 ) -> int:
     conn = open_db()
     try:
         cur = conn.execute(
             """INSERT INTO candidates
                  (first_name, last_name, focus_areas, healthy_weekly_rate,
-                  pacing_notes, created_at)
-               VALUES (?, ?, ?, ?, ?, ?)""",
+                  pacing_notes, created_at, email)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
             (first_name, last_name, json.dumps(focus_areas),
-             healthy_weekly_rate, pacing_notes, _now_iso()),
+             healthy_weekly_rate, pacing_notes, _now_iso(), email),
         )
         conn.commit()
         return cur.lastrowid
@@ -53,10 +70,7 @@ def get_candidate(candidate_id: int) -> Optional[Candidate]:
     conn = open_db()
     try:
         row = conn.execute(
-            """SELECT id, first_name, last_name, focus_areas,
-                      healthy_weekly_rate, pacing_notes,
-                      created_at, archived_at
-               FROM candidates WHERE id=?""",
+            f"SELECT {_CANDIDATE_COLS} FROM candidates WHERE id=?",
             (candidate_id,),
         ).fetchone()
     finally:
@@ -67,10 +81,7 @@ def get_candidate(candidate_id: int) -> Optional[Candidate]:
 def list_candidates(include_archived: bool = False) -> List[Candidate]:
     conn = open_db()
     try:
-        sql = """SELECT id, first_name, last_name, focus_areas,
-                        healthy_weekly_rate, pacing_notes,
-                        created_at, archived_at
-                 FROM candidates"""
+        sql = f"SELECT {_CANDIDATE_COLS} FROM candidates"
         if not include_archived:
             sql += " WHERE archived_at IS NULL"
         sql += " ORDER BY created_at ASC"
@@ -87,6 +98,7 @@ def update_candidate(
     focus_areas: Optional[List[str]] = None,
     healthy_weekly_rate: Optional[int] = None,
     pacing_notes: Optional[str] = None,
+    email: Optional[str] = None,
 ) -> None:
     """Partial update. Only fields provided as non-None are changed.
 
@@ -105,6 +117,8 @@ def update_candidate(
         sets.append("healthy_weekly_rate=?"); params.append(healthy_weekly_rate)
     if pacing_notes is not None:
         sets.append("pacing_notes=?"); params.append(pacing_notes)
+    if email is not None:
+        sets.append("email=?"); params.append(email)
     if not sets:
         return
     params.append(candidate_id)
@@ -167,5 +181,46 @@ def find_or_create_by_name(name: str) -> int:
         )
         conn.commit()
         return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def update_candidate_intent(
+    candidate_id: int,
+    *,
+    career_stage: Optional[str] = None,
+    direction: Optional[str] = None,
+    target_roles: Optional[List[str]] = None,
+    target_industries: Optional[List[str]] = None,
+    leadership_intent: Optional[str] = None,
+    work_preferences: Optional[List[str]] = None,
+    location: Optional[str] = None,
+    relocation_open: Optional[int] = None,
+    role_priorities: Optional[str] = None,
+    timeline: Optional[str] = None,
+) -> None:
+    """Write the career-intent fields and stamp intent_collected_at.
+
+    The onboarding form submits every field together, so this is a full
+    write of the intent block (not a partial update). List fields are
+    JSON-encoded; None lists become an empty JSON array.
+    """
+    conn = open_db()
+    try:
+        conn.execute(
+            """UPDATE candidates SET
+                 career_stage=?, direction=?, target_roles=?,
+                 target_industries=?, leadership_intent=?, work_preferences=?,
+                 location=?, relocation_open=?, role_priorities=?, timeline=?,
+                 intent_collected_at=?
+               WHERE id=?""",
+            (
+                career_stage, direction, json.dumps(target_roles or []),
+                json.dumps(target_industries or []), leadership_intent,
+                json.dumps(work_preferences or []), location, relocation_open,
+                role_priorities, timeline, _now_iso(), candidate_id,
+            ),
+        )
+        conn.commit()
     finally:
         conn.close()
