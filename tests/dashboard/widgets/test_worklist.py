@@ -11,6 +11,8 @@ from scripts.dashboard.widgets.worklist import compute_worklist
 
 @pytest.fixture
 def isolated(monkeypatch, tmp_path):
+    from scripts.dashboard.data import clear_all_caches
+    clear_all_caches()
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
     return tmp_path
