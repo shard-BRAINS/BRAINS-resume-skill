@@ -30,7 +30,7 @@ def _resolve_picker_default_index(candidates: list, active_id) -> int:
 
 def render_sidebar() -> None:
     """Render the persistent sidebar. Called once from app.py before tabs."""
-    from scripts.outputs.io import get_outputs_root
+    from scripts.outputs.io import _SKILL_VERSION, get_outputs_root
 
     with st.sidebar:
         st.markdown("### BRAINS Resume")
@@ -53,7 +53,7 @@ def render_sidebar() -> None:
         _render_handoff_section(profile)
 
         st.markdown("---")
-        st.caption(f"v1.3.0 · {_git_sha()}")
+        st.caption(f"v{_SKILL_VERSION} · {_git_sha()}")
         footer()
 
 
