@@ -3,9 +3,8 @@
 Run via the `brains-resume-dashboard` CLI entry point (see launch.py)
 which invokes `streamlit run scripts/dashboard/app.py`.
 
-Single-page top-tab layout matching the user's TSE Tools visual reference.
-Nine tabs: Overview, Resumes, Cover Letters, JDs, Applications, Analytics,
-Pacing, Workflows, Drift. Persistent sidebar for profile editing.
+Eight-tab layout. The Home tab is a customizable widget canvas
+(orchestration hub); the other seven are deep drill-down views.
 BRAINS Incubator branded.
 """
 import streamlit as st
@@ -17,32 +16,21 @@ from scripts.dashboard.tabs import (
     applications,
     cover_letters,
     drift as drift_tab,
+    home,
     jds,
-    overview,
     pacing,
     resumes,
-    workflows,
 )
 from scripts.tracker.candidates import list_candidates
 
 
 def require_candidate() -> None:
     """If no candidate exists yet, surface a one-shot modal directing the
-    user to create their first candidate via the sidebar.
-
-    Under Approach B, every artifact is owned by a candidate, so the
-    dashboard needs at least one candidate before it is usable. The
-    sidebar already provides a '+ New candidate' expander; this modal
-    simply blocks and points the user there.
-
-    Skipped when there is no active Streamlit script-run context (e.g.
-    during unit-test imports in bare mode) to avoid StreamlitAPIException.
-    """
+    user to create their first candidate via the sidebar."""
     from streamlit.runtime.scriptrunner import get_script_run_ctx
 
     if get_script_run_ctx() is None:
         return
-
     if list_candidates():
         return
 
@@ -51,9 +39,7 @@ def require_candidate() -> None:
         st.write(
             "BRAINS Resume organises every artifact under a candidate. "
             "Use the **+ New candidate** expander in the sidebar to create "
-            "your first one — the candidate's name is used in every "
-            "artifact filename "
-            "(e.g. `Matthew_Gell_resume_2026-05-20_KX7M9Q.docx`)."
+            "your first one."
         )
         st.info("Open the sidebar on the left and expand **+ New candidate**.")
 
@@ -74,19 +60,18 @@ def main() -> None:
     st.title("BRAINS Resume Dashboard")
 
     tabs = st.tabs([
-        "Overview",
+        "Home",
         "Resumes",
         "Cover Letters",
         "JDs",
         "Applications",
         "Analytics",
         "Pacing",
-        "Workflows",
         "Drift",
     ])
 
     with tabs[0]:
-        overview.render()
+        home.render()
     with tabs[1]:
         resumes.render()
     with tabs[2]:
@@ -100,8 +85,6 @@ def main() -> None:
     with tabs[6]:
         pacing.render()
     with tabs[7]:
-        workflows.render()
-    with tabs[8]:
         drift_tab.render()
 
 

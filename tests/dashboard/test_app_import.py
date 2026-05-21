@@ -1,7 +1,7 @@
 """Smoke test: the dashboard app module imports without errors.
 
 Catches missing-module errors, import-cycle issues, and syntax errors.
-Does NOT render the app — that's what test_app_overview_render.py does.
+Does NOT render the app — use test_app_home.py for AppTest rendering.
 """
 
 
@@ -13,7 +13,7 @@ def test_app_module_imports():
 
 def test_all_tab_modules_import():
     from scripts.dashboard.tabs import (  # noqa: F401
-        analytics, applications, cover_letters, jds, overview, pacing, resumes,
+        analytics, applications, cover_letters, home, jds, pacing, resumes,
     )
 
 
