@@ -94,29 +94,23 @@ def _render_candidate_picker() -> None:
 
 
 def _render_new_candidate_expander() -> None:
-    """Render the '+ New candidate' expander."""
+    """Render the '+ New candidate' expander — name + email only.
+
+    Career-intent fields are gathered later by the Home-tab onboarding
+    surface; focus areas / pacing rate / notes are set via 'Edit selected'.
+    """
     with st.expander("+ New candidate"):
         new_first = st.text_input("First name", key="new_first")
         new_last = st.text_input("Last name", key="new_last")
-        new_focus_raw = st.text_area(
-            "Focus areas (one per line)", key="new_focus"
-        )
-        new_rate = st.number_input(
-            "Healthy weekly rate", min_value=0, step=1, key="new_rate"
-        )
-        new_notes = st.text_area("Pacing notes (optional)", key="new_notes")
+        new_email = st.text_input("Email", key="new_email")
         if st.button("Create candidate", key="new_candidate_create"):
-            focus = [
-                line.strip()
-                for line in (new_focus_raw or "").splitlines()
-                if line.strip()
-            ]
             cid = create_candidate(
                 first_name=new_first,
                 last_name=new_last,
-                focus_areas=focus,
-                healthy_weekly_rate=int(new_rate) if new_rate else None,
-                pacing_notes=new_notes or None,
+                focus_areas=[],
+                healthy_weekly_rate=None,
+                pacing_notes=None,
+                email=new_email or None,
             )
             set_active_candidate(cid)
             clear_all_caches()
@@ -131,6 +125,9 @@ def _render_edit_candidate_expander(active) -> None:
         )
         edit_last = st.text_input(
             "Last name", value=active.last_name or "", key="edit_last"
+        )
+        edit_email = st.text_input(
+            "Email", value=active.email or "", key="edit_email"
         )
         edit_focus_raw = st.text_area(
             "Focus areas (one per line)",
@@ -159,6 +156,7 @@ def _render_edit_candidate_expander(active) -> None:
                 active.id,
                 first_name=edit_first,
                 last_name=edit_last,
+                email=edit_email or None,
                 focus_areas=focus,
                 healthy_weekly_rate=int(edit_rate) if edit_rate else None,
                 pacing_notes=edit_notes or None,

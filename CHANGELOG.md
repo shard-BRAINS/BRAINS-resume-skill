@@ -4,6 +4,15 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## v2.2.0 — 2026-05-21
+
+### Added
+- **Resume-first onboarding** — creating a candidate now collects only name + email. A Home-tab onboarding surface gathers career intent (career stage, direction, target roles/industries, leadership intent, work preferences, location, timeline) once, then disappears.
+- `candidates` table gains an `email` column and eleven career-intent columns (migration 0007).
+
+### Changed
+- The sidebar "+ New candidate" form is trimmed to name + email. Focus areas, pacing rate, and pacing notes are set via "Edit selected"; career intent via the onboarding surface.
+
 ## v2.1.0 — 2026-05-21
 
 ### Added
