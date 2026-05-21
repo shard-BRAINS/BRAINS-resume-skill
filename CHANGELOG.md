@@ -4,6 +4,19 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## v2.1.0 — 2026-05-21
+
+### Added
+- **Dashboard orchestration** — the dashboard is now an orchestration hub. A new **Home** tab is a customizable widget canvas: playbook cards, an in-progress-runs tracker, a computed next-actions worklist, a pipeline mini-board, reporting tiles, and a quick-launch panel.
+- **Playbook engine** — five guided journeys (Apply to a job, Build a base resume, Improve a resume, Refresh LinkedIn, Career change) with auto-detected step progress (`scripts/playbooks/`, migration 0006).
+- **Customize mode** — each candidate can add, remove, and reorder Home widgets; the layout persists per candidate.
+
+### Changed
+- The dashboard has eight tabs (was nine): the **Overview** and **Workflows** tabs are removed — their content is absorbed into the Home widget canvas.
+
+### Removed
+- The Overview tab's application-funnel chart, weekly sparkline cards, idle-state callouts, and pending/recent twin panels. The next-actions worklist and the recent-outcomes tile cover the same need; efficacy analysis remains on the Analytics tab.
+
 ## v2.0.0 — 2026-05-20
 
 ### Breaking
