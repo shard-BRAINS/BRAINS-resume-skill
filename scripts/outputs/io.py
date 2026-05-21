@@ -94,7 +94,7 @@ def ensure_jd_folder(jd_id: int) -> Path:
         conn.close()
 
 
-_SKILL_VERSION = "2.0.0"
+_SKILL_VERSION = "2.1.0"
 _MAX_UID_RETRIES = 5
 
 
