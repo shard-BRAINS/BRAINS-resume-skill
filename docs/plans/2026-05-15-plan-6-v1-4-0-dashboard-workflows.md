@@ -9,6 +9,7 @@
 **Tech Stack:** Streamlit 1.30+, Plotly 5.18+ (already from v1.3.0), Python 3.10+, SQLite tracker (~/.brains-resume/tracker.db), existing validators (`scripts/validators/{ai_signal_check,ats_check,bias_scan,consolidation_check,integrity_check,jd_analyzer}.py`), existing tracker (`scripts/tracker/{add,query,profile}.py`). New dependency: `pyperclip>=1.8.0`.
 
 **Plan conventions:**
+
 - Conventional commits (`feat:` / `fix:` / `test:` / `docs:` / `build:` / `chore:` / `refactor:`)
 - **NEVER** include `Co-Authored-By` footers — BRAINS-only attribution
 - TDD discipline for pure-Python modules: failing test → confirm failure → implement → confirm pass → commit
@@ -28,6 +29,7 @@
 ## Task 1 — Add pyperclip dependency + handoff.py module skeleton
 
 **Files:**
+
 - Modify: `pyproject.toml`
 - Create: `scripts/dashboard/handoff.py`
 - Create: `tests/dashboard/test_handoff.py`
@@ -150,6 +152,7 @@ git commit -m "build: add pyperclip dependency and handoff.build_command helper"
 ## Task 2 — handoff.py full implementation (clipboard + log + toast)
 
 **Files:**
+
 - Modify: `scripts/dashboard/handoff.py`
 - Modify: `tests/dashboard/test_handoff.py`
 
@@ -310,6 +313,7 @@ git commit -m "feat: add handoff clipboard + log + toast orchestrator"
 ## Task 3 — file_input.py three-way file picker
 
 **Files:**
+
 - Create: `scripts/dashboard/file_input.py`
 - Create: `tests/dashboard/test_file_input.py`
 
@@ -555,6 +559,7 @@ git commit -m "feat: add three-way file_input picker + data list helpers"
 ## Task 4 — Profile schema: log_handoffs field
 
 **Files:**
+
 - Modify: `scripts/tracker/models.py`
 - Modify: `scripts/tracker/profile.py`
 - Modify: `tests/tracker/test_profile.py`
@@ -681,9 +686,10 @@ git commit -m "feat: add log_handoffs field to Profile schema"
 
 ---
 
-## Task 5 — workflows/__init__.py + shared _handoff_card helper
+## Task 5 — workflows/**init**.py + shared _handoff_card helper
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/__init__.py`
 - Create: `scripts/dashboard/workflows/_card.py`
 - Create: `tests/dashboard/test_workflows_card.py`
@@ -808,6 +814,7 @@ git commit -m "feat: add workflows package + shared _card helper"
 ## Task 6 — 5 simple pure-LLM workflow modules (create, disclosure, edit, career_change, linkedin)
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/create.py`
 - Create: `scripts/dashboard/workflows/disclosure.py`
 - Create: `scripts/dashboard/workflows/edit.py`
@@ -953,6 +960,7 @@ git commit -m "feat: add 5 simple pure-LLM workflow modules (create/disclosure/e
 ## Task 7 — 4 multi-input pure-LLM workflow modules (tailor, cover_letter, linkedin_improve, precheck)
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/tailor.py`
 - Create: `scripts/dashboard/workflows/cover_letter.py`
 - Create: `scripts/dashboard/workflows/linkedin_improve.py`
@@ -1079,6 +1087,7 @@ git commit -m "feat: add 4 multi-input pure-LLM workflow modules (tailor/cover_l
 ## Task 8 — Workflows tab module + wire into app.py
 
 **Files:**
+
 - Create: `scripts/dashboard/tabs/workflows.py`
 - Modify: `scripts/dashboard/app.py`
 
@@ -1224,6 +1233,7 @@ git commit -m "feat: add Workflows tab with 15 command cards"
 ## Task 9 — Sidebar handoff-log toggle + recent-handoffs viewer
 
 **Files:**
+
 - Modify: `scripts/dashboard/sidebar.py`
 
 ### Steps
@@ -1300,6 +1310,7 @@ git commit -m "feat: add sidebar handoff-log toggle and recent-handoffs viewer"
 ## Task 10 — AppTest happy-path for Workflows tab
 
 **Files:**
+
 - Create: `tests/dashboard/test_app_workflows_tab.py`
 
 ### Steps
@@ -1384,6 +1395,7 @@ git commit -m "test: add AppTest happy-path for Workflows tab"
 ## Task 11 — workflows/deai.py (uses ai_signal_check)
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/deai.py`
 
 ### Steps
@@ -1476,6 +1488,7 @@ git commit -m "feat: add /brains-deai validator-backed workflow surface"
 ## Task 12 — workflows/jd_analyze.py (uses jd_analyzer)
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/jd_analyze.py`
 
 ### Steps
@@ -1550,6 +1563,7 @@ git commit -m "feat: add /brains-jd-analyze validator-backed workflow surface"
 ## Task 13 — workflows/track.py (fully in-dashboard tracker CRUD)
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/track.py`
 
 ### Steps
@@ -1619,6 +1633,7 @@ git commit -m "feat: add /brains-track in-dashboard tracker CRUD workflow"
 ## Task 14 — workflows/consolidate.py (uses consolidation_check)
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/consolidate.py`
 
 ### Steps
@@ -1690,6 +1705,7 @@ git commit -m "feat: add /brains-consolidate validator-backed workflow surface"
 ## Task 15 — workflows/check.py (composite of 4 validators)
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/check.py`
 
 ### Steps
@@ -1800,6 +1816,7 @@ git commit -m "feat: add /brains-check composite validator workflow surface"
 ## Task 16 — workflows/review.py (bias_scan preview + handoff)
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/review.py`
 
 ### Steps
@@ -1901,6 +1918,7 @@ git commit -m "feat: add /brains-review preview workflow surface + Phase 3 impor
 ## Task 17 — Resumes tab inline buttons (Review / Edit / Tailor / De-AI / Check)
 
 **Files:**
+
 - Modify: `scripts/dashboard/tabs/resumes.py`
 
 ### Steps
@@ -1978,6 +1996,7 @@ git commit -m "feat: add inline workflow actions (Review/Edit/Tailor/De-AI/Check
 ## Task 18 — Cover Letters tab inline buttons (Edit / De-AI)
 
 **Files:**
+
 - Modify: `scripts/dashboard/tabs/cover_letters.py`
 
 ### Steps
@@ -2032,6 +2051,7 @@ git commit -m "feat: add inline workflow actions (Edit/De-AI) on Cover Letters t
 ## Task 19 — JDs tab inline buttons (Analyze / Tailor-to-this-JD)
 
 **Files:**
+
 - Modify: `scripts/dashboard/tabs/jds.py`
 
 ### Steps
@@ -2085,6 +2105,7 @@ git commit -m "feat: add inline workflow actions (Analyze/Tailor) on JDs tab"
 ## Task 20 — Applications tab inline buttons (Track update)
 
 **Files:**
+
 - Modify: `scripts/dashboard/tabs/applications.py`
 
 ### Steps
@@ -2155,6 +2176,7 @@ git commit -m "feat: add inline outcome-logging on Applications tab + tab-render
 ## Task 21 — Docs updates (SKILL.md, README, brand-application, claude-project-setup)
 
 **Files:**
+
 - Modify: `SKILL.md`
 - Modify: `README.md`
 - Modify: `references/brand-application.md`
@@ -2225,6 +2247,7 @@ git commit -m "docs: update SKILL.md, README, brand-application, and Claude Proj
 ## Task 22 — CHANGELOG entry + Claude Project bundle rebuild
 
 **Files:**
+
 - Modify: `CHANGELOG.md`
 - Rebuild: `dist/brains-resume-claude-project.zip` (gitignored)
 
@@ -2291,6 +2314,7 @@ git commit -m "docs: add v1.4.0 CHANGELOG entry"
 ## Task 23 — Version bump 1.3.0 → 1.4.0
 
 **Files:**
+
 - Modify: `SKILL.md`
 - Modify: `pyproject.toml`
 

@@ -34,6 +34,7 @@ Run `scripts/validators/bias_scan.py` on the extracted text. The scanner detects
 
 **(d) Perform contextual review for the remaining patterns.**
 Patterns 3, 4, 5, 8, and 9 require human-level judgment that the validator cannot supply by keyword matching alone. Review the document for:
+
 - **Pattern 3** — consecutive short tenures without contract or fixed-term context
 - **Pattern 4** — hyperfocus clustering: a single domain token appearing four or more times in close proximity
 - **Pattern 5** — modesty or under-claim: passive constructions on work that appears to have been candidate-led
@@ -47,6 +48,7 @@ For every flag raised in (c) and (d), consult `references/nd-bias-patterns.md` f
 
 **(f) Score each resume bullet.**
 For every bullet point in the experience and skills sections, assign three scores:
+
 - **Specificity** — does the bullet describe a concrete action or outcome?
 - **Measurability** — is there a quantifiable result or scope signal?
 - **ND-bias risk** — low, medium, or high, based on (c) and (d) findings
@@ -82,9 +84,11 @@ The dashboard reserves the output path before invoking this command. The
 handoff payload contains the absolute path to write to. Do NOT pick your
 own filename. After saving the DOCX, call:
 
-    from scripts.outputs.io import finalize_docx
-    from scripts.outputs.tagging import ArtifactMeta
-    finalize_docx(target_path, meta)
+```text
+from scripts.outputs.io import finalize_docx
+from scripts.outputs.tagging import ArtifactMeta
+finalize_docx(target_path, meta)
+```
 
 then record the row via the appropriate `tracker.add_*` call, passing the
 `artifact_uid` and `parent_uid` from the handoff payload.

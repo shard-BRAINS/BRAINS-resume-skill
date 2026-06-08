@@ -3,4 +3,5 @@ description: Apply review recommendations to an existing resume; produces a clea
 argument-hint: [path to resume DOCX or PDF]
 ---
 
+<!-- markdownlint-disable-file MD041 -->
 Run the BRAINS Resume Skill edit workflow. Load `~/.claude/skills/brains-resume/references/workflows/edit.md` and follow its procedure. Resume path: `$ARGUMENTS`. If empty, ask the user.

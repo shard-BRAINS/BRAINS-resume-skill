@@ -424,7 +424,7 @@ Output the following two lines verbatim:
 ```
 Run: brains-resume-dashboard
 Then open: http://localhost:8501
-```
+```text
 
 The dashboard runs entirely on localhost. Port 8501 is the Streamlit default. The user stops the dashboard by pressing Ctrl+C in the terminal where `brains-resume-dashboard` is running.
 
@@ -432,7 +432,7 @@ If the user reports that `brains-resume-dashboard` is not found on PATH, suggest
 
 ```
 pip install -e .
-```
+```text
 
 from the project root to register the CLI entry. The entry is declared in `pyproject.toml` under `[project.scripts]` as `brains-resume-dashboard = "scripts.dashboard.launch:main"`.
 ````
@@ -3020,8 +3020,10 @@ Replace with:
 The skill ships a local Streamlit dashboard from v1.3.0. After `pip install -e .` (which registers the `brains-resume-dashboard` CLI entry), launch from any terminal:
 
 ```
+
 brains-resume-dashboard
-```
+
+```text
 
 The dashboard opens at `http://localhost:8501`. Press Ctrl+C in the launch terminal to stop it.
 

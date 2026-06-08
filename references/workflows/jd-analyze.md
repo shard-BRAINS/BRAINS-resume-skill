@@ -121,7 +121,9 @@ The dashboard's `persist_analyzed_jd(...)` function in
 `jd.txt` (raw JD text), and writes `jd-analysis.md` (analyzer findings as
 Markdown). The output folder name follows the convention:
 
-    YYYY-MM-DD_<Company>_<Role>/
+```text
+YYYY-MM-DD_<Company>_<Role>/
+```
 
 where `<Company>` falls back to `via-<Recruiter>` or `unknown` when needed.
 
