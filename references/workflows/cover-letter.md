@@ -24,7 +24,25 @@ Before beginning, confirm every input below:
    - Screenshot: read directly; Claude can parse image text
 3. **Recipient name and title** (optional) — improves personalisation of the salutation and close.
 4. **Personal hook** (optional) — a specific reason for interest, a connection to the employer's work, or a detail the user wants threaded through the letter. If not supplied, use generic-but-specific structure. **Do not invent a hook.**
-5. **Disclosure stance** — carry over from the current session. If not established, ask before proceeding.
+5. **Disclosure stance** — read from the tracker first; only ask if no session exists.
+
+   ```python
+   from scripts.tracker import disclosure as disclosure_db
+   from scripts.tracker.candidates import get_active_candidate
+
+   active = get_active_candidate()
+   latest = disclosure_db.get_latest_for_candidate(active.id)
+   ```
+
+   - If `latest` is **None** or `latest.landed_strength == "undecided"`: no
+     preference on file — ask, and offer to walk through the
+     disclosure-decision framework (`references/workflows/disclosure.md`).
+   - If `latest.landed_strength` is **"non-disclosure"** / **"neutral"** /
+     **"explicit"**: surface it back to the user so they can confirm or
+     override. *"You previously recorded a {landed_strength} preference on
+     {created_at[:10]}. I'll apply it unless you tell me otherwise."* If
+     they override, direct them to the dashboard's Disclosure tab to
+     record a new session.
 6. **Confirm the active candidate.** Read the active candidate from `scripts.tracker.candidates.get_active_candidate()`. State the candidate's name explicitly: *"This interview will produce a cover letter for **{first} {last}**."* If the user expected someone else, instruct them to switch via the dashboard sidebar before proceeding. Do not proceed until the candidate is confirmed.
 
 ---
@@ -45,11 +63,14 @@ Structure the letter as: hook → fit → close. Apply the per-paragraph calibra
 - **Close** — forward-looking and brief. Confirm availability and interest in next steps. Do not over-specify (no invented timelines or salary signals). Keep it action-oriented; avoid formulaic sign-off language.
 
 **(d) Apply disclosure-stance reconciliation.**
-Review the full draft against the user's disclosure stance before presenting it:
+Review the full draft against the candidate's landed disclosure strength (collected in Input 5) before presenting it. Behaviour by strength:
 
 - **Non-disclosure:** no ND identity language, no advocacy signals, no terms associated with neurodivergent disclosure. Remove any that appear.
 - **Neutral signalling:** ND-associated strengths (depth of focus, systems thinking, pattern recognition) may be present; do not name or frame them as ND identity.
 - **Explicit disclosure:** ND identity may be named where it arises naturally and the user has indicated they want it present. Do not force it into unnatural positions.
+- **Undecided / no preference on file:** make no disclosure-driven changes; surface that no preference is set.
+
+Surface the applied preference in the draft preamble before presenting paragraphs to the user. Example: *"Applied your non-disclosure preference (recorded 2026-06-08) — removed: 'as an autistic professional' opener, retained: depth-of-focus competency framing in fit paragraph."*
 
 **(e) Run validators on the draft.**
 With the draft assembled, run:

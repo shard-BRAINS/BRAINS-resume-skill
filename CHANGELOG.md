@@ -4,6 +4,19 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## v2.3.0 — 2026-06-08
+
+### Added
+- **Disclosure framework polish** — disclosure-coaching outcomes are now first-class, candidate-linked records.
+  - `disclosure_sessions` table (migration 0008): six factor answers, landed strength (`non-disclosure` / `neutral` / `explicit` / `undecided`), optional target employer/role, notes, and traceable artifact UID per worksheet.
+  - `scripts/tracker/disclosure.py` — CRUD module with `get_latest_for_candidate` as the read used by downstream auto-apply.
+  - `scripts/generators/disclosure_worksheet.py` + `templates/disclosure_worksheet.md` — branded worksheet (MD + PDF) rendered direct from session data; lands under `<outputs>/disclosure/<candidate-slug>/disclosure-YYYY-MM-DD-<uid>.{md,pdf}`.
+  - Dashboard Disclosure tab rebuilt: safeguarding caveat, six-factor record form with live suggested strength, save / save-and-generate buttons, archived-aware history panel.
+
+### Changed
+- `references/workflows/disclosure.md` — adds step (g) persist-to-DB and step (h) close, points to the new artifact path.
+- `references/workflows/tailor.md`, `cover-letter.md`, `review.md` — read the candidate's landed disclosure strength from the tracker first, surface "applied your X preference: ..." in the output.
+
 ## v2.2.0 — 2026-05-21
 
 ### Added
