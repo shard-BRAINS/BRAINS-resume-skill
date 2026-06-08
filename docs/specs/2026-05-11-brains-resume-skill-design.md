@@ -66,7 +66,7 @@ The skill exists because:
 
 The development directory `c:\Brains_Resume_Skill\` **is** the skill bundle. No separation between dev and the deliverable. When the user is ready to install, the bundle is copied or symlinked to `~/.claude/skills/brains-resume/`.
 
-```
+```text
 c:\Brains_Resume_Skill\
 ├── SKILL.md                          # Always-loaded core (router + cross-cutting principles)
 ├── README.md                         # Public-facing

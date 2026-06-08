@@ -32,6 +32,7 @@ Each task is TDD: failing test → minimal implementation → passing test → c
 ## Task 1: `scripts/outputs/naming.py` — `slugify`
 
 **Files:**
+
 - Create: `scripts/outputs/__init__.py` (empty)
 - Create: `scripts/outputs/naming.py`
 - Create: `tests/outputs/__init__.py` (empty)
@@ -88,6 +89,7 @@ Expected: All FAIL with `ModuleNotFoundError: No module named 'scripts.outputs'`
 - [ ] **Step 3: Create empty package files**
 
 Create `scripts/outputs/__init__.py`:
+
 ```python
 """Output organization, naming, and DOCX tagging for the BRAINS Resume Skill."""
 ```
@@ -164,6 +166,7 @@ git commit -m "feat(outputs): add slugify for folder/filename sanitization"
 ## Task 2: `scripts/outputs/naming.py` — `new_uid`
 
 **Files:**
+
 - Modify: `scripts/outputs/naming.py`
 - Modify: `tests/outputs/test_naming.py`
 
@@ -239,6 +242,7 @@ git commit -m "feat(outputs): add new_uid for 6-char Crockford base32 IDs"
 ## Task 3: `scripts/outputs/naming.py` — `folder_name`
 
 **Files:**
+
 - Modify: `scripts/outputs/naming.py`
 - Modify: `tests/outputs/test_naming.py`
 
@@ -378,6 +382,7 @@ git commit -m "feat(outputs): add folder_name with company/recruiter anchor logi
 ## Task 4: `scripts/outputs/naming.py` — `artifact_filename`
 
 **Files:**
+
 - Modify: `scripts/outputs/naming.py`
 - Modify: `tests/outputs/test_naming.py`
 
@@ -493,6 +498,7 @@ git commit -m "feat(outputs): add artifact_filename for resumes and cover letter
 ## Task 5: `scripts/outputs/naming.py` — `resolve_folder_collision`
 
 **Files:**
+
 - Modify: `scripts/outputs/naming.py`
 - Modify: `tests/outputs/test_naming.py`
 
@@ -563,6 +569,7 @@ git commit -m "feat(outputs): add resolve_folder_collision for _v2/_v3 suffixing
 ## Task 6: `scripts/outputs/tagging.py` — `ArtifactMeta` + `write_artifact_meta`
 
 **Files:**
+
 - Create: `scripts/outputs/tagging.py`
 - Create: `tests/outputs/test_tagging.py`
 
@@ -726,6 +733,7 @@ git commit -m "feat(outputs): add ArtifactMeta + write_artifact_meta (DOCX custo
 ## Task 7: `scripts/outputs/tagging.py` — `read_artifact_meta`
 
 **Files:**
+
 - Modify: `scripts/outputs/tagging.py`
 - Modify: `tests/outputs/test_tagging.py`
 
@@ -825,6 +833,7 @@ git commit -m "feat(outputs): add read_artifact_meta with None for untagged docs
 ## Task 8: Tracker migration `0002_artifact_uids.py`
 
 **Files:**
+
 - Create: `scripts/tracker/migrations/0002_artifact_uids.py`
 - Create: `tests/tracker/migrations/__init__.py` (if missing)
 - Create: `tests/tracker/migrations/test_0002_artifact_uids.py`
@@ -1004,6 +1013,7 @@ git commit -m "feat(tracker): migration 0002 — artifact_uid, parent_uid, folde
 ## Task 9: Profile gets `first_name` + `last_name`
 
 **Files:**
+
 - Modify: `scripts/tracker/models.py:101-106`
 - Modify: `scripts/tracker/profile.py:36-58`
 - Modify: `tests/tracker/test_profile.py` (or create if absent)
@@ -1129,6 +1139,7 @@ git commit -m "feat(tracker): add first_name + last_name to Profile"
 ## Task 10: `ResumeVersion`, `CoverLetter`, `JD` models gain UID/path fields
 
 **Files:**
+
 - Modify: `scripts/tracker/models.py:37-72`
 
 - [ ] **Step 1: Update dataclasses**
@@ -1196,6 +1207,7 @@ git commit -m "feat(tracker): add artifact_uid/parent_uid/folder_path to datacla
 ## Task 11: `add_resume_version` + `add_cover_letter` accept UIDs; `add_jd` writes folder_path
 
 **Files:**
+
 - Modify: `scripts/tracker/add.py:18-46`, `:88-108`, `:49-85`
 - Modify: `tests/tracker/test_add.py`
 
@@ -1418,6 +1430,7 @@ git commit -m "feat(tracker): add_resume_version/add_cover_letter accept UIDs; a
 ## Task 12: `get_artifact_by_uid` query helper
 
 **Files:**
+
 - Modify: `scripts/tracker/query.py`
 - Modify or create: `tests/tracker/test_query.py`
 
@@ -1543,6 +1556,7 @@ git commit -m "feat(tracker): add get_artifact_by_uid lookup across both tables"
 ## Task 13: `scripts/outputs/io.py` — exceptions + `BRAINS_OUTPUTS_DIR`
 
 **Files:**
+
 - Create: `scripts/outputs/io.py`
 - Create: `tests/outputs/test_io.py`
 
@@ -1657,6 +1671,7 @@ git commit -m "feat(outputs): io.py skeleton — exceptions + outputs-root env v
 ## Task 14: `io.ensure_jd_folder`
 
 **Files:**
+
 - Modify: `scripts/outputs/io.py`
 - Modify: `tests/outputs/test_io.py`
 
@@ -1797,6 +1812,7 @@ git commit -m "feat(outputs): ensure_jd_folder creates per-JD output directory"
 ## Task 15: `io.make_artifact_path`
 
 **Files:**
+
 - Modify: `scripts/outputs/io.py`
 - Modify: `tests/outputs/test_io.py`
 
@@ -1963,6 +1979,7 @@ git commit -m "feat(outputs): make_artifact_path issues UIDs + reserves filename
 ## Task 16: `io.finalize_docx` + `io.read_artifact_uid`
 
 **Files:**
+
 - Modify: `scripts/outputs/io.py`
 - Modify: `tests/outputs/test_io.py`
 
@@ -2065,6 +2082,7 @@ git commit -m "feat(outputs): add finalize_docx + read_artifact_uid"
 ## Task 17: `resume_to_docx` accepts optional `artifact_meta`
 
 **Files:**
+
 - Modify: `scripts/generators/resume_to_docx.py:62-102`
 - Modify or create: `tests/generators/test_resume_to_docx.py`
 
@@ -2165,6 +2183,7 @@ git commit -m "feat(generators): resume_to_docx accepts optional artifact_meta"
 ## Task 18: `cover_letter_to_docx` accepts optional `artifact_meta`
 
 **Files:**
+
 - Modify: `scripts/generators/cover_letter_to_docx.py`
 - Modify or create: `tests/generators/test_cover_letter_to_docx.py`
 
@@ -2237,6 +2256,7 @@ git commit -m "feat(generators): cover_letter_to_docx accepts optional artifact_
 ## Task 19: Sidebar — name fields + outputs-dir display
 
 **Files:**
+
 - Modify: `scripts/dashboard/sidebar.py`
 - Modify: `tests/dashboard/test_sidebar.py` (or create if absent)
 
@@ -2331,6 +2351,7 @@ git commit -m "feat(dashboard): sidebar — name fields + outputs dir display"
 ## Task 20: First-use modal when names are missing
 
 **Files:**
+
 - Modify: `scripts/dashboard/app.py`
 - Modify: `tests/dashboard/test_sidebar.py` (extend) or create `test_app.py`
 
@@ -2413,6 +2434,7 @@ Run: `pytest tests/dashboard/ -v`
 Expected: PASS.
 
 Manual smoke (NOT a test step — note for QA):
+
 1. Delete `~/.brains-resume/profile.json` (or set `BRAINS_TRACKER_PROFILE_PATH` to a fresh location).
 2. `streamlit run scripts/dashboard/app.py`.
 3. Verify the modal appears and saving redirects.
@@ -2429,11 +2451,13 @@ git commit -m "feat(dashboard): first-use modal prompts for first/last name"
 ## Task 21: `jd_analyze.py` — drop `jd.txt` + `jd-analysis.md` into the JD folder
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/jd_analyze.py`
 
 - [ ] **Step 1: Read existing `jd_analyze.py`**
 
 Run: `cat scripts/dashboard/workflows/jd_analyze.py` (or view in editor). It already runs analysis via `scripts/validators/jd_analyzer.py` and currently returns the result to the user without persisting. After this task, when the user clicks "Save to tracker", we:
+
 1. Call `tracker.add_jd(...)` (existing).
 2. Call `io.ensure_jd_folder(jd_id)`.
 3. Write `jd.txt` (the raw JD) into the folder.
@@ -2550,6 +2574,7 @@ git commit -m "feat(workflows): jd_analyze persists jd.txt + jd-analysis.md to J
 ## Task 22: `tailor.py` — route to per-JD folder with new filename
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/tailor.py`
 
 - [ ] **Step 1: Read existing `tailor.py`**
@@ -2622,6 +2647,7 @@ git commit -m "feat(workflows): tailor — output path resolved via io.make_arti
 ## Task 23: `cover_letter.py` — route to per-JD folder
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/cover_letter.py`
 
 - [ ] **Step 1: Read existing `cover_letter.py`**
@@ -2681,11 +2707,13 @@ git commit -m "feat(workflows): cover_letter — output path + parent_uid via io
 ## Task 24: `edit.py` — route to JD folder if JD known, else outputs root
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/edit.py`
 
 - [ ] **Step 1: Read existing**
 
 `/brains-edit` may operate on a resume without a JD context. Handle both:
+
 - If `jd_id` is provided in the UI → use `make_artifact_path`
 - If not → ask the user to optionally tag it with a JD; if they decline, skip the per-JD folder and produce a path under `<outputs_root>/_library/` with the same filename pattern.
 
@@ -2760,6 +2788,7 @@ git commit -m "feat(workflows): edit — JD folder when tagged, _library otherwi
 ## Task 25: `create.py` — drop into `_library` (or JD folder if a JD is selected)
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/create.py`
 
 - [ ] **Step 1: Modify `create.py`**
@@ -2780,6 +2809,7 @@ git commit -m "feat(workflows): create — output path via io (JD folder or _lib
 ## Task 26: `deai.py` — write the de-AI'd copy alongside the source
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/deai.py`
 
 - [ ] **Step 1: Inspect**
@@ -2789,6 +2819,7 @@ git commit -m "feat(workflows): create — output path via io (JD folder or _lib
 - [ ] **Step 2: Modify**
 
 Add to imports:
+
 ```python
 from scripts.outputs.io import read_artifact_uid, ProfileNameMissingError
 from scripts.outputs.naming import artifact_filename, new_uid
@@ -2838,6 +2869,7 @@ git commit -m "feat(workflows): deai — output written alongside source with pa
 ## Task 27: `check.py` — final-pass output alongside source
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/check.py`
 
 - [ ] **Step 1: Inspect**
@@ -2860,6 +2892,7 @@ git commit -m "feat(workflows): check — output written alongside source with p
 ## Task 28: End-to-end smoke test
 
 **Files:**
+
 - Create: `tests/test_smoke_outputs.py`
 
 - [ ] **Step 1: Write the smoke**
@@ -2973,6 +3006,7 @@ git commit -m "test: end-to-end smoke for v1.5.0 outputs pipeline"
 ## Task 29: Docs — `SKILL.md`, `README.md`, `references/workflows/*.md`
 
 **Files:**
+
 - Modify: `SKILL.md`
 - Modify: `README.md`
 - Modify: `references/workflows/tailor.md`
@@ -3060,6 +3094,7 @@ git commit -m "docs: v1.5.0 — file organization convention + workflow refs"
 ## Task 30: Release polish — CHANGELOG, version bump, bundle rebuild, tag
 
 **Files:**
+
 - Modify: `CHANGELOG.md`
 - Modify: `pyproject.toml:7`
 - Modify: `STATUS.yml`
@@ -3113,7 +3148,8 @@ Replace `2026-05-DD` with the actual release date when running this step.
 - [ ] **Step 2: Bump version in `pyproject.toml`**
 
 Edit `pyproject.toml` line 7:
-```
+
+```text
 -version = "1.4.1"
 +version = "1.5.0"
 ```

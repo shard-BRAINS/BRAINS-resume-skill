@@ -1,3 +1,4 @@
+<!-- markdownlint-disable-file MD041 MD001 -->
 <div align="center">
 
 <picture>
@@ -7,7 +8,7 @@
 
 # BRAINS Resume Skill
 
-### A neurodivergence-aware résumé, cover-letter, and LinkedIn toolkit.
+### A neurodivergence-aware résumé, cover-letter, and LinkedIn toolkit
 
 <br />
 
@@ -99,7 +100,7 @@ flowchart TD
 
 **Windows** (Command Prompt or PowerShell):
 
-```
+```text
 .\install\install.cmd
 ```
 
@@ -221,7 +222,7 @@ Use `/brains-track summary` for a pipeline view. Use `/brains-track update <id> 
 
 The skill ships a local **Streamlit dashboard**. After `pip install -e .`, launch from any terminal:
 
-```
+```text
 brains-resume-dashboard
 ```
 
@@ -247,7 +248,7 @@ The dashboard uses Incubator Blue with Gold Deep accents. Body text is Atkinson 
 
 All résumés and cover letters from the skill land in:
 
-```
+```text
 ~/.brains-resume/outputs/<JD-folder>/
 ```
 
@@ -259,7 +260,7 @@ All résumés and cover letters from the skill land in:
 
 A ready-to-import Claude Project bundle is at:
 
-```
+```text
 dist/brains-resume-claude-project.zip
 ```
 
@@ -273,7 +274,7 @@ Full setup instructions: [`docs/claude-project-setup.md`](docs/claude-project-se
 
 Paste or attach your résumé and ask Claude to review it:
 
-```
+```text
 Review my résumé for ND-bias risks and ATS issues.
 ```
 
@@ -281,7 +282,7 @@ Or paste your résumé content. The skill picks the review workflow by default w
 
 ### Disclosure coaching
 
-```
+```text
 I'm applying for a role and I'm not sure whether to disclose that I'm autistic. Can you walk me through the decision?
 ```
 

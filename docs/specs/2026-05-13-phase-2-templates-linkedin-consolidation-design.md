@@ -80,7 +80,7 @@ Same hybrid skill structure as v1: always-loaded `SKILL.md` core + on-demand ref
 
 **New components:**
 
-```
+```text
 templates/
 ├── resume/
 │   ├── chronological.docx       # moved from existing

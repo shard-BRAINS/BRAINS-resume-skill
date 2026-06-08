@@ -2779,7 +2779,7 @@ If a URL is provided, fetch via the existing parser. If pasted, use as-is. If a 
 # Extract from JD or ask user explicitly
 company = ...
 role_title = ...
-```
+```text
 
 **(c) Load user's focus areas.**
 
@@ -2790,7 +2790,7 @@ focus_areas = profile.focus_areas
 if not focus_areas:
     # Ask user to set their focus areas now; offer to save via write_profile()
     ...
-```
+```text
 
 **(d) Run the analyzer.**
 
@@ -2803,7 +2803,7 @@ result = jd_analyze(
     company=company,
     role_title=role_title,
 )
-```
+```text
 
 **(e) Present findings to the user.**
 
@@ -2833,7 +2833,7 @@ jd_id = add_jd(
     focus_areas_required=result.required_list,
     focus_areas_nice=result.nice_list,
 )
-```
+```text
 
 Ask the user before persisting. If declined, the analysis stays in chat only — nothing written to disk.
 
@@ -2863,6 +2863,7 @@ Based on findings:
 - **No persistence without explicit consent.** Steps (f) requires user opt-in before writing to the tracker.
 - **Duplicate-application check requires existing tracker data.** Returns no finding if the tracker db doesn't exist yet — silent, not an error.
 - **Focus areas are user-defined.** The skill never tells the user what their focus areas should be; it asks once and uses what they provide.
+
 ```
 
 - [ ] **Step 2: Write the structural test**
@@ -2999,7 +3000,7 @@ if duplicates:
     # Ask the user:
     #   "You applied to {company} as {role_title} on {date}. Continue?"
     # If user proceeds, record `duplicate_acknowledged: True` in notes.
-```
+```text
 
 If no duplicates, skip this question silently.
 
@@ -3026,7 +3027,7 @@ from scripts.tracker.models import Profile
 
 summary = weekly_summary()
 profile = read_profile()
-```
+```text
 
 If `profile.healthy_weekly_rate` is None, ask once:
 
@@ -3045,7 +3046,7 @@ elif summary.pacing_vs_target == "at":
 elif summary.pacing_vs_target == "below":
     # No prompt needed — under target is fine.
     pass
-```
+```text
 
 Record `pacing: above | at | below_target` in notes.
 
@@ -3077,7 +3078,7 @@ Add a row to the `applications` table via `scripts/tracker/add.py:add_applicatio
   "pacing": "above",
   "cover_letter_omitted_deliberately": false
 }
-```
+```text
 
 Surface the application id to the user for later outcome logging:
 
@@ -3100,6 +3101,7 @@ Surface the application id to the user for later outcome logging:
 - **The healthy weekly rate is user-defined.** The skill never recommends a number; it asks once and uses what the user provides.
 - **The fit-or-pressure answer is recorded verbatim, not judged.** Don't argue with the user or suggest they should not apply.
 - **Tracker-write only after Q6.** If the user abandons the workflow mid-flow, nothing is persisted.
+
 ```
 
 - [ ] **Step 2: Write the structural test**
@@ -3646,6 +3648,7 @@ git commit -m "feat: add opt-in tracker prompts to four existing workflows"
 - [ ] **Step 1: Read SKILL.md to locate the relevant sections**
 
 Three sections need editing:
+
 1. Workflow router table (where existing workflows are listed)
 2. Capability menu (in First-Use Behaviour section)
 3. Slash-command list sentence + "all eleven workflows" → "all fourteen workflows" updates

@@ -3,6 +3,7 @@ description: Manage the application tracker — add applications, log outcomes, 
 argument-hint: <subcommand> [args...] — subcommands: add | update <id> <event> | list [--company X] [--since YYYY-MM-DD] [--status open|closed] | summary | focus-areas | healthy-rate
 ---
 
+<!-- markdownlint-disable-file MD041 -->
 Run the BRAINS Resume Skill application tracker. Parse `$ARGUMENTS` for the subcommand and route to the matching Python helper in `scripts/tracker/`. All output is markdown rendered in chat, carrying the BRAINS coaching artifact frame.
 
 ## Subcommand routing

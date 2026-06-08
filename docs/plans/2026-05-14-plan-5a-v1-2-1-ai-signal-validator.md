@@ -995,7 +995,7 @@ Run the BRAINS Resume Skill AI-signal check. Load `~/.claude/skills/brains-resum
 ```python
 from scripts.validators.ai_signal_check import ai_signal_check
 result = ai_signal_check(text)
-```
+```text
 
 3. **Present the report.**
 
@@ -1016,6 +1016,7 @@ result = ai_signal_check(text)
 - **The validator scans skill-produced text or user-supplied text.** It is not used as a covert AI-detection tool on third-party content.
 - **No auto-rewrite.** Findings are suggestions; the user decides what to change.
 - **Lower scores are not a guarantee.** The validator detects pattern density, not authorship; a low score does not certify human authorship to a recruiter using detection tools.
+
 ```
 
 - [ ] **Step 2: Write the smoke test**
@@ -1128,9 +1129,10 @@ Read the file first to find the section that runs `bias_scan` and `integrity_che
 ```python
 from scripts.validators.ai_signal_check import ai_signal_check
 ai_signal = ai_signal_check(text)
-```
+```text
 
 Surface the AI-signal score numerically (e.g. "AI-signal score: 18/100 (mild traces — likely fine)") alongside the bias and integrity findings. If score >= 30, surface the top three findings with their suggestions; link to `references/ai-signal-patterns.md` for full rewrite guidance. Findings are coaching — the user decides whether to revise.
+
 ```
 
 - [ ] **Step 2: Add optional-prompt paragraph to four other workflow files**
@@ -1145,9 +1147,10 @@ Insert this paragraph verbatim in each of the four files:
 ```python
 from scripts.validators.ai_signal_check import ai_signal_check
 score = ai_signal_check(produced_text).score
-```
+```text
 
 If the score is above 30, surface the top three findings with rewrite suggestions and offer to revise. The user can decline — this is coaching, not gating. See `references/ai-signal-patterns.md` for the full pattern catalog.
+
 ```
 
 (Do NOT remove or rewrite existing content in these files. Just add the paragraph.)

@@ -67,7 +67,7 @@ Same pattern as the three existing validators (`ats_check.py`, `bias_scan.py`, `
 
 ### File additions
 
-```
+```text
 scripts/validators/
 └── ai_signal_check.py              # NEW — 9-code catalog + score
 

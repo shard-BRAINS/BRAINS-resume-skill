@@ -9,12 +9,14 @@
 **Tech Stack:** Python 3.14, SQLite (forward-only migrations), python-docx, reportlab, pytest, Streamlit.
 
 **Out of scope:**
+
 - PDF custom-property metadata. PDFs are derived; UIDs live in the DOCX. Separate ticket.
 - Per-candidate focus areas / healthy rates. Those move with Approach B.
 - Untracked-but-UID-stamped renderer convenience wrapper. Separate ticket.
 - Dashboard candidate picker dropdown of historical names. The text input is enough for C.
 
 **Pre-flight:**
+
 - Confirm `c:\Brains_Resume_Skill\.venv` is the active venv: `"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -V` → `Python 3.14.x`.
 - Run the full suite once before starting to capture a clean baseline: `"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests -q` (from the skill root: `C:\Users\matth\.claude\skills\brains-resume`). All tests should pass on `main` before any work begins.
 
@@ -52,6 +54,7 @@
 ## Task 1: Migration 0003 — `for_candidate` columns
 
 **Files:**
+
 - Create: `scripts/tracker/migrations/0003_for_candidate.py`
 - Test: `tests/tracker/migrations/test_0003_for_candidate.py`
 
@@ -120,10 +123,11 @@ def test_migration_recorded_in_migrations_table(isolated_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 cd C:\Users\matth\.claude\skills\brains-resume
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0003_for_candidate.py -v
 ```
+
 Expected: 4 FAILs — column doesn't exist; migration 3 not recorded.
 
 - [ ] **Step 3: Write the migration**
@@ -154,16 +158,18 @@ def apply(conn: sqlite3.Connection) -> None:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0003_for_candidate.py -v
 ```
+
 Expected: 4 PASS.
 
 - [ ] **Step 5: Run the full tracker test suite to check for regressions**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker -q
 ```
+
 Expected: all green.
 
 - [ ] **Step 6: Commit**
@@ -178,6 +184,7 @@ git commit -m "feat(tracker): migration 0003 adds for_candidate columns"
 ## Task 2: Extend dataclasses
 
 **Files:**
+
 - Modify: `scripts/tracker/models.py:38-49` (`ResumeVersion`) and `:52-62` (`CoverLetter`)
 - Test: `tests/tracker/test_models.py`
 
@@ -219,9 +226,10 @@ def test_cover_letter_has_for_candidate_default_none():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_models.py -v -k for_candidate
 ```
+
 Expected: 3 FAILs — AttributeError or unexpected-keyword-argument.
 
 - [ ] **Step 3: Update the dataclasses**
@@ -260,9 +268,10 @@ class CoverLetter:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_models.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -277,6 +286,7 @@ git commit -m "feat(tracker): for_candidate field on ResumeVersion + CoverLetter
 ## Task 3: Persist `for_candidate` through `add_resume_version` / `add_cover_letter`
 
 **Files:**
+
 - Modify: `scripts/tracker/add.py:18-51` (`add_resume_version`) and `:95-119` (`add_cover_letter`)
 - Test: `tests/tracker/test_add.py`
 
@@ -344,9 +354,10 @@ def test_add_cover_letter_persists_for_candidate(isolated):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_add.py -v -k for_candidate
 ```
+
 Expected: 3 FAILs — unexpected-keyword-argument.
 
 - [ ] **Step 3: Update `add_resume_version`**
@@ -427,9 +438,10 @@ def add_cover_letter(
 
 - [ ] **Step 5: Run test to verify it passes**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_add.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 6: Commit**
@@ -444,6 +456,7 @@ git commit -m "feat(tracker): add_resume_version + add_cover_letter accept for_c
 ## Task 4: Read-side support in `query.py`
 
 **Files:**
+
 - Modify: `scripts/tracker/query.py`
 - Test: `tests/tracker/test_query.py`
 
@@ -451,9 +464,10 @@ Goal: `get_artifact_by_uid` and any helpers that hydrate `ResumeVersion` / `Cove
 
 - [ ] **Step 1: Inspect the current query module**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_query.py -q
 ```
+
 Expected: all PASS currently. Open `scripts/tracker/query.py` and identify every place that constructs `ResumeVersion(...)` or `CoverLetter(...)`. Each constructor needs `for_candidate=` added to its kwargs and the corresponding column added to its `SELECT` list.
 
 - [ ] **Step 2: Write failing tests**
@@ -493,9 +507,10 @@ def test_list_artifacts_for_candidate_empty_when_no_match(isolated):
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_query.py -v -k "for_candidate or list_artifacts"
 ```
+
 Expected: 3 FAILs — `list_artifacts_for_candidate` undefined; `for_candidate` not on returned dataclass.
 
 - [ ] **Step 4: Update `get_artifact_by_uid` and add the list helper**
@@ -552,9 +567,10 @@ def list_artifacts_for_candidate(name: str) -> list:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker -v
 ```
+
 Expected: all green, including any pre-existing query tests.
 
 - [ ] **Step 6: Commit**
@@ -569,6 +585,7 @@ git commit -m "feat(tracker): query helpers expose for_candidate + list_artifact
 ## Task 5: `split_candidate_name` helper
 
 **Files:**
+
 - Modify: `scripts/outputs/naming.py`
 - Test: `tests/outputs/test_naming.py`
 
@@ -613,9 +630,10 @@ def test_split_candidate_name_empty_returns_empty_pair():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/outputs/test_naming.py -v -k split_candidate
 ```
+
 Expected: 6 FAILs — ImportError.
 
 - [ ] **Step 3: Add the helper**
@@ -641,9 +659,10 @@ def split_candidate_name(full_name: str) -> tuple[str, str]:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/outputs/test_naming.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -658,6 +677,7 @@ git commit -m "feat(outputs): split_candidate_name helper for free-text candidat
 ## Task 6: `BrainsForCandidate` custom property on the DOCX
 
 **Files:**
+
 - Modify: `scripts/outputs/tagging.py:56-79` (`ArtifactMeta`, `_meta_to_property_dict`) and `:195-219` (`read_artifact_meta`)
 - Test: `tests/outputs/test_tagging.py`
 
@@ -718,9 +738,10 @@ def test_for_candidate_absent_reads_as_none(tmp_path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/outputs/test_tagging.py -v -k for_candidate
 ```
+
 Expected: 3 FAILs.
 
 - [ ] **Step 3: Extend `ArtifactMeta`**
@@ -794,9 +815,10 @@ def read_artifact_meta(docx_path: Path | str) -> ArtifactMeta | None:
 
 - [ ] **Step 6: Run test to verify it passes**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/outputs/test_tagging.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 7: Commit**
@@ -811,6 +833,7 @@ git commit -m "feat(outputs): ArtifactMeta + DOCX gain BrainsForCandidate custom
 ## Task 7: `make_artifact_path` accepts `for_candidate` override
 
 **Files:**
+
 - Modify: `scripts/outputs/io.py:101-148` (`make_artifact_path`)
 - Test: `tests/outputs/test_io.py`
 
@@ -876,9 +899,10 @@ def test_make_artifact_path_single_token_candidate_name(isolated):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/outputs/test_io.py -v -k for_candidate
 ```
+
 Expected: 3 FAILs — unexpected-keyword-argument and missing assertion.
 
 - [ ] **Step 3: Update `make_artifact_path`**
@@ -952,9 +976,10 @@ def make_artifact_path(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/outputs/test_io.py -v
 ```
+
 Expected: all PASS, including pre-existing tests.
 
 - [ ] **Step 5: Commit**
@@ -969,6 +994,7 @@ git commit -m "feat(outputs): make_artifact_path accepts for_candidate override"
 ## Task 8: Dashboard workflow cards surface the candidate input
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/create.py`
 - Test: `tests/dashboard/test_workflows_card.py` (extend if it covers create; otherwise add a new dashboard test)
 
@@ -1016,9 +1042,10 @@ def test_create_workflow_passes_for_candidate_to_artifact_meta(monkeypatch, tmp_
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/test_workflows_card.py -v -k for_candidate
 ```
+
 Expected: FAIL — `create_mod._resolve_target` doesn't exist.
 
 - [ ] **Step 3: Refactor `create.py` to extract `_resolve_target` and wire the text input**
@@ -1131,9 +1158,10 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "create") -> None
 
 - [ ] **Step 4: Run test to verify it passes**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/test_workflows_card.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -1148,6 +1176,7 @@ git commit -m "feat(dashboard): /brains-create surfaces for_candidate text input
 ## Task 9: Repeat Task 8 pattern for edit, tailor, cover_letter
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/edit.py`, `scripts/dashboard/workflows/tailor.py`, `scripts/dashboard/workflows/cover_letter.py`
 - Test: extend `tests/dashboard/test_workflows_card.py`
 
@@ -1159,9 +1188,10 @@ Append three smoke tests to `tests/dashboard/test_workflows_card.py`, mirroring 
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/test_workflows_card.py -v
 ```
+
 Expected: 3 FAILs.
 
 - [ ] **Step 3: Apply the same refactor to each workflow file**
@@ -1176,9 +1206,10 @@ e. Update the `handoff_button` note to mention setting `for_candidate` in the tr
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/test_workflows_card.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -1193,6 +1224,7 @@ git commit -m "feat(dashboard): edit/tailor/cover-letter surface for_candidate t
 ## Task 10: Update workflow docs to mention `for_candidate`
 
 **Files:**
+
 - Modify: `references/workflows/create.md`, `references/workflows/edit.md`, `references/workflows/tailor.md`, `references/workflows/cover-letter.md`
 
 Each workflow doc needs an additional Target-Framing sub-step:
@@ -1219,9 +1251,10 @@ Same edit pattern, framed for cover letters (the cover letter is for the same ca
 
 - [ ] **Step 5: Verify reference tests still pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/references -q
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 6: Commit**
@@ -1236,6 +1269,7 @@ git commit -m "docs(workflows): document for_candidate step in interview flow"
 ## Task 11: End-to-end smoke test
 
 **Files:**
+
 - Create: `tests/test_smoke_multi_candidate.py`
 
 Goal: one test that runs the full flow end-to-end — render a resume DOCX for the profile holder, render a second resume DOCX with `for_candidate="Mathilda Gell"`, assert both files exist with the expected filenames, both have distinct UIDs in custom properties, and the second has `BrainsForCandidate=Mathilda Gell` while the first has an empty string for that property.
@@ -1319,16 +1353,18 @@ def test_two_candidates_one_installation(isolated):
 
 - [ ] **Step 2: Run test to verify it passes (everything assembled by now)**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/test_smoke_multi_candidate.py -v
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Run the full suite to check for regressions**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest -q
 ```
+
 Expected: all green.
 
 - [ ] **Step 4: Commit**
@@ -1343,6 +1379,7 @@ git commit -m "test: end-to-end smoke for multi-candidate Approach C"
 ## Task 12: Bump skill version and CHANGELOG entry
 
 **Files:**
+
 - Modify: `scripts/outputs/io.py` (`_SKILL_VERSION`)
 - Modify: `CHANGELOG.md`
 

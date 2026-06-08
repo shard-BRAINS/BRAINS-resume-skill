@@ -1,3 +1,5 @@
+<!-- markdownlint-disable-file MD036 -->
+
 # Bias-Aware ATS Final-Check Workflow
 
 **Purpose:** Pre-submit verification gate. Run this as the last pass before the user submits a resume (and optionally a cover letter) to a role. This workflow is also offered automatically at the end of every create, edit, tailor, and cover-letter workflow.

@@ -11,11 +11,13 @@
 **Tech Stack:** Python 3.14, SQLite (forward-only migrations + idempotent post-migration backfill), python-docx, reportlab, pytest, Streamlit.
 
 **Out of scope:**
+
 - Removing the Approach C `for_candidate` columns. We keep them as a denormalized cache — cheap, useful for data export, and a tombstone of "what name was on the DOCX when this row was written". Approach C's column becomes a write-only side-channel after this plan lands; reads go through `candidate_id`.
 - Multi-installation sync. Each install still has its own SQLite DB.
 - Per-candidate output directories. `BRAINS_OUTPUTS_DIR` stays installation-wide; per-candidate scoping happens via JD folders, which are unique anyway.
 
 **Pre-flight:**
+
 - Approach C is merged to `main` and the `for_candidate` column is populated on at least one row in the user's local tracker (so the backfill path can be exercised on real data).
 - Run the full suite once: all green on `main`.
 - Back up `~/.brains-resume/tracker.db` and `~/.brains-resume/profile.json` before starting. The backfill is idempotent but the migration itself is forward-only.
@@ -69,6 +71,7 @@
 ## Task 1: Migration 0004 schema
 
 **Files:**
+
 - Create: `scripts/tracker/migrations/0004_candidates_table.py`
 - Test: `tests/tracker/migrations/test_0004_candidates_table.py`
 
@@ -149,9 +152,10 @@ def test_migration_recorded(isolated_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0004_candidates_table.py -v
 ```
+
 Expected: 6 FAILs.
 
 - [ ] **Step 3: Write the migration**
@@ -197,16 +201,18 @@ def apply(conn: sqlite3.Connection) -> None:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0004_candidates_table.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Run the full tracker test suite (regressions)**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker -q
 ```
+
 Expected: all green. (Some pre-existing tests may need to drop `archived_at IS NULL` assumptions if the new index changes plan ordering — fix inline if so.)
 
 - [ ] **Step 6: Commit**
@@ -221,6 +227,7 @@ git commit -m "feat(tracker): migration 0004 adds candidates table + candidate_i
 ## Task 2: `Candidate` model + trimmed `Profile`
 
 **Files:**
+
 - Modify: `scripts/tracker/models.py` (add Candidate; trim Profile; add candidate_id to JD/ResumeVersion/CoverLetter)
 - Test: `tests/tracker/test_models.py`
 
@@ -279,9 +286,10 @@ def test_jd_carries_candidate_id():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_models.py -v -k "candidate"
 ```
+
 Expected: 5 FAILs.
 
 - [ ] **Step 3: Update `scripts/tracker/models.py`**
@@ -314,9 +322,10 @@ class Profile:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_models.py -v
 ```
+
 Expected: all new PASS. The legacy-shape test (`test_profile_holds_first_last_name`, if present) will now FAIL — delete that test, Task 4 covers the file-level back-compat.
 
 - [ ] **Step 5: Commit**
@@ -331,6 +340,7 @@ git commit -m "feat(tracker): Candidate dataclass + trim Profile to active_candi
 ## Task 3: `scripts/tracker/candidates.py` CRUD
 
 **Files:**
+
 - Create: `scripts/tracker/candidates.py`
 - Test: `tests/tracker/test_candidates.py`
 
@@ -402,9 +412,10 @@ def test_update_candidate(isolated):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_candidates.py -v
 ```
+
 Expected: 5 FAILs — ImportError.
 
 - [ ] **Step 3: Implement the CRUD module**
@@ -558,9 +569,10 @@ def get_active_candidate() -> Optional[Candidate]:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_candidates.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -575,6 +587,7 @@ git commit -m "feat(tracker): candidates CRUD module + active-candidate accessor
 ## Task 4: Trimmed `profile.py` with legacy-read back-compat
 
 **Files:**
+
 - Modify: `scripts/tracker/profile.py`
 - Test: `tests/tracker/test_profile.py`
 
@@ -633,9 +646,10 @@ def test_write_profile_writes_trimmed_shape(tmp_path, monkeypatch):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_profile.py -v
 ```
+
 Expected: FAILs — current code uses the legacy dataclass shape.
 
 - [ ] **Step 3: Update `scripts/tracker/profile.py`**
@@ -703,9 +717,10 @@ def write_profile(profile: Profile) -> None:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_profile.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -720,6 +735,7 @@ git commit -m "feat(tracker): Profile trimmed to {active_candidate_id, log_hando
 ## Task 5: Idempotent backfill hook
 
 **Files:**
+
 - Create: `scripts/tracker/_post_migration.py`
 - Modify: `scripts/tracker/db.py`
 - Test: `tests/tracker/test_post_migration.py`
@@ -727,6 +743,7 @@ git commit -m "feat(tracker): Profile trimmed to {active_candidate_id, log_hando
 Goal: after migrations run, `db.py` calls `run_b_backfill(conn)`. The hook is idempotent — it inspects state, performs the backfill only if needed, and is safe to call on every `open_db()` (so a partially-completed install converges).
 
 The backfill, when needed:
+
 1. Reads `profile.json` directly (without going through `read_profile()`, so it sees legacy fields).
 2. If `candidates` table is empty AND legacy `first_name` is present in the JSON: inserts a seed candidate from those fields.
 3. For each row in `resume_versions` / `cover_letters` with `candidate_id IS NULL`: if `for_candidate` is set, find or create a candidate by name and link; otherwise link to the seed candidate.
@@ -873,9 +890,10 @@ def test_backfill_is_idempotent(isolated):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_post_migration.py -v
 ```
+
 Expected: 5 FAILs — module doesn't exist; db.py doesn't call it.
 
 - [ ] **Step 3: Implement the hook**
@@ -1037,14 +1055,16 @@ def _run_post_migration_hooks(conn: sqlite3.Connection) -> None:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_post_migration.py -v
 ```
+
 Expected: all 5 PASS. Run the full tracker suite too:
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker -q
 ```
+
 Expected: all green.
 
 - [ ] **Step 6: Commit**
@@ -1059,6 +1079,7 @@ git commit -m "feat(tracker): idempotent post-migration backfill for candidates 
 ## Task 6: `add.py` — candidate_id default = active
 
 **Files:**
+
 - Modify: `scripts/tracker/add.py`
 - Test: `tests/tracker/test_add.py`
 
@@ -1114,9 +1135,10 @@ def test_add_resume_version_no_active_no_override_raises(isolated):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_add.py -v -k candidate
 ```
+
 Expected: 3 FAILs.
 
 - [ ] **Step 3: Update `scripts/tracker/add.py`**
@@ -1183,9 +1205,10 @@ Apply the same pattern to `add_jd` and `add_cover_letter`. `add_application` and
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_add.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -1200,6 +1223,7 @@ git commit -m "feat(tracker): inserts default candidate_id to active candidate"
 ## Task 7: `query.py` — scope reads to active candidate
 
 **Files:**
+
 - Modify: `scripts/tracker/query.py`
 - Test: `tests/tracker/test_query.py`
 
@@ -1251,9 +1275,10 @@ def test_list_jds_explicit_candidate_id_override(isolated):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_query.py -v -k candidate
 ```
+
 Expected: FAILs.
 
 - [ ] **Step 3: Update `scripts/tracker/query.py`**
@@ -1343,9 +1368,10 @@ def list_artifacts_for_candidate(name: str) -> list:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker -q
 ```
+
 Expected: all green.
 
 - [ ] **Step 5: Commit**
@@ -1360,6 +1386,7 @@ git commit -m "feat(tracker): queries scope to active candidate; JOIN-based name
 ## Task 8: `make_artifact_path` resolves to candidate name via candidate_id
 
 **Files:**
+
 - Modify: `scripts/outputs/io.py`
 - Test: `tests/outputs/test_io.py`
 
@@ -1454,9 +1481,10 @@ def test_make_artifact_path_for_candidate_alias_resolves_to_candidate_id(isolate
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/outputs/test_io.py -v -k candidate
 ```
+
 Expected: 3 FAILs.
 
 - [ ] **Step 4: Update `make_artifact_path`**
@@ -1532,9 +1560,10 @@ Note: This drops the `read_profile().first_name` path entirely; the old `Profile
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/outputs/test_io.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 6: Commit**
@@ -1549,6 +1578,7 @@ git commit -m "feat(outputs): make_artifact_path resolves candidate via candidat
 ## Task 9: `ArtifactMeta` + `BrainsCandidateId` DOCX custom property
 
 **Files:**
+
 - Modify: `scripts/outputs/tagging.py`
 - Test: `tests/outputs/test_tagging.py`
 
@@ -1574,10 +1604,12 @@ git commit -m "feat(outputs): ArtifactMeta + DOCX gain BrainsCandidateId custom 
 ## Task 10: Dashboard sidebar candidate picker
 
 **Files:**
+
 - Modify: `scripts/dashboard/sidebar.py`
 - Test: `tests/dashboard/test_app_import.py` (smoke); add focused tests in a new `tests/dashboard/test_sidebar_candidate_picker.py`
 
 Goal: the sidebar replaces the first/last-name text inputs with:
+
 1. A `st.selectbox` listing all non-archived candidates (showing `First Last`), with the active one pre-selected.
 2. A "+ New candidate" expander that prompts for first/last/focus-areas/healthy-rate/pacing-notes and creates a row via `candidates.create_candidate(...)`.
 3. An "Edit selected" expander for editing the selected candidate's focus areas / healthy rate / pacing notes.
@@ -1622,9 +1654,10 @@ def test_picker_pre_selects_active_candidate(isolated, monkeypatch):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/test_sidebar_candidate_picker.py -v
 ```
+
 Expected: FAILs — sidebar module doesn't have `_resolve_picker_default_index`.
 
 - [ ] **Step 3: Rewrite sidebar.py**
@@ -1695,9 +1728,10 @@ e. Add an "Edit selected" expander mirroring the New form but pre-populated and 
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/test_sidebar_candidate_picker.py tests/dashboard/test_app_import.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -1712,6 +1746,7 @@ git commit -m "feat(dashboard): sidebar candidate picker replaces name inputs"
 ## Task 11: Workflow cards drop `for_candidate` input; use active candidate
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/create.py`, `edit.py`, `tailor.py`, `cover_letter.py`
 - Test: `tests/dashboard/test_workflows_card.py`
 
@@ -1752,6 +1787,7 @@ git commit -m "feat(dashboard): workflows use active candidate; drop for_candida
 ## Task 12: Dashboard tabs scope to active candidate
 
 **Files:**
+
 - Modify: `scripts/dashboard/tabs/overview.py`, `tabs/pacing.py`, `tabs/applications.py`, `tabs/resumes.py`, `tabs/cover_letters.py`, `tabs/jds.py`
 - Modify: `scripts/validators/jd_analyzer.py`
 - Test: `tests/dashboard/test_app_overview_render.py`, add focused tests
@@ -1815,6 +1851,7 @@ git commit -m "feat(dashboard): tabs + JD analyzer scope to active candidate"
 ## Task 13: Workflow docs
 
 **Files:**
+
 - Modify: `references/workflows/create.md`, `edit.md`, `tailor.md`, `cover-letter.md`
 
 - [ ] **Step 1: For each doc**, replace the "Is this resume for someone else?" sub-step (added by Plan C) with:
@@ -1825,7 +1862,7 @@ git commit -m "feat(dashboard): tabs + JD analyzer scope to active candidate"
 
 - [ ] **Step 2: Verify reference tests pass:**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/references -q
 ```
 
@@ -1841,6 +1878,7 @@ git commit -m "docs(workflows): replace for_candidate prompt with active-candida
 ## Task 14: End-to-end smoke + version bump + CHANGELOG
 
 **Files:**
+
 - Create: `tests/test_smoke_two_candidate_session.py`
 - Modify: `scripts/outputs/io.py` (`_SKILL_VERSION = "2.0.0"`)
 - Modify: `CHANGELOG.md`
@@ -1927,16 +1965,18 @@ def test_two_candidate_session_end_to_end(isolated):
 
 - [ ] **Step 2: Run the test**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/test_smoke_two_candidate_session.py -v
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Run the full suite**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest -q
 ```
+
 Expected: all green.
 
 - [ ] **Step 4: Bump version**

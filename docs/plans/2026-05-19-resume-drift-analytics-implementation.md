@@ -13,6 +13,7 @@
 **Migration number:** This plan claims migration **0004**. Approach B's plan also reserves 0004 — by user decision Drift Analytics ships first, so Approach B's plan will be re-numbered to 0005/0006 when it lands. If that order ever flips, every occurrence of `0004_drift_analytics` in this plan must be renumbered to `0006_drift_analytics`.
 
 **Pre-flight:**
+
 - Confirm working directory is `c:\Brains_Resume_Skill`, current branch is `main`, and the live skill is at v1.6.0 (HEAD should be at or beyond commit `b3e227c` — the Plan C merge). Create a new feature branch `feature/drift-analytics` from `main` before Task 1.
 - `"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -V` → Python 3.14.x.
 - `"c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest -q` baseline: 442 passed, 2 pre-existing failures (`tests/dashboard/test_app_workflows_tab.py::test_workflows_tab_has_three_subheaders`, `tests/tracker/test_query.py::test_weekly_summary_pacing_none_when_no_target`). Leave those alone — they are not in scope.
@@ -69,6 +70,7 @@
 ## Task 1: Migration 0004 — schema + first-row backfill
 
 **Files:**
+
 - Create: `scripts/tracker/migrations/0004_drift_analytics.py`
 - Test: `tests/tracker/migrations/test_0004_drift_analytics.py`
 
@@ -243,9 +245,10 @@ def test_backfill_marks_oldest_per_candidate_as_baseline(fresh_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0004_drift_analytics.py -v
 ```
+
 Expected: every test FAILs — no such tables / column / index / module.
 
 - [ ] **Step 3: Write the migration**
@@ -339,16 +342,18 @@ def apply(conn: sqlite3.Connection) -> None:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/migrations/test_0004_drift_analytics.py -v
 ```
+
 Expected: all 8 PASS.
 
 - [ ] **Step 5: Run full tracker suite for regressions**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker -q
 ```
+
 Expected: only the pre-existing `test_weekly_summary_pacing_none_when_no_target` baseline failure remains.
 
 - [ ] **Step 6: Commit**
@@ -363,6 +368,7 @@ git commit -m "feat(tracker): migration 0004 — drift analytics schema + baseli
 ## Task 2: `add_resume_version` auto-sets `is_baseline` for first-per-candidate
 
 **Files:**
+
 - Modify: `scripts/tracker/add.py:18-53` (`add_resume_version`)
 - Test: `tests/tracker/test_add.py`
 
@@ -445,9 +451,10 @@ def test_add_resume_version_explicit_is_baseline_false_overrides_auto(fresh_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_add.py -v -k is_baseline
 ```
+
 Expected: 4 FAILs — column not set; unexpected-keyword-argument on the fourth.
 
 - [ ] **Step 3: Update `add_resume_version`**
@@ -509,9 +516,10 @@ def add_resume_version(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/tracker/test_add.py -v
 ```
+
 Expected: all PASS (existing tests + 4 new).
 
 - [ ] **Step 5: Commit**
@@ -526,6 +534,7 @@ git commit -m "feat(tracker): add_resume_version auto-sets is_baseline for first
 ## Task 3: `scripts/drift/` package skeleton + `snapshot_from_workflow`
 
 **Files:**
+
 - Create: `scripts/drift/__init__.py`
 - Create: `scripts/drift/snapshot_from_workflow.py`
 - Create: `tests/drift/__init__.py`
@@ -633,9 +642,10 @@ def test_schema_version_is_1():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_snapshot_from_workflow.py -v
 ```
+
 Expected: ImportError on every test.
 
 - [ ] **Step 3: Create the package marker**
@@ -899,9 +909,10 @@ def facts_from_workflow_data(data: dict) -> dict:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_snapshot_from_workflow.py -v
 ```
+
 Expected: all 7 PASS.
 
 - [ ] **Step 6: Commit**
@@ -916,6 +927,7 @@ git commit -m "feat(drift): package skeleton + facts_from_workflow_data transfor
 ## Task 4: `compute_drift_score` — set-shaped classes (skills / standalone_achievements / hobbies)
 
 **Files:**
+
 - Create: `scripts/drift/compute.py` (this task introduces it; later tasks extend it)
 - Test: `tests/drift/test_compute_set_classes.py`
 
@@ -988,9 +1000,10 @@ def test_set_class_both_null_returns_status_not_captured():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_compute_set_classes.py -v
 ```
+
 Expected: ImportError on `compute_class_diff`.
 
 - [ ] **Step 3: Implement `compute_class_diff` for set-shape**
@@ -1049,9 +1062,10 @@ def compute_class_diff(left: Any, right: Any, kind: str) -> dict:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_compute_set_classes.py -v
 ```
+
 Expected: all 9 PASS.
 
 - [ ] **Step 5: Commit**
@@ -1066,6 +1080,7 @@ git commit -m "feat(drift): compute_class_diff for set-shaped classes + null han
 ## Task 5: `compute_class_diff` — identity class
 
 **Files:**
+
 - Modify: `scripts/drift/compute.py`
 - Test: `tests/drift/test_compute_identity.py`
 
@@ -1120,9 +1135,10 @@ def test_identity_null_object_returns_not_captured():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_compute_identity.py -v
 ```
+
 Expected: ValueError on "Unknown class kind".
 
 - [ ] **Step 3: Extend `compute.py`**
@@ -1173,9 +1189,10 @@ def compute_class_diff(left: Any, right: Any, kind: str) -> dict:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_compute_identity.py tests/drift/test_compute_set_classes.py -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -1190,6 +1207,7 @@ git commit -m "feat(drift): compute_class_diff for identity per-field"
 ## Task 6: `compute_class_diff` — list-of-object classes with natural-key + fuzzy fallback
 
 **Files:**
+
 - Modify: `scripts/drift/compute.py`
 - Test: `tests/drift/test_compute_list_object_classes.py`
 
@@ -1349,9 +1367,10 @@ def test_empty_vs_populated_is_full_drift():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_compute_list_object_classes.py -v
 ```
+
 Expected: all FAIL with ValueError on unknown class kind.
 
 - [ ] **Step 3: Extend `compute.py` with list-of-object support**
@@ -1576,12 +1595,13 @@ def compute_class_diff(left: Any, right: Any, kind: str) -> dict:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_compute_list_object_classes.py -v
 ```
+
 Expected: all PASS. Also re-run earlier compute tests to confirm no regression:
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift -v
 ```
 
@@ -1597,6 +1617,7 @@ git commit -m "feat(drift): compute_class_diff for list-of-object classes with f
 ## Task 7: `compute_drift_score` — full snapshot diff + weighted `overall_pct`
 
 **Files:**
+
 - Modify: `scripts/drift/compute.py`
 - Test: `tests/drift/test_compute_overall.py`
 
@@ -1716,9 +1737,10 @@ def test_headline_changes_capped_at_5():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_compute_overall.py -v
 ```
+
 Expected: ImportError on `compute_drift_score`.
 
 - [ ] **Step 3: Implement `compute_drift_score`**
@@ -1793,9 +1815,10 @@ def format_headline_changes(score: dict) -> list[str]:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift -v
 ```
+
 Expected: all PASS, including the headline-capped-at-5 test (the stub returns `[]`, which satisfies "≤5").
 
 - [ ] **Step 5: Commit**
@@ -1810,6 +1833,7 @@ git commit -m "feat(drift): compute_drift_score full snapshot diff with renormal
 ## Task 8: `format_headline_changes`
 
 **Files:**
+
 - Modify: `scripts/drift/formatters.py`
 - Test: `tests/drift/test_formatters.py`
 
@@ -1908,9 +1932,10 @@ def test_capped_at_5():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_formatters.py -v
 ```
+
 Expected: 3 FAILs (the stub returns `[]` for everything).
 
 - [ ] **Step 3: Replace the stub with the real formatter**
@@ -2025,9 +2050,10 @@ def format_headline_changes(score: dict, limit: int = 5) -> list[str]:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift -v
 ```
+
 Expected: all PASS, including the headline-capped-at-5 test which now actually exercises the formatter.
 
 - [ ] **Step 5: Commit**
@@ -2042,6 +2068,7 @@ git commit -m "feat(drift): format_headline_changes priority ordering + 5-item c
 ## Task 9: `lineage.py` — parent, baseline, candidate-lineage walkers
 
 **Files:**
+
 - Create: `scripts/drift/lineage.py`
 - Test: `tests/drift/test_lineage.py`
 
@@ -2155,9 +2182,10 @@ def test_cycle_guard_caps_walk_at_100(fresh_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_lineage.py -v
 ```
+
 Expected: ImportError on every test.
 
 - [ ] **Step 3: Implement `lineage.py`**
@@ -2293,9 +2321,10 @@ def get_candidate_lineage(scope: dict) -> list:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_lineage.py -v
 ```
+
 Expected: all 6 PASS.
 
 - [ ] **Step 5: Commit**
@@ -2310,6 +2339,7 @@ git commit -m "feat(drift): lineage walkers — parent / baseline / candidate-li
 ## Task 10: `write_snapshot_and_compute_drift` integration writer
 
 **Files:**
+
 - Modify: `scripts/drift/compute.py`
 - Test: `tests/drift/test_compute_writer.py`
 
@@ -2438,9 +2468,10 @@ def test_idempotent_on_resave(fresh_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_compute_writer.py -v
 ```
+
 Expected: ImportError on `write_snapshot_and_compute_drift`.
 
 - [ ] **Step 3: Implement the writer**
@@ -2511,9 +2542,10 @@ def write_snapshot_and_compute_drift(artifact_uid: str, facts: dict) -> None:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift -v
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -2528,6 +2560,7 @@ git commit -m "feat(drift): write_snapshot_and_compute_drift integration writer"
 ## Task 11: `baseline.py` — `promote_baseline` + recompute
 
 **Files:**
+
 - Create: `scripts/drift/baseline.py`
 - Test: `tests/drift/test_baseline.py`
 
@@ -2642,9 +2675,10 @@ def test_promote_sets_promoted_baseline_to_null_drift(fresh_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_baseline.py -v
 ```
+
 Expected: ImportError on `scripts.drift.baseline`.
 
 - [ ] **Step 3: Implement `baseline.py`**
@@ -2751,9 +2785,10 @@ def promote_baseline(artifact_uid: str, reason: str) -> None:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_baseline.py -v
 ```
+
 Expected: 4 PASS. Re-run full drift suite to check for regressions.
 
 - [ ] **Step 5: Commit**
@@ -2768,6 +2803,7 @@ git commit -m "feat(drift): promote_baseline + transactional recompute of vs_bas
 ## Task 12: `extract_facts.py` — LLM-backed extractor
 
 **Files:**
+
 - Create: `scripts/drift/extract_facts.py`
 - Test: `tests/drift/test_extract_facts.py`
 
@@ -2893,9 +2929,10 @@ def test_flag_implausible_values_clean_returns_empty():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_extract_facts.py -v
 ```
+
 Expected: ImportError.
 
 - [ ] **Step 3: Implement `extract_facts.py`**
@@ -3063,9 +3100,10 @@ def extract_facts_from_text(text: str) -> dict:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/drift/test_extract_facts.py -v
 ```
+
 Expected: all 7 PASS.
 
 - [ ] **Step 5: Commit**
@@ -3080,6 +3118,7 @@ git commit -m "feat(drift): extract_facts_from_text LLM extractor with strict va
 ## Task 13: Integrate `write_snapshot_and_compute_drift` into the 4 generator workflows
 
 **Files:**
+
 - Modify: `scripts/dashboard/workflows/create.py`, `edit.py`, `tailor.py`, `cover_letter.py`
 - Test: `tests/dashboard/workflows/test_drift_integration.py` (new)
 
@@ -3157,9 +3196,10 @@ def test_on_artifact_finalised_cover_letter_no_snapshot(fresh_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/workflows/test_drift_integration.py -v
 ```
+
 Expected: ImportError on `scripts.drift.on_artifact_finalised`.
 
 - [ ] **Step 3: Expose `on_artifact_finalised` from the package**
@@ -3222,10 +3262,11 @@ Apply analogous updates in `edit.py`, `tailor.py`. For `cover_letter.py`, the no
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/workflows/test_drift_integration.py -v
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard -q
 ```
+
 Expected: new tests PASS; pre-existing `test_workflows_tab_has_three_subheaders` is the only failing test (the known baseline).
 
 - [ ] **Step 6: Commit**
@@ -3240,6 +3281,7 @@ git commit -m "feat(drift): on_artifact_finalised integration hook + workflow no
 ## Task 14: `drift_sparkline.py` — Overview tile data prep
 
 **Files:**
+
 - Create: `scripts/dashboard/prep/drift_sparkline.py`
 - Test: `tests/dashboard/prep/test_drift_sparkline.py`
 
@@ -3316,9 +3358,10 @@ def test_empty_lineage_returns_empty(fresh_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/prep/test_drift_sparkline.py -v
 ```
+
 Expected: ImportError.
 
 - [ ] **Step 3: Implement `drift_sparkline.py`**
@@ -3379,9 +3422,10 @@ def drift_trajectory_last_n(scope: dict, n: int = 12) -> list[dict]:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/prep/test_drift_sparkline.py -v
 ```
+
 Expected: all 4 PASS.
 
 - [ ] **Step 5: Commit**
@@ -3396,6 +3440,7 @@ git commit -m "feat(dashboard): drift_trajectory_last_n prep for Overview sparkl
 ## Task 15: Overview tab — drift trajectory tile
 
 **Files:**
+
 - Modify: `scripts/dashboard/tabs/overview.py`
 - Test: `tests/dashboard/test_app_overview_render.py`
 
@@ -3403,7 +3448,7 @@ The existing Overview tab renders a set of summary tiles. Add a new tile for the
 
 - [ ] **Step 1: Inspect the current Overview tab**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/test_app_overview_render.py -v
 ```
 
@@ -3450,9 +3495,10 @@ def test_overview_includes_drift_trajectory_tile(monkeypatch, tmp_path):
 
 - [ ] **Step 3: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/test_app_overview_render.py -v -k drift
 ```
+
 Expected: FAIL — `_drift_tile_summary` doesn't exist.
 
 - [ ] **Step 4: Implement the tile**
@@ -3538,9 +3584,10 @@ Then call `render_drift_tile(scope)` from the existing top-level `render()` func
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard -q
 ```
+
 Expected: only the pre-existing baseline failures remain.
 
 - [ ] **Step 6: Commit**
@@ -3555,6 +3602,7 @@ git commit -m "feat(dashboard): Overview tile shows drift trajectory + headline"
 ## Task 16: Resumes tab — Drift columns
 
 **Files:**
+
 - Modify: `scripts/dashboard/tabs/resumes.py`
 - Test: `tests/dashboard/test_resumes_tab.py` (new if it doesn't exist; otherwise extend)
 
@@ -3614,9 +3662,10 @@ def test_row_builder_includes_drift_columns(fresh_db):
 
 - [ ] **Step 3: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/test_resumes_tab.py -v
 ```
+
 Expected: ImportError or AttributeError on `_build_resume_rows`.
 
 - [ ] **Step 4: Implement `_build_resume_rows`**
@@ -3716,9 +3765,10 @@ def render(scope: dict | None = None) -> None:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard -q
 ```
+
 Expected: only pre-existing baseline failures remain.
 
 - [ ] **Step 6: Commit**
@@ -3733,6 +3783,7 @@ git commit -m "feat(dashboard): Resumes tab gains Drift vs parent + Drift vs bas
 ## Task 17: Drift tab — full page
 
 **Files:**
+
 - Create: `scripts/dashboard/tabs/drift.py`
 - Modify: `scripts/dashboard/app.py` (register the new tab)
 - Test: `tests/dashboard/tabs/test_drift_tab_render.py`
@@ -3802,9 +3853,10 @@ def test_field_level_changes_list(fresh_db):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/tabs/test_drift_tab_render.py -v
 ```
+
 Expected: ImportError.
 
 - [ ] **Step 3: Implement `drift.py`**
@@ -4011,9 +4063,10 @@ with tabs[5]:  # whichever index ends up corresponding to "Drift"
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard -q
 ```
+
 Expected: only pre-existing baseline failures remain.
 
 - [ ] **Step 6: Commit**
@@ -4028,6 +4081,7 @@ git commit -m "feat(dashboard): Drift tab with lineage strip, per-class table, f
 ## Task 18: `/brains-import` workflow card + reference doc
 
 **Files:**
+
 - Create: `scripts/dashboard/workflows/import.py`
 - Create: `references/workflows/import.md`
 - Test: `tests/dashboard/workflows/test_import.py`
@@ -4144,9 +4198,10 @@ def test_commit_blocked_by_implausibility_unless_confirmed(monkeypatch, fresh_db
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/workflows/test_import.py -v
 ```
+
 Expected: ImportError on `scripts.dashboard.workflows.import_`.
 
 - [ ] **Step 3: Implement `import_.py`**
@@ -4364,10 +4419,11 @@ with col:
 
 - [ ] **Step 6: Run tests to verify they pass**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard/workflows/test_import.py -v
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/dashboard -q
 ```
+
 Expected: new tests PASS; pre-existing baseline failures only.
 
 - [ ] **Step 7: Commit**
@@ -4382,6 +4438,7 @@ git commit -m "feat(dashboard): /brains-import workflow card + LLM-extracted bas
 ## Task 19: End-to-end smoke test
 
 **Files:**
+
 - Create: `tests/test_smoke_drift_end_to_end.py`
 
 A single integration test that exercises the whole pipeline: import a baseline via `run_import` (with stubbed LLM), generate a derivative resume via the workflow data dict + `on_artifact_finalised`, assert the drift scores are correct end-to-end.
@@ -4552,16 +4609,18 @@ def test_promote_baseline_recompute_end_to_end(monkeypatch, isolated):
 
 - [ ] **Step 2: Run the test**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest tests/test_smoke_drift_end_to_end.py -v
 ```
+
 Expected: both tests PASS.
 
 - [ ] **Step 3: Run the full suite for regressions**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest -q
 ```
+
 Expected: only the 2 pre-existing baseline failures (`test_workflows_tab_has_three_subheaders`, `test_weekly_summary_pacing_none_when_no_target`).
 
 - [ ] **Step 4: Commit**
@@ -4576,6 +4635,7 @@ git commit -m "test: end-to-end smoke for v1.7.0 drift analytics"
 ## Task 20: Version bump + CHANGELOG
 
 **Files:**
+
 - Modify: `scripts/outputs/io.py` (`_SKILL_VERSION`)
 - Modify: `pyproject.toml`
 - Modify: `CHANGELOG.md`
@@ -4652,9 +4712,10 @@ Add at the top of `CHANGELOG.md`, above the v1.6.0 entry:
 
 - [ ] **Step 4: Run the full suite for final sanity check**
 
-```
+```text
 "c:\Brains_Resume_Skill\.venv\Scripts\python.exe" -m pytest -q
 ```
+
 Expected: only the 2 pre-existing baseline failures.
 
 - [ ] **Step 5: Commit**
@@ -4700,6 +4761,7 @@ Then re-extract her facts from the saved DOCX via `/brains-import` (or, if the D
 ## Self-Review
 
 **Spec coverage.** Each section of the spec maps to a task or tasks:
+
 - §3 (Architecture) → Task 1 (migration), Task 13 (workflow integration hook)
 - §4 (Fact schema) → Task 3 (snapshot_from_workflow), Task 12 (extract_facts)
 - §5 (Drift formula) → Tasks 4, 5, 6, 7 (compute split by class shape), Task 8 (formatters)
@@ -4714,6 +4776,7 @@ Then re-extract her facts from the saved DOCX via `/brains-import` (or, if the D
 **Placeholder scan.** Every step has a complete code block or exact text. No "TBD" / "implement later" / "similar to Task N without code". The cover-letter workflow note text is the only place that intentionally refers to a no-op call site; that's documented behaviour, not a placeholder. Task 16's render() is shortened to "or whatever the existing render is — keep it and add columns" — that's explicit context-handing, not a placeholder.
 
 **Type consistency.**
+
 - `compute_class_diff(left, right, kind: str)` returns a dict with shape determined by `kind` — set kinds return `{added, removed, total, pct}`, identity returns `{fields_changed, fields_total, pct}`, list-of-object returns `{entries_added, entries_removed, entries_with_field_changes, field_changes, entries_total, pct}`. Null-on-either-side returns `{status: "not_captured", pct: null}`. Used consistently across Tasks 4-8.
 - `compute_drift_score(left, right) -> dict` with 10 class keys + `overall_pct` + `headline_changes`. Used in Tasks 7, 8, 10, 11.
 - `write_snapshot_and_compute_drift(artifact_uid: str, facts: dict) -> None`. Used in Tasks 10, 11, 13, 18, 19.

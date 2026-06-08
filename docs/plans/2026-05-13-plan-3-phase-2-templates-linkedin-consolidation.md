@@ -1856,7 +1856,7 @@ from scripts.validators.integrity_check import integrity_check
 
 bias = bias_scan(existing_profile_text)
 integ = integrity_check(existing_profile_text)
-```
+```text
 
 Surface the findings. These inform the rewrite — the rewrite should resolve every CRITICAL or HIGH integrity finding and address every bias finding the user agrees with.
 
@@ -1865,12 +1865,14 @@ Surface the findings. These inform the rewrite — the rewrite should resolve ev
 Apply the language rules from `references/language-do-dont.md` and the bias-pattern guidance from `references/nd-bias-patterns.md`. Respect the user's disclosure stance.
 
 **Headline (max 220 characters):**
+
 - One sentence. Lead with the role or domain, not with a generic descriptor.
 - Include 2-3 high-value keywords that match the target-role search query.
 - No soft-skills vocabulary ("passionate", "team player", etc. — bias-scan Pattern 1).
 - Identity-first language by default; switch to person-first if the user has set that preference.
 
 **About (max 2,600 characters; aim for ~1,500 for scannability):**
+
 - Three paragraphs maximum.
   - **Paragraph 1 — Hook:** one specific, evidenced opening line. No generic openers ("I'm a passionate professional with X years of experience…"). Lead with the most concrete claim.
   - **Paragraph 2 — Proof:** two or three concrete achievements with measurable outcomes. This is the resume-summary content reframed for narrative reading rather than bullet scanning.
@@ -1879,11 +1881,13 @@ Apply the language rules from `references/language-do-dont.md` and the bias-patt
 - No more than one warmth signal per paragraph. Warmth without specificity reads hollow; specificity without warmth reads cold.
 
 **Experience entries (max ~2,000 characters per role):**
+
 - Lead each role with a one-line role-summary sentence (what the role actually was — not just the title), then 3-5 achievement bullets.
 - Achievement bullets follow the same pattern as resume bullets: action verb → specific action → measurable outcome.
 - LinkedIn does not render bullet characters — use plain text. A line break per bullet is sufficient.
 
 **Skills (target 25-30 tags):**
+
 - LinkedIn supports up to 50 skill tags. Aim for 25-30 — enough density for semantic search to surface the profile without diluting the strongest signals.
 - Order by relevance to the target role; the first 5 are the most visible.
 - Include both hard skills (named technologies, frameworks, certifications, methodologies) and skill tags that match common recruiter search terms for the target role.
@@ -1897,9 +1901,10 @@ from scripts.validators.integrity_check import integrity_check
 rewritten = headline + "\n\n" + about_text + "\n\n" + experience_text + "\n\n" + skills_text
 bias_after = bias_scan(rewritten)
 integ_after = integrity_check(rewritten)
-```
+```text
 
 The rewritten output must have:
+
 - No CRITICAL or HIGH integrity findings.
 - No remaining ND_BIAS_P1_SOFT_SKILLS or ND_BIAS_P5_UNDER_CLAIM hits unless the user explicitly preserved the language.
 
@@ -1963,7 +1968,7 @@ Write to `output/linkedin-profile-YYYY-MM-DD-HHMMSS.md` with this structure:
 {original about}
 {original experience}
 {original skills list}
-```
+```text
 
 This artifact carries BRAINS coaching branding — it is an internal coaching artifact, not a submission-ready document. (The branding rule from `references/brand-application.md` covers this: the LinkedIn rewrite output itself, intended for LinkedIn paste, is plain unbranded text within the artifact; the markdown wrapper that documents the coaching session carries the BRAINS coaching frame.)
 
@@ -1987,6 +1992,7 @@ This artifact carries BRAINS coaching branding — it is an internal coaching ar
 - **No LinkedIn API write access.** The skill produces a markdown artifact. The user pastes the rewritten sections into LinkedIn themselves.
 - **Third-party PII guard inherited from `linkedin_zip.py`.** Connections, messages, invitations, reactions, comments, likes — all skipped at the parser level. The skipped-files list is surfaced exactly as in the linkedin-ingest workflow.
 - **Character limits are LinkedIn-defined, not optional.** The Headline cuts off at 220 characters; About at 2,600; Experience at 2,000. The rewrite must fit within those limits, not just attempt to.
+
 ```
 
 - [ ] **Step 2: Add a structural test for the workflow reference**
@@ -2927,7 +2933,7 @@ from scripts.parsers.linkedin_zip import parse_linkedin_export
 
 resume = parse_docx_resume(resume_path)
 linkedin = parse_linkedin_export(linkedin_zip_path)
-```
+```text
 
 Surface the LinkedIn `skipped_files` list as in the linkedin-ingest workflow.
 
@@ -2945,7 +2951,7 @@ The LinkedIn parser already returns structured positions. The resume parser retu
     "description": "A flowing-prose description of the role for tone analysis. "
                    "If the resume only has bullets, concatenate them here.",
 }
-```
+```text
 
 Show the structured extraction to the user and confirm before proceeding. The extraction is informed; the user has the veto.
 
@@ -2968,7 +2974,7 @@ def _from_linkedin(pos):
     }
 
 linkedin_positions = [_from_linkedin(p) for p in linkedin["positions"]]
-```
+```text
 
 **(d) Run the validator.**
 
@@ -2976,7 +2982,7 @@ linkedin_positions = [_from_linkedin(p) for p in linkedin["positions"]]
 from scripts.validators.consolidation_check import consolidation_check
 
 result = consolidation_check(resume_positions, linkedin_positions)
-```
+```text
 
 The validator returns a `ConsolidationCheckResult` with a `findings` list. Each finding has a `code`, `severity`, `role_context`, `resume_excerpt`, `linkedin_excerpt`, and `suggested_resolutions` (a list of three resolutions tagged `RESUME-LEADING`, `LINKEDIN-LEADING`, `NEW-SYNTHESIS`).
 
@@ -3049,7 +3055,7 @@ When you decide which resolutions to apply:
 - For aligned re-tailoring (you also want both surfaces optimised for a new target role), run `/brains-tailor` first on the resume, then `/brains-linkedin-improve`.
 
 This report is read-only. The skill does not apply resolutions automatically.
-```
+```text
 
 This artifact carries BRAINS coaching branding — it is an internal coaching artifact, not a submitted document.
 
@@ -3073,6 +3079,7 @@ Based on the user's resolution choices, offer the relevant fix workflow. Do not 
 - **Tone-divergence is heuristic.** Always state this when presenting tone-divergence findings. The user may have intentional reasons for register differences between the two surfaces.
 - **Third-party PII guard inherited from `linkedin_zip.py`.** Connections, messages, invitations, reactions, comments, likes — all skipped at the parser level.
 - **The structured extraction from the resume is confirmed by the user.** Step (b) is not a silent step — the user sees the extraction and can correct it before findings are computed.
+
 ```
 
 - [ ] **Step 2: Add a structural test**

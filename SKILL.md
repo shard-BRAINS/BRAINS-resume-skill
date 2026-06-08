@@ -5,6 +5,8 @@ version: 1.4.0
 license: MIT
 ---
 
+<!-- markdownlint-disable-file MD036 -->
+
 # BRAINS Resume Skill
 
 This skill helps neurodivergent and autistic users review, edit, create, customise, and tailor resumes and cover letters with cross-cutting awareness of ND-related bias patterns in ATS systems and human screeners. It applies a ten-pattern bias catalog across every workflow to surface language risks and structural choices that disadvantage neurodivergent candidates. Every finding is a suggestion — the user always decides.
@@ -288,7 +290,9 @@ Slash commands are available for every workflow when the install script has been
 The skill writes every output under `~/.brains-resume/outputs/` (overridable
 via `BRAINS_OUTPUTS_DIR`). Each JD gets its own folder named:
 
-    YYYY-MM-DD_<Company>_<Role>/
+```text
+YYYY-MM-DD_<Company>_<Role>/
+```
 
 where `<Company>` falls back to `via-<Recruiter>` when the hiring company
 isn't known, or to `unknown` when neither is set.
@@ -296,7 +300,9 @@ isn't known, or to `unknown` when neither is set.
 Resumes and cover letters land inside the JD folder with filenames of the
 form:
 
-    <First>_<Last>_<resume|cover-letter>_<YYYY-MM-DD>_<UID>.docx
+```text
+<First>_<Last>_<resume|cover-letter>_<YYYY-MM-DD>_<UID>.docx
+```
 
 The trailing `<UID>` is a 6-char Crockford base32 identifier. The same UID
 is also written as an invisible custom property inside the DOCX itself, so

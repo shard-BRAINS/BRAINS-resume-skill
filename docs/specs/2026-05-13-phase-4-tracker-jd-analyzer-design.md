@@ -75,7 +75,7 @@ Same hybrid skill structure as v1.1.0: always-loaded `SKILL.md` core + on-demand
 
 ### New user-level state directory
 
-```
+```text
 ~/.brains-resume/
 ├── tracker.db         # SQLite — 5 entity tables + migrations table
 └── profile.json       # focus areas, healthy weekly application rate
@@ -85,7 +85,7 @@ This directory is created on first tracker write. Users who never run `/brains-t
 
 ### New scripts/tracker/ Python module
 
-```
+```text
 scripts/tracker/
 ├── __init__.py
 ├── db.py              # connection, schema bootstrap, migrations, transaction helpers
@@ -99,7 +99,7 @@ The public API is `scripts.tracker.add` + `scripts.tracker.query` + `scripts.tra
 
 ### New JD analyzer
 
-```
+```text
 scripts/validators/
 └── jd_analyzer.py     # finding catalog + role-fit scoring
 ```
@@ -108,7 +108,7 @@ Pattern mirrors existing `bias_scan.py` and `integrity_check.py`: pure-function 
 
 ### Three new workflow references
 
-```
+```text
 references/workflows/
 ├── jd-analyze.md
 └── pre-application-check.md
@@ -118,7 +118,7 @@ Plus integration touch-ups (single paragraph each) on the four existing workflow
 
 ### Three new slash commands
 
-```
+```text
 commands/
 ├── brains-jd-analyze.md
 ├── brains-precheck.md
@@ -197,7 +197,7 @@ All tables: `id INTEGER PRIMARY KEY AUTOINCREMENT`, `created_at TEXT NOT NULL`, 
 
 Numbered migration scripts in `scripts/tracker/migrations/`:
 
-```
+```text
 scripts/tracker/migrations/
 ├── 0001_initial_schema.py    # creates all 5 tables + migrations table
 ├── 0002_*.py                 # future migrations
@@ -265,7 +265,7 @@ All findings carry: `code`, `severity`, `excerpt` (where in JD it appeared), `su
 
 Deterministic, no LLM:
 
-```
+```text
 required_matches = count(focus_areas ∩ jd.focus_areas_required)
 nice_matches     = count(focus_areas ∩ jd.focus_areas_nice)
 
@@ -379,6 +379,7 @@ Synthetic JD fixture → analyzer → tracker add → precheck flow simulated as
 ### 10.4 End-to-end smoke tests
 
 One per new workflow:
+
 - `test_smoke_jd_analyze_workflow.py` — analyzer runs on fixture, findings persisted to tracker, summary returned
 - `test_smoke_precheck_workflow.py` — synthetic application data flows through precheck → application row created
 - `test_smoke_track_workflow.py` — add an application, record an outcome, query summary

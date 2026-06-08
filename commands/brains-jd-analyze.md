@@ -3,4 +3,5 @@ description: Analyse a job description for ND-relevant signals (red flags, maski
 argument-hint: [optional: JD URL, or paste JD text in chat]
 ---
 
+<!-- markdownlint-disable-file MD041 -->
 Run the BRAINS Resume Skill JD-analyzer workflow. Load `~/.claude/skills/brains-resume/references/workflows/jd-analyze.md` and follow its procedure. Input source: `$ARGUMENTS` (a URL) or pasted text in the next message.

@@ -55,6 +55,7 @@ After the factor review and suggestion, offer to produce a worksheet that summar
 Generate the worksheet as a markdown document using the coaching-report template structure (`templates/coaching_report.md`, added in Task 17). Render to a branded PDF via `scripts/generators/coaching_report_to_pdf.py` (Task 18) with `include_trust_footer=True` so that the BRAINS Trust safeguarding-credit line appears in the footer of the rendered document.
 
 Save outputs to:
+
 - `output/disclosure-worksheet-YYYY-MM-DD-HHMMSS.md`
 - `output/disclosure-worksheet-YYYY-MM-DD-HHMMSS.pdf`
 

@@ -79,6 +79,7 @@ These tasks ship the v0.1.x test findings as a clean v0.2 wave before the workfl
 ## Task 1 — `integrity_check.py` validator (TDD, prompt-injection detection)
 
 **Files:**
+
 - Create: `tests/fixtures/integrity_fixtures.py` (synthetic text strings — clean + injected variants)
 - Create: `tests/validators/test_integrity_check.py`
 - Create: `scripts/validators/integrity_check.py`
@@ -182,7 +183,7 @@ def test_result_includes_severity_and_excerpt():
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-```
+```text
 .venv\Scripts\activate
 python -m pytest tests/validators/test_integrity_check.py -v
 ```
@@ -332,7 +333,7 @@ def integrity_check(text: str) -> IntegrityCheckResult:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 python -m pytest tests/validators/test_integrity_check.py -v
 ```
 
@@ -340,7 +341,7 @@ Expected: all 6 tests PASS.
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 git add scripts/validators/integrity_check.py tests/validators/test_integrity_check.py tests/fixtures/integrity_fixtures.py
 git commit -m "feat: add document-integrity validator with prompt-injection detection"
 ```
@@ -350,6 +351,7 @@ git commit -m "feat: add document-integrity validator with prompt-injection dete
 ## Task 2 — Harden `docx_to_text.py` (TDD)
 
 **Files:**
+
 - Modify: `scripts/parsers/docx_to_text.py`
 - Modify: `tests/parsers/test_docx_to_text.py` (add new tests; keep existing ones passing)
 - Create: `docs/testing/fixtures/_make_complex_resume_docx.py` (a synthetic resume with mixed structure: Word-styled headings + body-text headings + font-size-jump headings, no two-column tables — that's a separate test)
@@ -413,7 +415,7 @@ print(f"Wrote {fixture_path}")
 
 Run it once:
 
-```
+```text
 python docs\testing\fixtures\_make_complex_resume_docx.py
 ```
 
@@ -456,7 +458,7 @@ def test_parser_finds_at_least_four_sections_in_complex_doc():
 
 - [ ] **Step 3: Run tests to verify the new tests fail (parser hasn't been hardened yet)**
 
-```
+```text
 python -m pytest tests/parsers/test_docx_to_text.py -v
 ```
 
@@ -580,7 +582,7 @@ def parse_docx_resume(path: Union[str, Path]) -> dict:
 
 - [ ] **Step 5: Run all DOCX-parser tests to verify all 8 pass**
 
-```
+```text
 python -m pytest tests/parsers/test_docx_to_text.py -v
 ```
 
@@ -588,7 +590,7 @@ Expected: all 8 tests PASS (4 original + 4 new).
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 git add scripts/parsers/docx_to_text.py tests/parsers/test_docx_to_text.py docs/testing/fixtures/_make_complex_resume_docx.py docs/testing/fixtures/complex_resume_basic.docx
 git commit -m "feat: harden DOCX parser with style + font-size heading detection"
 ```
@@ -598,6 +600,7 @@ git commit -m "feat: harden DOCX parser with style + font-size heading detection
 ## Task 3 — Add `render_from_markdown` entrypoint to `coaching_report_to_pdf.py`
 
 **Files:**
+
 - Modify: `scripts/generators/coaching_report_to_pdf.py` (add new function, keep existing `render_coaching_report_pdf` intact)
 - Modify: `tests/generators/test_coaching_report_to_pdf.py` (add tests for new function)
 
@@ -678,7 +681,7 @@ def test_render_from_markdown_trust_footer(tmp_path):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-```
+```text
 python -m pytest tests/generators/test_coaching_report_to_pdf.py::test_render_from_markdown_writes_pdf -v
 ```
 
@@ -786,7 +789,7 @@ def render_from_markdown(
 
 - [ ] **Step 4: Run tests**
 
-```
+```text
 python -m pytest tests/generators/test_coaching_report_to_pdf.py -v
 ```
 
@@ -794,7 +797,7 @@ Expected: all tests PASS (3 original + 2 new = 5).
 
 - [ ] **Step 5: Commit**
 
-```
+```text
 git add scripts/generators/coaching_report_to_pdf.py tests/generators/test_coaching_report_to_pdf.py
 git commit -m "feat: add render_from_markdown entrypoint to coaching report PDF generator"
 ```
@@ -804,6 +807,7 @@ git commit -m "feat: add render_from_markdown entrypoint to coaching report PDF 
 ## Task 4 — `linkedin_zip.py` parser (TDD, with synthetic fixture)
 
 **Files:**
+
 - Create: `docs/testing/fixtures/_make_synthetic_linkedin_zip.py` (fixture generator script)
 - Create: `docs/testing/fixtures/synthetic_linkedin_export.zip` (generated fixture — committed)
 - Create: `tests/parsers/test_linkedin_zip.py`
@@ -906,7 +910,7 @@ print(f"Wrote {fixture_path}")
 
 Run once:
 
-```
+```text
 python docs\testing\fixtures\_make_synthetic_linkedin_zip.py
 ```
 
@@ -997,7 +1001,7 @@ def test_parser_raises_on_non_zip_file(tmp_path):
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-```
+```text
 python -m pytest tests/parsers/test_linkedin_zip.py -v
 ```
 
@@ -1119,7 +1123,7 @@ def parse_linkedin_export(path: Union[str, Path]) -> dict:
 
 - [ ] **Step 5: Run tests**
 
-```
+```text
 python -m pytest tests/parsers/test_linkedin_zip.py -v
 ```
 
@@ -1127,7 +1131,7 @@ Expected: all 10 tests PASS.
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 git add scripts/parsers/linkedin_zip.py tests/parsers/test_linkedin_zip.py docs/testing/fixtures/_make_synthetic_linkedin_zip.py docs/testing/fixtures/synthetic_linkedin_export.zip
 git commit -m "feat: add LinkedIn ZIP parser with strict third-party-PII exclusion"
 ```
@@ -1137,6 +1141,7 @@ git commit -m "feat: add LinkedIn ZIP parser with strict third-party-PII exclusi
 ## Task 5 — `jd_url_fetch.py` parser (TDD)
 
 **Files:**
+
 - Create: `tests/parsers/test_jd_url_fetch.py`
 - Create: `scripts/parsers/jd_url_fetch.py`
 
@@ -1228,7 +1233,7 @@ def test_fetch_jd_from_html_handles_empty_string():
 
 - [ ] **Step 2: Run tests to verify failure**
 
-```
+```text
 python -m pytest tests/parsers/test_jd_url_fetch.py -v
 ```
 
@@ -1300,7 +1305,7 @@ def fetch_jd_from_url(url: str, timeout_seconds: int = 15) -> dict:
 
 - [ ] **Step 4: Run tests**
 
-```
+```text
 python -m pytest tests/parsers/test_jd_url_fetch.py -v
 ```
 
@@ -1308,7 +1313,7 @@ Expected: 5 tests PASS.
 
 - [ ] **Step 5: Commit**
 
-```
+```text
 git add scripts/parsers/jd_url_fetch.py tests/parsers/test_jd_url_fetch.py
 git commit -m "feat: add job-description URL fetcher via trafilatura"
 ```
@@ -1322,6 +1327,7 @@ git commit -m "feat: add job-description URL fetcher via trafilatura"
 ## Task 6 — `templates/resume_chronological.docx` template
 
 **Files:**
+
 - Create: `scripts/packaging/_make_resume_chronological_template.py` (the generator — committed so the template can be re-created from source)
 - Create: `templates/resume_chronological.docx` (the generated file — committed)
 - Create: `tests/templates/test_resume_chronological_template.py`
@@ -1408,7 +1414,7 @@ if __name__ == "__main__":
 
 Run once:
 
-```
+```text
 python scripts\packaging\_make_resume_chronological_template.py
 ```
 
@@ -1449,7 +1455,7 @@ def test_template_contains_required_placeholders():
 
 - [ ] **Step 3: Run tests**
 
-```
+```text
 python -m pytest tests/templates/test_resume_chronological_template.py -v
 ```
 
@@ -1457,7 +1463,7 @@ Expected: 3 tests PASS.
 
 - [ ] **Step 4: Commit**
 
-```
+```text
 git add scripts/packaging/__init__.py scripts/packaging/_make_resume_chronological_template.py templates/resume_chronological.docx tests/templates/__init__.py tests/templates/test_resume_chronological_template.py
 git commit -m "feat: add ATS-safe chronological resume DOCX template"
 ```
@@ -1467,6 +1473,7 @@ git commit -m "feat: add ATS-safe chronological resume DOCX template"
 ## Task 7 — `templates/cover_letter.docx` template
 
 **Files:**
+
 - Create: `scripts/packaging/_make_cover_letter_template.py`
 - Create: `templates/cover_letter.docx`
 - Create: `tests/templates/test_cover_letter_template.py`
@@ -1548,7 +1555,7 @@ if __name__ == "__main__":
 
 Run once:
 
-```
+```text
 python scripts\packaging\_make_cover_letter_template.py
 ```
 
@@ -1589,7 +1596,7 @@ def test_template_contains_required_placeholders():
 
 - [ ] **Step 3: Run tests**
 
-```
+```text
 python -m pytest tests/templates/test_cover_letter_template.py -v
 ```
 
@@ -1597,7 +1604,7 @@ Expected: 3 PASS.
 
 - [ ] **Step 4: Commit**
 
-```
+```text
 git add scripts/packaging/_make_cover_letter_template.py templates/cover_letter.docx tests/templates/test_cover_letter_template.py
 git commit -m "feat: add ATS-safe cover-letter DOCX template"
 ```
@@ -1611,6 +1618,7 @@ git commit -m "feat: add ATS-safe cover-letter DOCX template"
 ## Task 8 — Resume DOCX + PDF generators (TDD)
 
 **Files:**
+
 - Create: `tests/generators/test_resume_to_docx.py`
 - Create: `tests/generators/test_resume_to_pdf.py`
 - Create: `scripts/generators/resume_to_docx.py`
@@ -1750,7 +1758,7 @@ def test_pdf_contains_no_brains_branding(tmp_path):
 
 - [ ] **Step 3: Run failing tests**
 
-```
+```text
 python -m pytest tests/generators/test_resume_to_docx.py tests/generators/test_resume_to_pdf.py -v
 ```
 
@@ -1960,7 +1968,7 @@ def render_resume_pdf(data: dict, out_path: Union[str, Path]) -> Path:
 
 - [ ] **Step 6: Run all tests**
 
-```
+```text
 python -m pytest tests/generators/ -v
 ```
 
@@ -1968,7 +1976,7 @@ Expected: all generator tests PASS (previous 5 from coaching_report + new resume
 
 - [ ] **Step 7: Commit**
 
-```
+```text
 git add scripts/generators/resume_to_docx.py scripts/generators/resume_to_pdf.py tests/generators/test_resume_to_docx.py tests/generators/test_resume_to_pdf.py
 git commit -m "feat: add unbranded resume DOCX and PDF generators"
 ```
@@ -1978,6 +1986,7 @@ git commit -m "feat: add unbranded resume DOCX and PDF generators"
 ## Task 9 — Cover-letter DOCX + PDF generators (TDD)
 
 **Files:**
+
 - Create: `tests/generators/test_cover_letter_to_docx.py`
 - Create: `tests/generators/test_cover_letter_to_pdf.py`
 - Create: `scripts/generators/cover_letter_to_docx.py`
@@ -2098,7 +2107,7 @@ def test_pdf_contains_no_brains_branding(tmp_path):
 
 - [ ] **Step 2: Run failing tests**
 
-```
+```text
 python -m pytest tests/generators/test_cover_letter_to_docx.py tests/generators/test_cover_letter_to_pdf.py -v
 ```
 
@@ -2242,7 +2251,7 @@ def render_cover_letter_pdf(data: dict, out_path: Union[str, Path]) -> Path:
 
 - [ ] **Step 5: Run tests**
 
-```
+```text
 python -m pytest tests/generators/ -v
 ```
 
@@ -2250,7 +2259,7 @@ Expected: all generator tests PASS.
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 git add scripts/generators/cover_letter_to_docx.py scripts/generators/cover_letter_to_pdf.py tests/generators/test_cover_letter_to_docx.py tests/generators/test_cover_letter_to_pdf.py
 git commit -m "feat: add unbranded cover-letter DOCX and PDF generators"
 ```
@@ -2266,6 +2275,7 @@ Each workflow reference is a markdown document Claude loads on demand. The contr
 ## Task 10 — `references/workflows/edit.md`
 
 **Files:**
+
 - Create: `references/workflows/edit.md`
 
 ### Document contract
@@ -2311,6 +2321,7 @@ Each workflow reference is a markdown document Claude loads on demand. The contr
    - Never apply a recommendation contradicting a saved user career preference (e.g., career direction memory entries)
 
 ### Length target
+
 600-900 words.
 
 ### Steps
@@ -2320,7 +2331,8 @@ Each workflow reference is a markdown document Claude loads on demand. The contr
 - [ ] **Step 2:** Verify each script reference path is correct: `scripts/parsers/pdf_to_text.py`, `scripts/parsers/docx_to_text.py`, `scripts/validators/integrity_check.py`, `scripts/validators/bias_scan.py`, `scripts/generators/resume_to_docx.py`, `scripts/generators/resume_to_pdf.py`. (All exist by this point in the plan.)
 
 - [ ] **Step 3:** Commit
-```
+
+```text
 git add references/workflows/edit.md
 git commit -m "docs: add edit/customise workflow reference"
 ```
@@ -2330,6 +2342,7 @@ git commit -m "docs: add edit/customise workflow reference"
 ## Task 11 — `references/workflows/create.md`
 
 **Files:**
+
 - Create: `references/workflows/create.md`
 
 ### Document contract
@@ -2366,13 +2379,16 @@ git commit -m "docs: add edit/customise workflow reference"
 5. **Boundaries:** never invent content the user did not provide. The user-veto principle is absolute. If a prompt fails to elicit useful content for a section, ask clarifying follow-up questions rather than filling in plausible-sounding placeholder text.
 
 ### Length target
+
 800-1100 words (interview pacing is content-heavy).
 
 ### Steps
+
 - [ ] **Step 1:** Write the workflow file
 - [ ] **Step 2:** Verify path references
 - [ ] **Step 3:** Commit
-```
+
+```text
 git add references/workflows/create.md
 git commit -m "docs: add create-from-scratch workflow reference"
 ```
@@ -2382,6 +2398,7 @@ git commit -m "docs: add create-from-scratch workflow reference"
 ## Task 12 — `references/workflows/tailor.md`
 
 **Files:**
+
 - Create: `references/workflows/tailor.md`
 
 ### Document contract
@@ -2422,13 +2439,16 @@ git commit -m "docs: add create-from-scratch workflow reference"
    - Respect saved career preferences (e.g., no SAP ecosystem roles) — surface conflicts, never silently comply
 
 ### Length target
+
 600-900 words.
 
 ### Steps
+
 - [ ] **Step 1:** Write the workflow file
 - [ ] **Step 2:** Verify references
 - [ ] **Step 3:** Commit
-```
+
+```text
 git add references/workflows/tailor.md
 git commit -m "docs: add tailor-to-JD workflow reference"
 ```
@@ -2438,6 +2458,7 @@ git commit -m "docs: add tailor-to-JD workflow reference"
 ## Task 13 — `references/workflows/cover-letter.md`
 
 **Files:**
+
 - Create: `references/workflows/cover-letter.md`
 
 ### Document contract
@@ -2480,13 +2501,16 @@ git commit -m "docs: add tailor-to-JD workflow reference"
    - Career preference conflicts (e.g., SAP) — same rule as tailor workflow
 
 ### Length target
+
 500-800 words.
 
 ### Steps
+
 - [ ] **Step 1:** Write workflow file
 - [ ] **Step 2:** Verify references
 - [ ] **Step 3:** Commit
-```
+
+```text
 git add references/workflows/cover-letter.md
 git commit -m "docs: add cover-letter generation workflow reference"
 ```
@@ -2496,6 +2520,7 @@ git commit -m "docs: add cover-letter generation workflow reference"
 ## Task 14 — `references/workflows/linkedin-ingest.md`
 
 **Files:**
+
 - Create: `references/workflows/linkedin-ingest.md`
 
 ### Document contract
@@ -2527,13 +2552,16 @@ git commit -m "docs: add cover-letter generation workflow reference"
    - Recommend the user delete the ZIP after parsing; the skill itself does not store the original file
 
 ### Length target
+
 500-800 words.
 
 ### Steps
+
 - [ ] **Step 1:** Write workflow file
 - [ ] **Step 2:** Verify references
 - [ ] **Step 3:** Commit
-```
+
+```text
 git add references/workflows/linkedin-ingest.md
 git commit -m "docs: add LinkedIn ingestion workflow reference"
 ```
@@ -2543,6 +2571,7 @@ git commit -m "docs: add LinkedIn ingestion workflow reference"
 ## Task 15 — `references/workflows/career-change.md`
 
 **Files:**
+
 - Create: `references/workflows/career-change.md`
 
 ### Document contract
@@ -2577,13 +2606,16 @@ git commit -m "docs: add LinkedIn ingestion workflow reference"
    - Career change is reframing-of-existing-experience, not invention
 
 ### Length target
+
 500-800 words.
 
 ### Steps
+
 - [ ] **Step 1:** Write workflow file
 - [ ] **Step 2:** Verify references
 - [ ] **Step 3:** Commit
-```
+
+```text
 git add references/workflows/career-change.md
 git commit -m "docs: add career-change translator workflow reference"
 ```
@@ -2593,6 +2625,7 @@ git commit -m "docs: add career-change translator workflow reference"
 ## Task 16 — `references/workflows/bias-check.md`
 
 **Files:**
+
 - Create: `references/workflows/bias-check.md`
 
 ### Document contract
@@ -2627,13 +2660,16 @@ git commit -m "docs: add career-change translator workflow reference"
    - If failures: "Not ready to submit." with specific blockers (e.g., prompt injection, ATS table presence, brand leak in submission artifact)
 
 ### Length target
+
 500-700 words.
 
 ### Steps
+
 - [ ] **Step 1:** Write workflow file
 - [ ] **Step 2:** Verify references
 - [ ] **Step 3:** Commit
-```
+
+```text
 git add references/workflows/bias-check.md
 git commit -m "docs: add bias-aware ATS final-check workflow reference"
 ```
@@ -2649,6 +2685,7 @@ The goal of this phase: install becomes one command per platform, invocation bec
 ## Task 17 — `install/install.ps1` (Windows PowerShell installer)
 
 **Files:**
+
 - Create: `install/install.ps1`
 
 ### Steps
@@ -2762,7 +2799,7 @@ Write-Host "  3. Or invoke by natural language: 'review my resume at C:\path\to\
 
 - [ ] **Step 2:** Commit (no test step needed — installers are integration-tested manually after the slash commands ship in Task 19)
 
-```
+```text
 git add install/install.ps1
 git commit -m "build: add Windows PowerShell installer"
 ```
@@ -2772,6 +2809,7 @@ git commit -m "build: add Windows PowerShell installer"
 ## Task 18 — `install/install.sh` (mac/Linux bash installer)
 
 **Files:**
+
 - Create: `install/install.sh`
 
 ### Steps
@@ -2867,7 +2905,7 @@ echo "  3. Or invoke by natural language: 'review my resume at /path/to/resume.d
 
 - [ ] **Step 2:** Make executable + commit
 
-```
+```text
 chmod +x install/install.sh
 git add install/install.sh
 git update-index --chmod=+x install/install.sh
@@ -2879,6 +2917,7 @@ git commit -m "build: add macOS/Linux bash installer"
 ## Task 19 — Slash commands (9 files in `commands/`)
 
 **Files:** create one file per workflow under `commands/`:
+
 - `commands/brains-review.md`
 - `commands/brains-disclosure.md`
 - `commands/brains-edit.md`
@@ -2909,6 +2948,7 @@ argument-hint: <optional argument hint, e.g. "[path to resume]">
 For each command, the body is a short natural-language prompt that loads the relevant workflow reference and invokes it. Examples:
 
 `commands/brains-review.md`:
+
 ```markdown
 ---
 description: Audit a resume for ND-bias, ATS-safety, and document-integrity issues
@@ -2919,6 +2959,7 @@ Run the BRAINS Resume Skill review workflow on the resume at `$ARGUMENTS`. Load 
 ```
 
 `commands/brains-disclosure.md`:
+
 ```markdown
 ---
 description: Walk through the disclosure-decision framework (whether/when/how to disclose neurodivergence)
@@ -2928,6 +2969,7 @@ Run the BRAINS Resume Skill disclosure-coaching workflow. Load `~/.claude/skills
 ```
 
 `commands/brains-edit.md`:
+
 ```markdown
 ---
 description: Apply review recommendations to an existing resume; produces a clean ATS-safe rewrite
@@ -2938,6 +2980,7 @@ Run the BRAINS Resume Skill edit workflow. Load `~/.claude/skills/brains-resume/
 ```
 
 `commands/brains-tailor.md`:
+
 ```markdown
 ---
 description: Tailor an existing resume to a specific job description
@@ -2948,6 +2991,7 @@ Run the BRAINS Resume Skill tailor-to-JD workflow. Load `~/.claude/skills/brains
 ```
 
 `commands/brains-cover-letter.md`:
+
 ```markdown
 ---
 description: Generate a cover letter matched to a tailored resume and JD
@@ -2958,6 +3002,7 @@ Run the BRAINS Resume Skill cover-letter workflow. Load `~/.claude/skills/brains
 ```
 
 `commands/brains-create.md`:
+
 ```markdown
 ---
 description: Build a resume from scratch via interactive interview
@@ -2967,6 +3012,7 @@ Run the BRAINS Resume Skill create-from-scratch workflow. Load `~/.claude/skills
 ```
 
 `commands/brains-linkedin.md`:
+
 ```markdown
 ---
 description: Ingest a LinkedIn export ZIP (third-party PII excluded automatically)
@@ -2977,6 +3023,7 @@ Run the BRAINS Resume Skill LinkedIn-ingestion workflow. Load `~/.claude/skills/
 ```
 
 `commands/brains-career-change.md`:
+
 ```markdown
 ---
 description: Translate experience from one domain into another for a career pivot
@@ -2987,6 +3034,7 @@ Run the BRAINS Resume Skill career-change translator workflow. Load `~/.claude/s
 ```
 
 `commands/brains-check.md`:
+
 ```markdown
 ---
 description: Final pre-submit pass — ATS, ND-bias, document integrity
@@ -2998,7 +3046,7 @@ Run the BRAINS Resume Skill bias-aware-ATS-check workflow. Load `~/.claude/skill
 
 - [ ] **Step 2:** Commit
 
-```
+```text
 git add commands/
 git commit -m "feat: add slash commands for all nine workflows"
 ```
@@ -3008,6 +3056,7 @@ git commit -m "feat: add slash commands for all nine workflows"
 ## Task 20 — Claude Project bundle generator
 
 **Files:**
+
 - Create: `scripts/packaging/build_project_bundle.py`
 - Create: `docs/claude-project-setup.md`
 - Create: `dist/.gitkeep`
@@ -3016,7 +3065,7 @@ git commit -m "feat: add slash commands for all nine workflows"
 
 - [ ] **Step 1:** Create `dist/` directory with .gitkeep so the directory exists in git
 
-```
+```text
 mkdir -p dist
 touch dist/.gitkeep
 ```
@@ -3024,7 +3073,8 @@ touch dist/.gitkeep
 Also update `.gitignore` to exclude `dist/*` except `.gitkeep`:
 
 Add to `.gitignore`:
-```
+
+```text
 # Distribution artifacts (built on demand)
 dist/*
 !dist/.gitkeep
@@ -3173,7 +3223,7 @@ Built by neurodivergent minds, for neurodivergent people.
 
 - [ ] **Step 4:** Build the bundle and verify
 
-```
+```text
 python scripts/packaging/build_project_bundle.py
 ```
 
@@ -3181,7 +3231,7 @@ Expected: `Wrote .../dist/brains-resume-claude-project.zip`. Verify the ZIP exis
 
 - [ ] **Step 5:** Commit
 
-```
+```text
 git add scripts/packaging/build_project_bundle.py docs/claude-project-setup.md dist/.gitkeep .gitignore
 git commit -m "feat: add Claude Project bundle builder and setup guide"
 ```
@@ -3191,6 +3241,7 @@ git commit -m "feat: add Claude Project bundle builder and setup guide"
 ## Task 21 — Update `SKILL.md` for all 9 workflows live
 
 **Files:**
+
 - Modify: `SKILL.md`
 
 ### Steps
@@ -3239,7 +3290,7 @@ Slash commands are available for every workflow when the install script has been
 
 - [ ] **Step 7:** Commit
 
-```
+```text
 git add SKILL.md
 git commit -m "feat: update SKILL.md for all nine live workflows and integrity validator"
 ```
@@ -3253,6 +3304,7 @@ git commit -m "feat: update SKILL.md for all nine live workflows and integrity v
 ## Task 22 — Workflow smoke tests (each workflow's deterministic pipeline composes end-to-end)
 
 **Files:**
+
 - Modify: `tests/test_smoke_review_workflow.py` (rename if needed; add others)
 - Create: `tests/test_smoke_edit_workflow.py`
 - Create: `tests/test_smoke_create_workflow.py`
@@ -3371,7 +3423,7 @@ Create the remaining six smoke tests following the same pattern, each exercising
 
 - [ ] **Step 3:** Run all smoke tests + full suite
 
-```
+```text
 python -m pytest -v
 ```
 
@@ -3379,7 +3431,7 @@ Expected: all tests PASS. Total count should be approximately 28 (v0.1.x baselin
 
 - [ ] **Step 4:** Commit
 
-```
+```text
 git add tests/test_smoke_edit_workflow.py tests/test_smoke_create_workflow.py tests/test_smoke_tailor_workflow.py tests/test_smoke_cover_letter_workflow.py tests/test_smoke_linkedin_workflow.py tests/test_smoke_career_change_workflow.py tests/test_smoke_bias_check_workflow.py tests/fixtures/career_change_fixtures.py
 git commit -m "test: add end-to-end smoke tests for all seven new workflows"
 ```
@@ -3389,6 +3441,7 @@ git commit -m "test: add end-to-end smoke tests for all seven new workflows"
 ## Task 23 — Update README + CHANGELOG, build bundle, tag v1.0.0
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `CHANGELOG.md`
 
@@ -3450,7 +3503,7 @@ Add the v1.0.0 entry. Example skeleton:
 
 - [ ] **Step 3:** Build the Claude Project bundle
 
-```
+```text
 python scripts/packaging/build_project_bundle.py
 ```
 
@@ -3458,7 +3511,7 @@ Verify `dist/brains-resume-claude-project.zip` exists.
 
 - [ ] **Step 4:** Final full test suite run
 
-```
+```text
 python -m pytest -v
 ```
 
@@ -3466,7 +3519,7 @@ Expected: 100% pass, no failures.
 
 - [ ] **Step 5:** Commit + tag v1.0.0
 
-```
+```text
 git add README.md CHANGELOG.md
 git commit -m "docs: update README and changelog for v1.0.0 release"
 git tag -a v1.0.0 -m "v1.0.0 — complete nine-workflow skill with installers, slash commands, Claude Project bundle"
@@ -3504,6 +3557,7 @@ At the end of Task 24, the BRAINS Resume Skill v1.0.0 is:
 - Tagged in local git; the user can push to `shard-brains/brains-resume-skill` whenever ready
 
 **Next (Plan 3 / future):**
+
 - Template library and visual variants
 - LinkedIn profile review/improvement workflow
 - LinkedIn + resume consolidation

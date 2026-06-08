@@ -35,7 +35,8 @@ Date of birth, headshot or photo, marital status, national ID numbers, or anythi
 Pattern 6 — Direct ND Signal Terms is the primary risk here. Some candidates list diagnostic credentials or community affiliations in their header as a signal of identity. This is a disclosure decision, not a formatting error; see Pattern 6 for the full risk framing and the user-veto principle. Pattern 7 — Indirect ND Signal Terms can also surface if contact links point to ND-community platforms or profiles that imply identity.
 
 **Example — done well:**
-```
+
+```text
 Alex Reyes
 alex.reyes@example.invalid  |  555-000-1234  |  Portland, OR
 portfolio.example.invalid/alexreyes
@@ -55,7 +56,8 @@ Empty soft-skills vocabulary — terms like "passionate", "dynamic", "self-start
 Pattern 1 — Soft-Skills-Coded Vocabulary clusters heavily in summaries; this is the highest-risk section for vague social descriptors that replace concrete evidence. Pattern 8 — Communication-Warmth Deficit is also common here: summaries written to sound "professional" often strip out first-person voice and motivation language entirely, which human screeners read as flat or disengaged. Pattern 6 — Direct ND Signal Terms surfaces when candidates choose to disclose identity in the summary.
 
 **Example — done well:**
-```
+
+```text
 I am a data engineer with six years of experience designing and maintaining
 large-scale data pipelines. I am drawn to complex data-quality problems and
 have a track record of building systems that hold up when data volumes spike.
@@ -77,7 +79,8 @@ Duty lists that describe responsibilities without outcomes ("Responsible for man
 Pattern 5 — Modesty / Under-Claim is the dominant risk in experience bullets: hedged language ("contributed to", "helped with", "assisted with") systematically underrepresents solo or candidate-led work. Pattern 3 — Short-Tenure Framing requires attention if two or more consecutive roles each lasted under 18 months without context explaining the duration. Pattern 2 — Employment-Gap Framing is a risk if the candidate has placed explanatory phrases directly inside the work history section. Pattern 4 — Hyperfocus / Narrow-Expertise Framing can surface in experience sections where deep domain work is described without a transferable-skills bridge.
 
 **Example — done well:**
-```
+
+```text
 Software Engineer — Example Corp (Mar 2021–Nov 2023)
 - Built a real-time event-processing service handling 400k events/day,
   reducing latency by 60% over the prior batch architecture.
@@ -101,7 +104,8 @@ GPA unless it is strong and recency makes it relevant (generally within the last
 Pattern 6 — Direct ND Signal Terms can appear here if a candidate lists an accommodation plan, a disability-focused award, or an ND-identity-based scholarship without having made an informed disclosure decision. Pattern 7 — Indirect ND Signal Terms may surface if extracurricular or leadership entries reference ND community organisations. Pattern 2 — Employment-Gap Framing occasionally appears in education sections when candidates explain a delayed graduation or time out of study in apologetic terms.
 
 **Example — done well:**
-```
+
+```text
 B.S. Computer Science — Example University, 2019
 Relevant coursework: Distributed Systems, Database Internals,
 Human-Computer Interaction
@@ -122,7 +126,8 @@ Self-rated proficiency scales (e.g., "Python ★★★☆☆") — these have no
 Pattern 4 — Hyperfocus / Narrow-Expertise Framing is the primary risk in skills sections: a list that is very long in one domain and sparse in others may be accurate but can fail to signal breadth to screeners who default to generalist assumptions. Pattern 1 — Soft-Skills-Coded Vocabulary occasionally appears here when candidates list interpersonal labels alongside technical skills. Pattern 5 — Modesty / Under-Claim surfaces when candidates omit genuine competencies they consider "obvious" or "not impressive enough."
 
 **Example — done well:**
-```
+
+```text
 Languages: Python, SQL, Bash
 Frameworks & Libraries: FastAPI, dbt, Apache Spark
 Infrastructure: Docker, Kubernetes, Terraform
