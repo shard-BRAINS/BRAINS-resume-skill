@@ -1,5 +1,8 @@
 # BRAINS Resume Skill — Design Specification
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 **Version:** Draft v1
 **Date:** 2026-05-11
 **Status:** Awaiting user review

@@ -1,5 +1,8 @@
 # v1.2.1 — AI-Signal Validator and De-AI Integration — Design Specification
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 **Version:** Draft v1
 **Date:** 2026-05-14
 **Status:** Awaiting user review

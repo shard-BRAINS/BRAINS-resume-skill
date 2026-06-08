@@ -1,5 +1,8 @@
 # Plan 5b — v1.3.0: Streamlit Dashboard
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 > **For implementers:** Checkbox (`- [ ]`) syntax. Work sequentially, mark steps as you go. Stage and commit after each task. **Never include third-party org or project credits in any file or commit message — BRAINS / BRAINS Trust / BRAINS Incubator only. Never include `Co-Authored-By` footers.** Conventional commits style.
 
 **Goal:** Ship v1.3.0 — a local Streamlit dashboard that surfaces the tracker, JD-analyzer, and AI-signal data the user has been building toward. Single-page top-tab layout matching the user's TSE Tools visual reference, BRAINS Incubator branded, seven tabs (Overview, Resumes, Cover Letters, JDs, Applications, Analytics, Pacing) plus a sidebar for profile editing.

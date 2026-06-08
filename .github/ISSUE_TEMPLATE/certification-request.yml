@@ -1,0 +1,48 @@
+name: BRAINS Certification request
+description: Apply for the BRAINS Certified · Gold mark for your repository.
+title: "[Certification] owner/repo"
+labels: ["certification"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for applying for **BRAINS Certified · Gold**. Fill this in and a maintainer
+        will verify your evidence and add you to the [registry](../../blob/main/CERTIFIED.md).
+  - type: input
+    id: repository
+    attributes:
+      label: Repository URL
+      placeholder: https://github.com/owner/repo
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Owner or maintainer
+    validations:
+      required: true
+  - type: input
+    id: evidence
+    attributes:
+      label: Evidence — a passing CI run on your default branch
+      placeholder: https://github.com/owner/repo/actions/runs/123456789
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Standard checklist
+      description: All three must be true to qualify for Gold.
+      options:
+        - label: Every standard check passes on the default branch (Scorecard, CodeQL, Trivy, Gitleaks, Vale, Readability, Markdownlint).
+          required: true
+        - label: ND-affirming governance is present (Code of Conduct, Security policy, Contributing guide).
+          required: true
+        - label: The repo uses the BRAINS Vale rule pack and the readability gate.
+          required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else we should know?
+    validations:
+      required: false

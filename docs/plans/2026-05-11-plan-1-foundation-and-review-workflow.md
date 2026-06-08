@@ -1,5 +1,8 @@
 # Plan 1 — Foundation & Review Workflow (v0.1.0)
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 > **For implementers:** This plan uses checkbox (`- [ ]`) syntax. Work through tasks sequentially, marking each step as you go. Stage and commit after each task unless a step says otherwise. Never include third-party org or project credits in any file or commit message — BRAINS / BRAINS Trust / BRAINS Incubator only.
 
 **Goal:** Ship v0.1.0 of the BRAINS Resume Skill — a working Claude Code skill that ingests a PDF or DOCX resume, runs a deterministic ATS-safety check and pattern-matched ND-bias scan, and produces a BRAINS-branded coaching report. Establishes the architectural foundation that subsequent workflows plug into.
@@ -179,7 +182,7 @@ This project is part of the BRAINS Incubator — a space for community projects 
 ## Before you contribute
 
 - Read the design specification in `docs/specs/`. It captures every architectural and ethical decision and the reasons behind them. New work should align with it (or argue for changing it).
-- Identity-first language is the default ("autistic person," not "person with autism"). Follow an individual's stated preference when they tell you theirs.
+- Identity-first language is the default (`autistic person`, not `person with autism`). Follow an individual's stated preference when they tell you theirs.
 - Never use deficit framing in default copy. Never use puzzle-piece imagery. Never use AI-generated images of people.
 - Outputs the user submits to employers (resumes, cover letters) stay unbranded. Outputs the user reads as coaching (review reports, disclosure worksheets) carry BRAINS branding.
 
@@ -333,7 +336,7 @@ This is a content document. The implementer writes the full prose; the structure
    - Person-first defaults that ignore identity-first preference (e.g., `person with autism` → `autistic person` — community preference)
    - Hyperbolic soft-skills pairs (e.g., `passionate about X` → `[concrete instance + outcome]` — bias-coded vagueness)
    - Functional-deficit labels (e.g., `high-functioning` → omit or rephrase contextually — the term is harmful)
-   - "Special needs" framings → `accessibility needs` or omit
+   - `Special needs` framings → `accessibility needs` or omit
    - Gendered language pairs (e.g., `chairman` → `chair` or `chairperson`)
    - Ableist idioms (e.g., `tone-deaf approach` → `out-of-touch approach`)
 3. **Edge cases** (2-3 paragraphs) —

@@ -656,7 +656,7 @@ Create `scripts/outputs/tagging.py`:
 These properties are invisible in the Word body, header, footer, and
 comment pane. The only way a user sees them is *File -> Info -> Properties
 -> Advanced Properties -> Custom*. The skill uses six properties, all
-prefixed 'Brains' to avoid collision with anything else.
+prefixed `Brains` to avoid collision with anything else.
 
 | Property              | Type    | Notes                              |
 | --------------------- | ------- | ---------------------------------- |
@@ -693,7 +693,7 @@ class ArtifactMeta:
 def write_artifact_meta(docx_path: Path | str, meta: ArtifactMeta) -> None:
     """Embed the artifact metadata as DOCX custom properties.
 
-    Opens the existing DOCX, sets six 'Brains*' custom properties, and
+    Opens the existing DOCX, sets six `Brains*` custom properties, and
     saves in place. Absent jd_id stored as 0; absent parent_uid stored
     as ''.
     """

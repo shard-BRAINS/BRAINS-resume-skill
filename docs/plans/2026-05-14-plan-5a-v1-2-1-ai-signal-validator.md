@@ -1,5 +1,8 @@
 # Plan 5a — v1.2.1: AI-Signal Validator and De-AI Integration
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 > **For implementers:** Checkbox (`- [ ]`) syntax. Work sequentially, mark steps as you go. Stage and commit after each task. **Never include third-party org or project credits in any file or commit message — BRAINS / BRAINS Trust / BRAINS Incubator only. Never include `Co-Authored-By` footers.** Conventional commits style.
 
 **Goal:** Ship v1.2.1 patch — add an AI-signal validator that detects 9 common AI-tell patterns in text (em-dash overuse, AI-flavoured vocabulary, parallel-structure abuse, rhetorical contrasts, transitional overuse, present-participle pile-ups, hedging phrases, range quantifiers, whether-disjunctions), surfaces a 0-100 AI-signal score (lower = better), integrates into the final pre-submit `bias-check` workflow, exposes a standalone `/brains-deai` slash command, and adds optional de-AI prompts to four text-producing workflows.

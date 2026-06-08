@@ -1,5 +1,8 @@
 # Plan 3 — Phase 2: Template Library, LinkedIn Profile Improvement, and Consolidation (v1.1.0)
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 > **For implementers:** Checkbox (`- [ ]`) syntax. Work sequentially, mark steps as you go. Stage and commit after each task. **Never include third-party org or project credits in any file or commit message — BRAINS / BRAINS Trust / BRAINS Incubator only. Never include `Co-Authored-By` footers.** Conventional commits style.
 
 **Goal:** Ship v1.1.0 — add a 4-template resume library + 2-template cover-letter library with explicit template-selection guidance, a LinkedIn profile improvement workflow that applies the ND-aware framework to a parallel job-search surface, and a resume + LinkedIn consolidation workflow that detects and surfaces narrative inconsistencies between a user's two main job-search documents.
