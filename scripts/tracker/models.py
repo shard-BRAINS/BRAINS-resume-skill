@@ -33,6 +33,16 @@ APPLICATION_CHANNELS = (
     "other",
 )
 
+# Disclosure-strength values for the disclosure_sessions table.
+# `undecided` lets a coaching session that didn't reach a decision still be
+# recorded — the downstream auto-apply treats it as "no preference on file".
+DISCLOSURE_STRENGTHS = (
+    "non-disclosure",
+    "neutral",
+    "explicit",
+    "undecided",
+)
+
 
 @dataclass
 class ResumeVersion:
@@ -130,6 +140,25 @@ class Outcome:
     notes: Optional[str]
     created_at: str
     archived_at: Optional[str]
+
+
+@dataclass
+class DisclosureSession:
+    id: Optional[int]
+    candidate_id: int
+    created_at: str
+    landed_strength: str
+    target_employer: Optional[str] = None
+    target_role: Optional[str] = None
+    factor_1: Optional[str] = None
+    factor_2: Optional[str] = None
+    factor_3: Optional[str] = None
+    factor_4: Optional[str] = None
+    factor_5: Optional[str] = None
+    factor_6: Optional[str] = None
+    notes: Optional[str] = None
+    artifact_uid: Optional[str] = None
+    archived_at: Optional[str] = None
 
 
 @dataclass
