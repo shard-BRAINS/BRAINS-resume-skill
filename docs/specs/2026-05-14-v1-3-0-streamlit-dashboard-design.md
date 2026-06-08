@@ -1,5 +1,8 @@
 # v1.3.0 — Streamlit Dashboard — Design Specification
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 **Version:** Draft v1
 **Date:** 2026-05-14
 **Status:** Awaiting user review
@@ -263,7 +266,7 @@ The `brains-brand` skill is the authoritative source. At implementation time (Ph
 - **Footer:** BRAINS Incubator origin credit, rendered via Streamlit's `st.caption()`
 - **No italics in body text** (carries through from BRAINS brand rules)
 - **No AI-generated imagery** (carries through)
-- **Identity-first language** in all UI strings ("autistic candidate", not "person with autism")
+- **Identity-first language** in all UI strings (`autistic candidate`, not `person with autism`)
 
 The CSS injection in `style.py` is a single function `inject_brand_css()` called once at app start. It writes `<style>` tags via `st.markdown(unsafe_allow_html=True)`.
 

@@ -1,5 +1,8 @@
 # Plan 2 — Complete Workflows, Test-Finding Fixes, and Packaging (v1.0.0)
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 > **For implementers:** Checkbox (`- [ ]`) syntax. Work sequentially, mark steps as you go. Stage and commit after each task. **Never include third-party org or project credits in any file or commit message — BRAINS / BRAINS Trust / BRAINS Incubator only. Never include `Co-Authored-By` footers.** Conventional commits style.
 
 **Goal:** Ship v1.0.0 — the full nine-workflow BRAINS Resume Skill with all deferred workflows live (create-from-scratch, edit, tailor, cover letter, LinkedIn ingestion, career-change translator, bias-aware ATS final check), test findings from v0.1.x folded in (prompt-injection detection, DOCX parser hardening, render-from-markdown PDF entrypoint), and packaging that makes install + invocation low-friction: a one-line install script per platform, slash commands for Claude Code, and a Claude Project bundle for claude.ai users.
