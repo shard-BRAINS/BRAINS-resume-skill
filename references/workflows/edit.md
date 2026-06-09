@@ -42,6 +42,7 @@ Run `scripts/validators/integrity_check.py` on the parsed text before any editin
 
 **(c) Walk through each recommendation interactively.**
 Present each recommendation from the coaching report (or direct ask) one at a time. For each, state:
+
 - the original text or issue
 - the suggested rewrite
 - a clear accept / reject / modify prompt
@@ -51,7 +52,7 @@ Record every decision. Do not apply changes silently. Do not batch-apply or assu
 **(d) Assemble structured resume data.**
 Once all decisions are recorded, construct the structured data object:
 
-```
+```text
 {
   candidate_name,
   candidate_contact_line,
@@ -77,6 +78,7 @@ Write a change-log markdown file alongside the resume artifacts. The change-log 
 
 **(h) Offer next steps.**
 Present the user with three options for continuing:
+
 - Tailor the revised resume to a specific job description (tailor workflow)
 - Generate a cover letter for this role (cover-letter workflow)
 - Run a final bias-aware ATS check (ATS-check workflow)
@@ -119,9 +121,11 @@ The dashboard reserves the output path before invoking this command. The
 handoff payload contains the absolute path to write to. Do NOT pick your
 own filename. After saving the DOCX, call:
 
-    from scripts.outputs.io import finalize_docx
-    from scripts.outputs.tagging import ArtifactMeta
-    finalize_docx(target_path, meta)
+```text
+from scripts.outputs.io import finalize_docx
+from scripts.outputs.tagging import ArtifactMeta
+finalize_docx(target_path, meta)
+```
 
 then record the row via the appropriate `tracker.add_*` call, passing the
 `artifact_uid` and `parent_uid` from the handoff payload.

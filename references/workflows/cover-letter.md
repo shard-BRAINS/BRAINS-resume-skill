@@ -74,6 +74,7 @@ Surface the applied preference in the draft preamble before presenting paragraph
 
 **(e) Run validators on the draft.**
 With the draft assembled, run:
+
 - `scripts/validators/bias_scan.py` — flag ND-disclosure-relevant patterns not covered by the user's disclosure stance
 - `scripts/validators/integrity_check.py` — check for prompt-injection patterns, structural anomalies, or data integrity warnings
 
@@ -121,9 +122,11 @@ The dashboard reserves the output path before invoking this command. The
 handoff payload contains the absolute path to write to. Do NOT pick your
 own filename. After saving the DOCX, call:
 
-    from scripts.outputs.io import finalize_docx
-    from scripts.outputs.tagging import ArtifactMeta
-    finalize_docx(target_path, meta)
+```text
+from scripts.outputs.io import finalize_docx
+from scripts.outputs.tagging import ArtifactMeta
+finalize_docx(target_path, meta)
+```
 
 then record the row via the appropriate `tracker.add_*` call, passing the
 `artifact_uid` and `parent_uid` from the handoff payload.

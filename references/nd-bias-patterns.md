@@ -172,8 +172,9 @@ When a bias flag is raised, Claude offers the finding and a suggestion. The user
 ### Pattern 10 — Identity-Language Preference
 
 **Trigger:** Mixed person-first and identity-first language appearing in the same document.
+
 - Identity-first terms: `autistic <noun>`, `neurodivergent <noun>`, `disabled <noun>`
-- Person-first terms: `person with `, `people with `, `individual with `, `individuals with `
+- Person-first terms: `person with`, `people with`, `individual with`, `individuals with`
 
 Flag is raised when both styles appear in the same document, signalling inconsistency rather than intentional code-switching.
 
@@ -205,6 +206,7 @@ Flag is raised when both styles appear in the same document, signalling inconsis
 | 10 | Identity-language preference | yes | no |
 
 **Notes on `partial` entries:**
+
 - Pattern 3 requires date parsing and consecutive-tenure logic beyond simple regex.
 - Pattern 4 requires proximity-aware token clustering, not a raw keyword count.
 - Pattern 5 flagging is accurate on trigger phrases but requires Claude to confirm the work was genuinely solo or candidate-led before surfacing the flag.

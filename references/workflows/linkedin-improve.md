@@ -65,12 +65,14 @@ Surface the findings. These inform the rewrite — the rewrite should resolve ev
 Apply the language rules from `references/language-do-dont.md` and the bias-pattern guidance from `references/nd-bias-patterns.md`. Respect the user's disclosure stance.
 
 **Headline (max 220 characters):**
+
 - One sentence. Lead with the role or domain, not with a generic descriptor.
 - Include 2-3 high-value keywords that match the target-role search query.
 - No soft-skills vocabulary ("passionate", "team player", etc. — bias-scan Pattern 1).
 - Identity-first language by default; switch to person-first if the user has set that preference.
 
 **About (max 2,600 characters; aim for ~1,500 for scannability):**
+
 - Three paragraphs maximum.
   - **Paragraph 1 — Hook:** one specific, evidenced opening line. No generic openers ("I'm a passionate professional with X years of experience…"). Lead with the most concrete claim.
   - **Paragraph 2 — Proof:** two or three concrete achievements with measurable outcomes. This is the resume-summary content reframed for narrative reading rather than bullet scanning.
@@ -79,11 +81,13 @@ Apply the language rules from `references/language-do-dont.md` and the bias-patt
 - No more than one warmth signal per paragraph. Warmth without specificity reads hollow; specificity without warmth reads cold.
 
 **Experience entries (max ~2,000 characters per role):**
+
 - Lead each role with a one-line role-summary sentence (what the role actually was — not just the title), then 3-5 achievement bullets.
 - Achievement bullets follow the same pattern as resume bullets: action verb → specific action → measurable outcome.
 - LinkedIn does not render bullet characters — use plain text. A line break per bullet is sufficient.
 
 **Skills (target 25-30 tags):**
+
 - LinkedIn supports up to 50 skill tags. Aim for 25-30 — enough density for semantic search to surface the profile without diluting the strongest signals.
 - Order by relevance to the target role; the first 5 are the most visible.
 - Include both hard skills (named technologies, frameworks, certifications, methodologies) and skill tags that match common recruiter search terms for the target role.
@@ -100,6 +104,7 @@ integ_after = integrity_check(rewritten)
 ```
 
 The rewritten output must have:
+
 - No CRITICAL or HIGH integrity findings.
 - No remaining ND_BIAS_P1_SOFT_SKILLS or ND_BIAS_P5_UNDER_CLAIM hits unless the user explicitly preserved the language.
 

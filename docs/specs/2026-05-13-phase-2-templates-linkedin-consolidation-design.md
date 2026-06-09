@@ -1,5 +1,8 @@
 # Phase 2 — Templates, LinkedIn Profile, and Consolidation — Design Specification
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 **Version:** Draft v1
 **Date:** 2026-05-13
 **Status:** Awaiting user review
@@ -77,7 +80,7 @@ Same hybrid skill structure as v1: always-loaded `SKILL.md` core + on-demand ref
 
 **New components:**
 
-```
+```text
 templates/
 ├── resume/
 │   ├── chronological.docx       # moved from existing

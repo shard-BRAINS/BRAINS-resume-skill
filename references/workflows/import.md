@@ -43,6 +43,7 @@ If `flag_implausible_values` returned any warnings and the user has not confirme
 
 **(e) Write the row, snapshot, and drift scores.**
 On commit the workflow:
+
 - Computes the output path in `_library/` and an `ArtifactMeta` via `_resolve_target`.
 - Calls `scripts/tracker/add.py:add_resume_version(...)` with `template="imported"` and `for_candidate` set. Because this is the first non-archived row for the candidate, the auto-baseline logic sets `is_baseline=1`.
 - Calls `scripts/drift/compute.py:write_snapshot_and_compute_drift(artifact_uid, facts)` to persist the fact snapshot and the drift-score row.

@@ -1,4 +1,9 @@
+<!-- markdownlint-disable-file MD029 -->
+
 # Plan 1 — Foundation & Review Workflow (v0.1.0)
+
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
 
 > **For implementers:** This plan uses checkbox (`- [ ]`) syntax. Work through tasks sequentially, marking each step as you go. Stage and commit after each task unless a step says otherwise. Never include third-party org or project credits in any file or commit message — BRAINS / BRAINS Trust / BRAINS Incubator only.
 
@@ -9,6 +14,7 @@
 **Tech Stack:** Python 3.10+, `python-docx`, `pdfplumber`, `reportlab`, `trafilatura`, `pyyaml`, `pytest`. Claude Code skill bundle format.
 
 **In scope for this plan:**
+
 - Project skeleton, dependencies, licence, contribution guide
 - All foundational reference documents (nd-bias patterns, ATS rules, language do/don't, resume anatomy, disclosure decision tree, brand application)
 - Two parsers: PDF, DOCX
@@ -20,6 +26,7 @@
 - `README.md`, `CHANGELOG.md`, v0.1.0 tag
 
 **Out of scope (deferred to Plan 2):**
+
 - create-from-scratch, edit, tailor, cover-letter, linkedin-ingest, career-change, bias-aware-ATS-check workflows
 - `resume_to_docx.py`, `resume_to_pdf.py`, `cover_letter_to_docx.py` generators
 - `linkedin_zip.py`, `jd_url_fetch.py` parsers
@@ -42,6 +49,7 @@
 ## Task 1 — Initialise Python project metadata
 
 **Files:**
+
 - Create: `pyproject.toml`
 - Create: `requirements.txt`
 - Create: `requirements-dev.txt`
@@ -100,7 +108,7 @@ addopts = "-v"
 
 - [ ] **Step 2: Create `requirements.txt`**
 
-```
+```text
 python-docx>=1.1.0
 pdfplumber>=0.11.0
 reportlab>=4.0.0
@@ -110,7 +118,7 @@ pyyaml>=6.0
 
 - [ ] **Step 3: Create `requirements-dev.txt`**
 
-```
+```text
 -r requirements.txt
 pytest>=8.0.0
 pytest-cov>=5.0.0
@@ -119,16 +127,18 @@ pytest-cov>=5.0.0
 - [ ] **Step 4: Verify install works**
 
 From `c:\Brains_Resume_Skill\`:
-```
+
+```text
 python -m venv .venv
 .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
+
 Expected: all packages install successfully, and `scripts` is editable-installed so test imports resolve.
 
 - [ ] **Step 5: Commit**
 
-```
+```text
 git add pyproject.toml requirements.txt requirements-dev.txt
 git commit -m "build: add Python project metadata and pin dependencies"
 ```
@@ -138,6 +148,7 @@ git commit -m "build: add Python project metadata and pin dependencies"
 ## Task 2 — Add LICENSE and contribution guide
 
 **Files:**
+
 - Create: `LICENSE`
 - Create: `CONTRIBUTING.md`
 
@@ -145,7 +156,7 @@ git commit -m "build: add Python project metadata and pin dependencies"
 
 - [ ] **Step 1: Create `LICENSE`** (MIT, copyright BRAINS only)
 
-```
+```text
 MIT License
 
 Copyright (c) 2026 BRAINS
@@ -179,7 +190,7 @@ This project is part of the BRAINS Incubator — a space for community projects 
 ## Before you contribute
 
 - Read the design specification in `docs/specs/`. It captures every architectural and ethical decision and the reasons behind them. New work should align with it (or argue for changing it).
-- Identity-first language is the default ("autistic person," not "person with autism"). Follow an individual's stated preference when they tell you theirs.
+- Identity-first language is the default (`autistic person`, not `person with autism`). Follow an individual's stated preference when they tell you theirs.
 - Never use deficit framing in default copy. Never use puzzle-piece imagery. Never use AI-generated images of people.
 - Outputs the user submits to employers (resumes, cover letters) stay unbranded. Outputs the user reads as coaching (review reports, disclosure worksheets) carry BRAINS branding.
 
@@ -210,7 +221,7 @@ This project is part of the BRAINS Incubator — a space for community projects 
 
 - [ ] **Step 3: Commit**
 
-```
+```text
 git add LICENSE CONTRIBUTING.md
 git commit -m "docs: add MIT licence and BRAINS-aligned contribution guide"
 ```
@@ -220,6 +231,7 @@ git commit -m "docs: add MIT licence and BRAINS-aligned contribution guide"
 ## Task 3 — Create directory skeleton
 
 **Files:**
+
 - Create directories: `references/`, `references/workflows/`, `scripts/`, `scripts/parsers/`, `scripts/generators/`, `scripts/validators/`, `templates/`, `assets/`, `tests/`, `tests/parsers/`, `tests/validators/`, `tests/generators/`, `tests/fixtures/`, `docs/testing/`, `docs/testing/fixtures/`
 - Create empty `__init__.py` files where needed for Python imports
 
@@ -228,6 +240,7 @@ git commit -m "docs: add MIT licence and BRAINS-aligned contribution guide"
 - [ ] **Step 1: Create all directories**
 
 Using PowerShell from `c:\Brains_Resume_Skill\`:
+
 ```powershell
 $dirs = @(
     "references", "references\workflows",
@@ -242,6 +255,7 @@ foreach ($d in $dirs) { New-Item -ItemType Directory -Force -Path $d | Out-Null 
 - [ ] **Step 2: Create `__init__.py` files** so Python can import scripts cleanly
 
 Create empty file at each of:
+
 - `scripts/__init__.py`
 - `scripts/parsers/__init__.py`
 - `scripts/generators/__init__.py`
@@ -252,6 +266,7 @@ Create empty file at each of:
 - `tests/generators/__init__.py`
 
 Each file is empty — zero bytes is fine. PowerShell one-liner:
+
 ```powershell
 $inits = @(
     "scripts\__init__.py", "scripts\parsers\__init__.py",
@@ -269,7 +284,7 @@ Expected output: all new directories listed under untracked files, with `__init_
 
 - [ ] **Step 4: Commit**
 
-```
+```text
 git add scripts/ tests/
 git commit -m "chore: create directory skeleton and Python package markers"
 ```
@@ -281,6 +296,7 @@ git commit -m "chore: create directory skeleton and Python package markers"
 ## Task 4 — Import BRAINS brand assets
 
 **Files:**
+
 - Create: `assets/brains-mark-light-bg.png` (copy from BRAINS brand skill)
 - Create: `assets/brains-mark-dark-bg.png` (copy from BRAINS brand skill)
 
@@ -291,6 +307,7 @@ git commit -m "chore: create directory skeleton and Python package markers"
 The two PNG files live at `C:\Users\matth\.claude\skills\brains-brand\assets\brains-mark-light-bg-v1.png` and `C:\Users\matth\.claude\skills\brains-brand\assets\brains-mark-dark-bg-v1.png`.
 
 From `c:\Brains_Resume_Skill\`:
+
 ```powershell
 Copy-Item "C:\Users\matth\.claude\skills\brains-brand\assets\brains-mark-light-bg-v1.png" "assets\brains-mark-light-bg.png"
 Copy-Item "C:\Users\matth\.claude\skills\brains-brand\assets\brains-mark-dark-bg-v1.png" "assets\brains-mark-dark-bg.png"
@@ -303,11 +320,12 @@ Copy-Item "C:\Users\matth\.claude\skills\brains-brand\assets\brains-mark-dark-bg
 ```powershell
 Get-Item assets\brains-mark-*.png | Select-Object Name, Length
 ```
+
 Expected: both files listed with non-zero size.
 
 - [ ] **Step 3: Commit**
 
-```
+```text
 git add assets/
 git commit -m "feat: import BRAINS brand marks for coaching report branding"
 ```
@@ -317,6 +335,7 @@ git commit -m "feat: import BRAINS brand marks for coaching report branding"
 ## Task 5 — Write `references/language-do-dont.md`
 
 **Files:**
+
 - Create: `references/language-do-dont.md`
 
 This is a content document. The implementer writes the full prose; the structure below is the contract.
@@ -333,7 +352,7 @@ This is a content document. The implementer writes the full prose; the structure
    - Person-first defaults that ignore identity-first preference (e.g., `person with autism` → `autistic person` — community preference)
    - Hyperbolic soft-skills pairs (e.g., `passionate about X` → `[concrete instance + outcome]` — bias-coded vagueness)
    - Functional-deficit labels (e.g., `high-functioning` → omit or rephrase contextually — the term is harmful)
-   - "Special needs" framings → `accessibility needs` or omit
+   - `Special needs` framings → `accessibility needs` or omit
    - Gendered language pairs (e.g., `chairman` → `chair` or `chairperson`)
    - Ableist idioms (e.g., `tone-deaf approach` → `out-of-touch approach`)
 3. **Edge cases** (2-3 paragraphs) —
@@ -354,7 +373,7 @@ Count rows in the do/don't table. If fewer than 25, add more.
 
 - [ ] **Step 3: Commit**
 
-```
+```text
 git add references/language-do-dont.md
 git commit -m "docs: add ND-affirmative language do/don't reference"
 ```
@@ -364,6 +383,7 @@ git commit -m "docs: add ND-affirmative language do/don't reference"
 ## Task 6 — Write `references/ats-rules.md`
 
 **Files:**
+
 - Create: `references/ats-rules.md`
 
 ### Document contract
@@ -402,7 +422,7 @@ Cross-check: each item the validator will programmatically check must have a cor
 
 - [ ] **Step 3: Commit**
 
-```
+```text
 git add references/ats-rules.md
 git commit -m "docs: add ATS formatting rules reference"
 ```
@@ -412,6 +432,7 @@ git commit -m "docs: add ATS formatting rules reference"
 ## Task 7 — Write `references/nd-bias-patterns.md`
 
 **Files:**
+
 - Create: `references/nd-bias-patterns.md`
 
 This is the most important reference document in the bundle. It is the source of truth for both Claude's contextual review and the deterministic `bias_scan.py` validator.
@@ -469,7 +490,7 @@ Search for the disclaimer phrase; should appear at least 10 times.
 
 - [ ] **Step 4: Commit**
 
-```
+```text
 git add references/nd-bias-patterns.md
 git commit -m "docs: add ND-bias pattern catalog (10 families)"
 ```
@@ -479,6 +500,7 @@ git commit -m "docs: add ND-bias pattern catalog (10 families)"
 ## Task 8 — Write `references/resume-anatomy.md`
 
 **Files:**
+
 - Create: `references/resume-anatomy.md`
 
 ### Document contract
@@ -502,7 +524,7 @@ Target 800-1200 words. Examples must be synthetic — no real PII.
 
 - [ ] **Step 2: Commit**
 
-```
+```text
 git add references/resume-anatomy.md
 git commit -m "docs: add ND-aware resume anatomy reference"
 ```
@@ -512,6 +534,7 @@ git commit -m "docs: add ND-aware resume anatomy reference"
 ## Task 9 — Write `references/brand-application.md`
 
 **Files:**
+
 - Create: `references/brand-application.md`
 
 ### Document contract
@@ -540,7 +563,7 @@ Target 400-700 words. The PDF generator implementation in Task 18 reads its styl
 
 - [ ] **Step 2: Commit**
 
-```
+```text
 git add references/brand-application.md
 git commit -m "docs: add brand application reference for coaching outputs"
 ```
@@ -550,6 +573,7 @@ git commit -m "docs: add brand application reference for coaching outputs"
 ## Task 10 — Write `references/disclosure-decision-tree.md`
 
 **Files:**
+
 - Create: `references/disclosure-decision-tree.md`
 
 ### Document contract
@@ -578,7 +602,7 @@ The string `Disclosure guidance developed with BRAINS Trust safeguarding princip
 
 - [ ] **Step 3: Commit**
 
-```
+```text
 git add references/disclosure-decision-tree.md
 git commit -m "docs: add disclosure decision framework with safeguarding caveats"
 ```
@@ -588,6 +612,7 @@ git commit -m "docs: add disclosure decision framework with safeguarding caveats
 ## Task 11 — Write `references/workflows/disclosure.md`
 
 **Files:**
+
 - Create: `references/workflows/disclosure.md`
 
 ### Document contract
@@ -619,7 +644,7 @@ Target 400-700 words.
 
 - [ ] **Step 2: Commit**
 
-```
+```text
 git add references/workflows/disclosure.md
 git commit -m "docs: add disclosure-coaching workflow reference"
 ```
@@ -629,6 +654,7 @@ git commit -m "docs: add disclosure-coaching workflow reference"
 ## Task 12 — Write `references/workflows/review.md`
 
 **Files:**
+
 - Create: `references/workflows/review.md`
 
 ### Document contract
@@ -666,7 +692,7 @@ Target 500-800 words.
 
 - [ ] **Step 2: Commit**
 
-```
+```text
 git add references/workflows/review.md
 git commit -m "docs: add resume-review workflow reference"
 ```
@@ -676,6 +702,7 @@ git commit -m "docs: add resume-review workflow reference"
 ## Task 13 — Implement `scripts/parsers/pdf_to_text.py` (TDD)
 
 **Files:**
+
 - Create: `docs/testing/fixtures/synthetic_resume_basic.pdf` (synthetic test fixture)
 - Create: `tests/parsers/test_pdf_to_text.py`
 - Create: `scripts/parsers/pdf_to_text.py`
@@ -714,7 +741,8 @@ print(f"Wrote {fixture_path}")
 ```
 
 Run it once from `c:\Brains_Resume_Skill\`:
-```
+
+```text
 .venv\Scripts\activate
 python docs\testing\fixtures\_make_synthetic_resume_basic.py
 ```
@@ -766,9 +794,10 @@ def test_parser_raises_on_missing_file():
 
 - [ ] **Step 3: Run test to verify it fails**
 
-```
+```text
 pytest tests/parsers/test_pdf_to_text.py -v
 ```
+
 Expected: all tests FAIL with `ModuleNotFoundError: No module named 'scripts.parsers.pdf_to_text'` or `ImportError`.
 
 - [ ] **Step 4: Write the minimal implementation**
@@ -869,14 +898,15 @@ def _split_sections(raw_text: str) -> dict:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 pytest tests/parsers/test_pdf_to_text.py -v
 ```
+
 Expected: all 5 tests PASS.
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 git add scripts/parsers/pdf_to_text.py tests/parsers/test_pdf_to_text.py docs/testing/fixtures/_make_synthetic_resume_basic.py docs/testing/fixtures/synthetic_resume_basic.pdf
 git commit -m "feat: add PDF resume parser with section detection"
 ```
@@ -886,6 +916,7 @@ git commit -m "feat: add PDF resume parser with section detection"
 ## Task 14 — Implement `scripts/parsers/docx_to_text.py` (TDD)
 
 **Files:**
+
 - Create: `docs/testing/fixtures/_make_synthetic_resume_basic_docx.py` (fixture generator)
 - Create: `docs/testing/fixtures/synthetic_resume_basic.docx` (generated)
 - Create: `tests/parsers/test_docx_to_text.py`
@@ -920,7 +951,8 @@ print(f"Wrote {fixture_path}")
 ```
 
 Run once:
-```
+
+```text
 python docs\testing\fixtures\_make_synthetic_resume_basic_docx.py
 ```
 
@@ -965,9 +997,10 @@ def test_parser_raises_on_missing_file():
 
 - [ ] **Step 3: Run test to verify it fails**
 
-```
+```text
 pytest tests/parsers/test_docx_to_text.py -v
 ```
+
 Expected: ImportError / ModuleNotFoundError.
 
 - [ ] **Step 4: Write the minimal implementation**
@@ -1053,14 +1086,15 @@ def parse_docx_resume(path: Union[str, Path]) -> dict:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 pytest tests/parsers/test_docx_to_text.py -v
 ```
+
 Expected: all 4 tests PASS.
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 git add scripts/parsers/docx_to_text.py tests/parsers/test_docx_to_text.py docs/testing/fixtures/_make_synthetic_resume_basic_docx.py docs/testing/fixtures/synthetic_resume_basic.docx
 git commit -m "feat: add DOCX resume parser with section detection"
 ```
@@ -1070,6 +1104,7 @@ git commit -m "feat: add DOCX resume parser with section detection"
 ## Task 15 — Implement `scripts/validators/ats_check.py` (TDD)
 
 **Files:**
+
 - Create: `docs/testing/fixtures/_make_ats_fixtures.py`
 - Create: `docs/testing/fixtures/ats_clean.docx`
 - Create: `docs/testing/fixtures/ats_with_table.docx`
@@ -1124,7 +1159,8 @@ print("Wrote three ATS fixtures.")
 ```
 
 Run once:
-```
+
+```text
 python docs\testing\fixtures\_make_ats_fixtures.py
 ```
 
@@ -1171,9 +1207,10 @@ def test_result_includes_pass_warn_fail_counts():
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-```
+```text
 pytest tests/validators/test_ats_check.py -v
 ```
+
 Expected: ImportError.
 
 - [ ] **Step 4: Write the implementation**
@@ -1250,14 +1287,15 @@ def ats_check(path: Union[str, Path]) -> AtsCheckResult:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 pytest tests/validators/test_ats_check.py -v
 ```
+
 Expected: all 4 tests PASS.
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 git add scripts/validators/ats_check.py tests/validators/test_ats_check.py docs/testing/fixtures/_make_ats_fixtures.py docs/testing/fixtures/ats_*.docx
 git commit -m "feat: add deterministic ATS-safety validator for DOCX"
 ```
@@ -1267,6 +1305,7 @@ git commit -m "feat: add deterministic ATS-safety validator for DOCX"
 ## Task 16 — Implement `scripts/validators/bias_scan.py` (TDD) — ten-pattern coverage
 
 **Files:**
+
 - Create: `tests/fixtures/bias_fixtures.py` (Python module with fixture text strings)
 - Create: `tests/validators/test_bias_scan.py`
 - Create: `scripts/validators/bias_scan.py`
@@ -1413,9 +1452,10 @@ def test_clean_text_returns_no_findings():
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-```
+```text
 pytest tests/validators/test_bias_scan.py -v
 ```
+
 Expected: ImportError.
 
 - [ ] **Step 4: Write the implementation**
@@ -1633,14 +1673,15 @@ def bias_scan(text: str) -> BiasScanResult:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-```
+```text
 pytest tests/validators/test_bias_scan.py -v
 ```
+
 Expected: all 11 tests PASS.
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 git add scripts/validators/bias_scan.py tests/validators/test_bias_scan.py tests/fixtures/bias_fixtures.py
 git commit -m "feat: add ND-bias deterministic scanner covering all 10 patterns"
 ```
@@ -1650,6 +1691,7 @@ git commit -m "feat: add ND-bias deterministic scanner covering all 10 patterns"
 ## Task 17 — Create `templates/coaching_report.md`
 
 **Files:**
+
 - Create: `templates/coaching_report.md`
 
 ### Document contract
@@ -1699,6 +1741,7 @@ Built by neurodivergent minds, for neurodivergent people.
 ```
 
 Placeholders the generator must fill:
+
 - `{{REPORT_TITLE}}` — e.g., "Resume Coaching Report"
 - `{{REPORT_DATE}}` — ISO date
 - `{{RESUME_FILENAME}}` — basename of input file
@@ -1712,7 +1755,7 @@ Placeholders the generator must fill:
 
 - [ ] **Step 2: Commit**
 
-```
+```text
 git add templates/coaching_report.md
 git commit -m "feat: add coaching report markdown template"
 ```
@@ -1722,6 +1765,7 @@ git commit -m "feat: add coaching report markdown template"
 ## Task 18 — Implement `scripts/generators/coaching_report_to_pdf.py` (TDD)
 
 **Files:**
+
 - Create: `tests/generators/test_coaching_report_to_pdf.py`
 - Create: `scripts/generators/coaching_report_to_pdf.py`
 
@@ -1803,9 +1847,10 @@ def test_pdf_includes_trust_footer_when_requested(tmp_path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 pytest tests/generators/test_coaching_report_to_pdf.py -v
 ```
+
 Expected: ImportError.
 
 - [ ] **Step 3: Write the implementation**
@@ -1973,14 +2018,15 @@ def render_coaching_report_pdf(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-```
+```text
 pytest tests/generators/test_coaching_report_to_pdf.py -v
 ```
+
 Expected: all 3 tests PASS.
 
 - [ ] **Step 5: Commit**
 
-```
+```text
 git add scripts/generators/coaching_report_to_pdf.py tests/generators/test_coaching_report_to_pdf.py
 git commit -m "feat: add branded BRAINS coaching report PDF generator"
 ```
@@ -1990,6 +2036,7 @@ git commit -m "feat: add branded BRAINS coaching report PDF generator"
 ## Task 19 — Write `SKILL.md` (the always-loaded core)
 
 **Files:**
+
 - Create: `SKILL.md`
 
 ### Document contract
@@ -1999,6 +2046,7 @@ This is the entrypoint to the skill. Claude loads this on every invocation. Keep
 **Required sections, in order:**
 
 1. **YAML frontmatter:**
+
 ```yaml
 ---
 name: brains-resume
@@ -2059,7 +2107,7 @@ Verbatim from the design spec §6: "general guidance, not legal or medical advic
 
 - [ ] **Step 5: Commit**
 
-```
+```text
 git add SKILL.md
 git commit -m "feat: add always-loaded SKILL.md core with router and cross-cutting principles"
 ```
@@ -2069,6 +2117,7 @@ git commit -m "feat: add always-loaded SKILL.md core with router and cross-cutti
 ## Task 20 — End-to-end smoke test for the review workflow
 
 **Files:**
+
 - Create: `tests/test_smoke_review_workflow.py`
 
 ### Steps
@@ -2148,21 +2197,23 @@ def test_review_workflow_runs_end_to_end(tmp_path):
 
 - [ ] **Step 2: Run the smoke test**
 
-```
+```text
 pytest tests/test_smoke_review_workflow.py -v
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Run the entire test suite to make sure nothing regressed**
 
-```
+```text
 pytest -v
 ```
+
 Expected: all tests across all files PASS.
 
 - [ ] **Step 4: Commit**
 
-```
+```text
 git add tests/test_smoke_review_workflow.py
 git commit -m "test: add end-to-end smoke test for review workflow"
 ```
@@ -2172,6 +2223,7 @@ git commit -m "test: add end-to-end smoke test for review workflow"
 ## Task 21 — Write `README.md`
 
 **Files:**
+
 - Create: `README.md`
 
 ### Document contract
@@ -2199,6 +2251,7 @@ Target 400-600 words. No third-party project references anywhere.
 - [ ] **Step 2: Verify protected phrases are used verbatim**
 
 Grep for:
+
 - "Built by neurodivergent minds, for neurodivergent people."
 - "AI that works for every mind."
 - "An Incubator project from BRAINS"
@@ -2211,7 +2264,7 @@ Search for common third-party names that might have slipped in. None should appe
 
 - [ ] **Step 4: Commit**
 
-```
+```text
 git add README.md
 git commit -m "docs: add README with usage, privacy, and Incubator origin credit"
 ```
@@ -2221,6 +2274,7 @@ git commit -m "docs: add README with usage, privacy, and Incubator origin credit
 ## Task 22 — Write `CHANGELOG.md` and tag v0.1.0
 
 **Files:**
+
 - Create: `CHANGELOG.md`
 
 ### Steps
@@ -2272,7 +2326,7 @@ The format follows Keep a Changelog conventions; the project follows semantic ve
 
 - [ ] **Step 2: Commit and tag**
 
-```
+```text
 git add CHANGELOG.md
 git commit -m "docs: add changelog for v0.1.0"
 git tag -a v0.1.0 -m "v0.1.0 — foundation and review workflow"
@@ -2280,17 +2334,19 @@ git tag -a v0.1.0 -m "v0.1.0 — foundation and review workflow"
 
 - [ ] **Step 3: Verify the tag**
 
-```
+```text
 git tag -l
 git log --oneline --decorate
 ```
+
 Expected: `v0.1.0` appears in tag list and on the most recent commit.
 
 - [ ] **Step 4: Final verification — run the entire test suite once more**
 
-```
+```text
 pytest -v
 ```
+
 Expected: every test PASSES.
 
 ---
@@ -2298,6 +2354,7 @@ Expected: every test PASSES.
 ## Plan complete
 
 At this point the bundle contains:
+
 - A working Claude Code skill (`SKILL.md` + on-demand references + scripts + assets)
 - Two functional workflows (review + disclosure) with end-to-end smoke coverage
 - The full ten-pattern ND-bias scanning catalog with deterministic coverage

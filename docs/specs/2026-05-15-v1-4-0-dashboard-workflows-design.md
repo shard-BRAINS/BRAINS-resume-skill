@@ -1,3 +1,5 @@
+<!-- markdownlint-disable-file MD036 -->
+
 # BRAINS Resume Skill v1.4.0 — Dashboard workflows design
 
 **Date:** 2026-05-15
@@ -38,7 +40,7 @@ Out of scope:
 
 ### 3.1 New package layout
 
-```
+```text
 scripts/dashboard/
   app.py                    # unchanged structure; adds Workflows tab + button wiring
   data.py                   # unchanged
@@ -246,9 +248,11 @@ Profile schema gains `log_handoffs: bool = True` field.
 ### 4.1 `/brains-deai` (in-dashboard)
 
 Form:
+
 - File picker (resume / cover_letter / linkedin export DOCX)
 
 Action: Scan → calls `scripts.validators.ai_signal_check.scan(file_path)` → renders:
+
 - Overall score (0–100, lower = better) with colored badge
 - Findings table: code, severity, line, snippet, fix-suggestion
 - Per-finding breakdown via `st.expander`
@@ -258,9 +262,11 @@ Secondary action: "Get rewrite suggestions from Claude Code" → `handoff("deai"
 ### 4.2 `/brains-jd-analyze` (in-dashboard)
 
 Form:
+
 - Text area for JD paste OR file path picker
 
 Action: Analyze → calls `scripts.validators.jd_analyzer.analyze(text)` → renders:
+
 - Red flags table
 - Masking-cost score
 - Role-fit score (vs profile.focus_areas)
@@ -271,6 +277,7 @@ Secondary action: "Full coaching report in Claude Code" → `handoff("jd-analyze
 ### 4.3 `/brains-track` (fully in-dashboard, no LLM)
 
 Already partially in the Applications tab from v1.3.0. v1.4.0 adds:
+
 - Add-application form with the six pre-application coaching questions inline
 - Inline outcome-logging buttons on each application row (acknowledged, callback, interview, offer, rejection, ghosted, withdrew)
 - No clipboard handoff — `/brains-track` is fully self-contained
@@ -278,6 +285,7 @@ Already partially in the Applications tab from v1.3.0. v1.4.0 adds:
 ### 4.4 `/brains-consolidate` (in-dashboard)
 
 Form:
+
 - Resume picker
 - LinkedIn export picker (DOCX or ZIP)
 
@@ -288,9 +296,11 @@ Secondary action: "LLM-coached resolution in Claude Code" → `handoff("consolid
 ### 4.5 `/brains-check` (composite, in-dashboard)
 
 Form:
+
 - Resume picker
 
 Action: Run all → calls all four: `ats_check`, `integrity_check`, `bias_scan`, `ai_signal_check`. Renders composite report:
+
 - ATS-safety: pass/fail by check, with offending content
 - Integrity: encoding/font/table issues
 - Bias-scan: hits from the ten-pattern catalog with line numbers
@@ -303,6 +313,7 @@ Secondary action: "Final coaching pass in Claude Code" → `handoff("check", fil
 Validator preview only: runs `bias_scan` and renders a shallow preview table. Primary action is the handoff to Claude Code for the full multi-pass review (which includes LLM-driven nuance the validators don't catch).
 
 Form:
+
 - Resume picker
 
 Action: Preview → shows bias-scan preview
@@ -379,11 +390,13 @@ No other new dependencies. (Streamlit 1.30+, Plotly 5.18+ already added in v1.3.
 Three test categories:
 
 **(A) Pure-Python unit tests (TDD)**
+
 - `tests/dashboard/test_handoff.py` — `build_command`, `copy_to_clipboard` (mocked), `log_handoff`, `handoff` toast paths. ~10 tests.
 - `tests/dashboard/test_file_input.py` — path resolution priority (dropdown > path > upload), DOCX/PDF gating logic. ~8 tests.
 - `tests/dashboard/test_workflows/*.py` — input-validation helpers per workflow (form-args → slash-command string). ~12 tests across 15 workflow modules.
 
 **(B) Streamlit AppTest happy-paths**
+
 - `tests/dashboard/test_app_workflows_tab.py` — Workflows tab renders, all 15 cards present, no exception.
 - `tests/dashboard/test_inline_buttons.py` — Resumes/Cover-Letters/JDs/Applications tabs render with inline buttons, no exception.
 
@@ -392,6 +405,7 @@ Existing 297 tests remain green throughout.
 Target: 297 → ~335 tests.
 
 **(C) Manual verification (documented in plan, not automated)**
+
 - Clipboard integration (`pyperclip.copy` actually writes to OS clipboard on Windows)
 - Toast appearance and timing
 - File-uploader saves to expected directory
@@ -399,6 +413,7 @@ Target: 297 → ~335 tests.
 ## 12. Phasing
 
 **Phase 1 — Infrastructure (Tasks 1-4)**
+
 1. `pyperclip` dependency + `handoff.py` skeleton (TDD)
 2. `handoff.py` full implementation + tests
 3. `file_input.py` (TDD)

@@ -36,6 +36,7 @@ After each parse call, display the `skipped_files` list explicitly. Files that a
 
 **(c) Merge parts when multiple ZIPs were provided.**
 If the user supplied more than one ZIP:
+
 - **Profile:** take the profile record from whichever part contains `profile.csv`. If both contain one, use the more recently modified file and note the choice.
 - **Positions:** concatenate all parts; deduplicate by `(company + title + start date)`.
 - **Education:** concatenate all parts; deduplicate by `(school + degree + start date)`.
@@ -52,7 +53,7 @@ Apply the **user-veto principle**: anything the user declines or asks to exclude
 **(e) Save the normalised intermediate.**
 Write the confirmed profile summary as a BRAINS coaching artifact:
 
-```
+```text
 output/linkedin-profile-normalised-YYYY-MM-DD-HHMMSS.md
 ```
 

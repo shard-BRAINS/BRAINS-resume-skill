@@ -63,7 +63,7 @@ This release **supersedes** the previously-planned v1.5 "disclosure framework po
 
 ### 3.1 Module layout
 
-```
+```text
 scripts/
   outputs/                      # NEW PACKAGE
     __init__.py
@@ -207,7 +207,7 @@ def find_artifact_by_uid(uid: str) -> ResumeVersion | CoverLetter | None:
 
 ### 3.5 Data flow — single tailored resume
 
-```
+```text
 User triggers /brains-tailor with resume_v17 + jd_42
    │
    ▼
@@ -270,6 +270,7 @@ class Profile:
 ```
 
 `scripts/dashboard/sidebar.py`:
+
 - Two new text inputs under a "Your name" subsection at the top of the sidebar.
 - On dashboard launch, if either is missing, render a one-shot modal (`st.dialog`) asking for them before any workflow tab is enabled.
 
@@ -280,6 +281,7 @@ class Profile:
 ### 4.1 Folder name
 
 `{jd_date}_{anchor}_{role}` where:
+
 - `jd_date`: ISO date the JD row was added (`YYYY-MM-DD`).
 - `anchor`: `slugify(company)` if `company` is non-empty, else `via-{slugify(recruiter)}` if recruiter is non-empty, else `unknown`.
 - `role`: `slugify(role_title, max_len=40)`.
@@ -289,6 +291,7 @@ class Profile:
 ### 4.2 Filename
 
 `{first}_{last}_{kind}_{created_date}_{uid}.{ext}` where:
+
 - `first`, `last`: `slugify(profile.first_name)`, `slugify(profile.last_name)`, no internal hyphens (single token each).
 - `kind`: `resume` or `cover-letter`.
 - `created_date`: ISO date the file was generated (`YYYY-MM-DD`).

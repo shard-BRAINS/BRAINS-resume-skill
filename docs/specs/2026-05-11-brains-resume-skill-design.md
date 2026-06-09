@@ -1,5 +1,8 @@
 # BRAINS Resume Skill — Design Specification
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 **Version:** Draft v1
 **Date:** 2026-05-11
 **Status:** Awaiting user review
@@ -63,7 +66,7 @@ The skill exists because:
 
 The development directory `c:\Brains_Resume_Skill\` **is** the skill bundle. No separation between dev and the deliverable. When the user is ready to install, the bundle is copied or symlinked to `~/.claude/skills/brains-resume/`.
 
-```
+```text
 c:\Brains_Resume_Skill\
 ├── SKILL.md                          # Always-loaded core (router + cross-cutting principles)
 ├── README.md                         # Public-facing

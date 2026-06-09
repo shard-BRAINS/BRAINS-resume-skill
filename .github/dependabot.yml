@@ -1,0 +1,19 @@
+# Dependabot config — only ecosystems this repo actually uses.
+# The BRAINS template ships npm + docker entries too; trimmed here
+# because BRAINS-resume-skill is Python-only (no package.json, no
+# Dockerfile). Add them back if a manifest lands.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels: ["deps", "github-actions"]
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels: ["deps", "pip"]

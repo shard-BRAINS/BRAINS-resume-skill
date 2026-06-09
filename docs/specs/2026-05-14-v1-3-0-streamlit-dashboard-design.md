@@ -1,5 +1,8 @@
 # v1.3.0 — Streamlit Dashboard — Design Specification
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 **Version:** Draft v1
 **Date:** 2026-05-14
 **Status:** Awaiting user review
@@ -65,7 +68,7 @@ Same hybrid skill structure as v1.2.x (always-loaded `SKILL.md` core + on-demand
 
 ### File structure
 
-```
+```text
 scripts/dashboard/
 ├── __init__.py                 # one-line module docstring
 ├── app.py                      # main Streamlit entry; st.tabs + sidebar
@@ -263,7 +266,7 @@ The `brains-brand` skill is the authoritative source. At implementation time (Ph
 - **Footer:** BRAINS Incubator origin credit, rendered via Streamlit's `st.caption()`
 - **No italics in body text** (carries through from BRAINS brand rules)
 - **No AI-generated imagery** (carries through)
-- **Identity-first language** in all UI strings ("autistic candidate", not "person with autism")
+- **Identity-first language** in all UI strings (`autistic candidate`, not `person with autism`)
 
 The CSS injection in `style.py` is a single function `inject_brand_css()` called once at app start. It writes `<style>` tags via `st.markdown(unsafe_allow_html=True)`.
 
@@ -318,13 +321,13 @@ brains-resume-dashboard = "scripts.dashboard.launch:main"
 
 After `pip install -e .` (or any reinstall against the v1.3.0 codebase), the user has a clean terminal command:
 
-```
+```text
 brains-resume-dashboard
 ```
 
 This invokes `scripts/dashboard/launch.py:main()`, which uses `subprocess` to call:
 
-```
+```text
 streamlit run scripts/dashboard/app.py --server.headless true --server.port 8501
 ```
 
@@ -352,6 +355,7 @@ Three-layer strategy.
 `scripts/dashboard/prep/*.py` modules contain pure functions: given query results in, return chart-ready data structures out. No Streamlit imports, no I/O, no DB access. Fully unit-testable with fixtures.
 
 Expected tests:
+
 - `test_funnel.py` — funnel-data computation from `ApplicationRow` lists
 - `test_sparkline.py` — rolling-30-day AI-signal trend, 8-week applications-per-week, callback-rate trend
 - `test_trends.py` — weekly aggregation, rolling averages
@@ -362,6 +366,7 @@ Expected: ~20 tests.
 ### 8.2 Cached wrappers (light)
 
 `tests/dashboard/test_data.py` confirms each wrapper:
+
 - Delegates to the underlying `scripts.tracker.query` function
 - Returns the same shape
 - The `@st.cache_data` decorator is applied (verified via attribute check, not by actually caching across calls)
@@ -422,17 +427,20 @@ Single tag at end: **v1.3.0**.
 Approximately 22 tasks across 5 phases. Plan document (separate, produced via `writing-plans`) will define exact task boundaries and TDD steps.
 
 **Phase 1 — Foundation (Tasks 1-4):**
+
 - pyproject deps + project-scripts entry
 - Dashboard package skeleton (`__init__.py`, `launch.py`, `app.py` stub)
 - `.streamlit/config.toml` dark-theme baseline
 - `/brains-dashboard` slash command
 
 **Phase 2 — Data + style (Tasks 5-7):**
+
 - `data.py` cached wrappers + tests
 - `prep/` modules with TDD (funnel, sparkline, trends, idle_states)
 - `style.py` CSS injection with BRAINS Incubator branding (consults `brains-brand` skill at impl time)
 
 **Phase 3 — Tabs (Tasks 8-14):**
+
 - Overview tab (highest-complexity; tiles + sparklines + funnel + idle-states + twin panels)
 - Resumes tab
 - Cover-letters tab
@@ -442,10 +450,12 @@ Approximately 22 tasks across 5 phases. Plan document (separate, produced via `w
 - Pacing tab
 
 **Phase 4 — Sidebar + smoke test (Tasks 15-16):**
+
 - Sidebar (focus areas / healthy rate / refresh / version footer)
 - `AppTest` smoke test for Overview render
 
 **Phase 5 — Release polish (Tasks 17-22):**
+
 - SKILL.md updates (router unchanged; slash-command count 15 → 16; tooling-notes)
 - README "Launching the dashboard" section
 - `references/brand-application.md` row

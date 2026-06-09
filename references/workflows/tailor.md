@@ -56,6 +56,7 @@ Run `scripts/parsers/pdf_to_text.py` or `scripts/parsers/docx_to_text.py` on the
 
 **(b) Extract JD requirements.**
 From the parsed JD, identify and record:
+
 - **Must-haves:** mandatory qualifications, experience, and hard skills
 - **Nice-to-haves:** preferred or bonus qualifications
 - **Keywords:** technical terms, tools, methodologies, certifications
@@ -67,6 +68,7 @@ Compare extracted requirements against all memory entries before any further ana
 
 **(d) Score the resume against the JD.**
 Produce a gap analysis across three dimensions:
+
 - **Keyword coverage:** which JD keywords appear in the current resume, which are absent
 - **Requirement alignment:** which must-haves and nice-to-haves are addressed by existing content
 - **Narrative fit:** whether the summary and bullets match the seniority and focus of the role
@@ -75,6 +77,7 @@ Surface the gap analysis before proposing any edits.
 
 **(e) Propose targeted edits.**
 Based on the gap analysis, draft and present specific proposals:
+
 - **Summary refresh:** reframe the opening statement to lead with the credentials and language most relevant to this role
 - **Bullet reordering:** within each role, surface the most JD-relevant achievements first
 - **Keyword integration:** where a JD keyword maps to work the user has genuinely done, propose placing it naturally in body text — never in an artificial keyword section, never where it would be factually inaccurate
@@ -93,6 +96,7 @@ Present one edit at a time. Prompt accept, reject, or modify. Record every decis
 
 **(g) Run validators on the tailored content.**
 With decisions recorded and the tailored text assembled, run:
+
 - `scripts/validators/bias_scan.py` — flag ND-disclosure-relevant patterns not covered by the user's disclosure stance
 - `scripts/validators/integrity_check.py` — check for prompt-injection patterns, structural anomalies, or data integrity warnings
 
@@ -105,6 +109,7 @@ Call `scripts/generators/resume_to_docx.py` and `scripts/generators/resume_to_pd
 
 **(i) Produce a JD match report.**
 Write a match report markdown file capturing:
+
 - **Changes made:** each accepted edit, keyed to the JD requirement it addressed
 - **Keyword coverage before and after:** side-by-side count of JD keywords present in the original vs. tailored resume
 - **Disclosure preference applied:** a one-line summary referencing the candidate's landed strength and the disclosure-driven changes made (added, removed, flagged), or "no preference on file" if none was set. Example: *"Applied non-disclosure preference (recorded 2026-06-08) — removed: identity-first credential in summary, flagged: 'autism advocacy' wording in role 2."*
@@ -147,9 +152,11 @@ The dashboard reserves the output path before invoking this command. The
 handoff payload contains the absolute path to write to. Do NOT pick your
 own filename. After saving the DOCX, call:
 
-    from scripts.outputs.io import finalize_docx
-    from scripts.outputs.tagging import ArtifactMeta
-    finalize_docx(target_path, meta)
+```text
+from scripts.outputs.io import finalize_docx
+from scripts.outputs.tagging import ArtifactMeta
+finalize_docx(target_path, meta)
+```
 
 then record the row via the appropriate `tracker.add_*` call, passing the
 `artifact_uid` and `parent_uid` from the handoff payload.

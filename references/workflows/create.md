@@ -107,7 +107,7 @@ Follow the order above: Target Framing, Contact, Summary, Experience, Education,
 **(c) Assemble structured resume data.**
 Once all sections are complete (or the user is satisfied with what they have), construct the structured data object:
 
-```
+```text
 {
   candidate_name,
   candidate_contact_line,

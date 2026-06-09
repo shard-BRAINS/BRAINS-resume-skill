@@ -43,7 +43,7 @@ The brainstorm landed these specific decisions:
 
 ## 3. Architecture
 
-```
+```text
 ┌─────────────────────┐
 │ /brains-create      │
 │ /brains-edit        │     (generated resume — workflow has the
@@ -83,14 +83,17 @@ The brainstorm landed these specific decisions:
 ```
 
 **Auxiliary tables:**
+
 - `baseline_history` — append-only audit log of which version was the baseline at any given time, with the user's stated reason for each promotion.
 
 **Modules** (new):
+
 - `scripts/drift/` package containing `snapshot_from_workflow.py`, `extract_facts.py`, `compute.py`, `baseline.py`, `lineage.py`, `formatters.py`.
 - `scripts/dashboard/tabs/drift.py` (new dashboard tab).
 - `scripts/dashboard/workflows/import.py` (new workflow card for the new `/brains-import` slash command).
 
 **Migrations** (new):
+
 - `scripts/tracker/migrations/000N_drift_analytics.py` — adds two tables, the `is_baseline` column on `resume_versions`, `baseline_history`, the partial unique index, and the backfill that sets `is_baseline=1` on the oldest non-archived row per candidate. The migration number `N` depends on shipping order — see "Migration number coordination" below.
 
 **Migration number coordination.** Approach B's plan (`docs/plans/2026-05-19-multi-candidate-approach-b.md`) reserves migration 0004 for the `candidates` table; its own follow-up migration 0005 is the optional cleanup that drops the `for_candidate` columns. Whichever feature ships first claims 0004; the other shifts up. Recommended order (user's call at planning time): **Drift Analytics first** (0004), **Approach B second** (0005 candidates + 0006 cleanup), because Drift Analytics is smaller, has no migration-runner-hook complexity, and gives the user useful telemetry before the bigger B refactor. If Approach B ships first instead, this design's migration becomes 0005 and the rest of the spec is unaffected — the drift module is candidate-scope-agnostic.
@@ -153,6 +156,7 @@ Stored as JSON in `resume_fact_snapshots.facts`. This is the structured represen
 ```
 
 **Conventions:**
+
 - `entry_id` is a stable identifier assigned at snapshot creation. Format: `exp-N`, `edu-N`, `pub-N`, monotonically numbered in chronological order. Survives across versions when the natural key matches.
 - `key_points` is always a list of strings. The workflow already produces these as a list; the LLM extractor reverse-engineers it from prose.
 - Dates use `YYYY-MM` or `YYYY`. Day precision is never used.
@@ -189,6 +193,7 @@ This matters because the baseline (broader-than-resume) often holds categories t
 The "broader than the resume" property is enforced by the LLM extractor: when ingesting an uploaded baseline, it captures all ten classes even when the source DOCX only surfaces some. Workflows that don't ask the user for hobbies/languages/publications/portfolio_links produce `null` for those classes in their derivative snapshots, and drift compute correctly treats those absences as "not captured" rather than "removed".
 
 **Out of scope for v1:**
+
 - Cover-letter facts. Cover letters are derivative; drift on a cover letter doesn't carry the same signal.
 - Image / signature / formatting facts. Content only.
 - Workflow enhancements to start asking for hobbies/languages/publications/portfolio_links during the interview. Those workflows can populate the new classes in a future enhancement; v1 just needs the schema to accommodate them and the LLM extractor to fill them on baseline upload.
@@ -319,6 +324,7 @@ Weighted average of per-class `pct`s, with renormalisation across only the class
 (Weights sum to 1.00.)
 
 **Rationale for the relative weights:**
+
 - Identity and experience changes are the highest-signal of factual problems — if employer or role dates have shifted, that's where to look first.
 - Education, certifications, languages all carry credential-like signal (claims about qualifications).
 - Skills, standalone achievements, publications, hobbies, portfolio links drift more legitimately over time — added/removed often reflects real life, not corruption.
@@ -410,6 +416,7 @@ In the Drift tab, each non-baseline resume in the lineage shows a "Make this my 
 > Your old baseline will be retained in history. Drift scores for every resume in this lineage will be recalculated.
 >
 > **Why are you promoting?** (required)
+>
 > - [ ] Real-life change (new job, completed degree, certification)
 > - [ ] Correcting historical inaccuracy
 > - [ ] Other (please describe)
@@ -436,7 +443,7 @@ Three layered surfaces matching the TSE Tools visual vocabulary already establis
 
 A new tile on the existing Overview tab, sized like the other summary tiles:
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │  Drift from baseline · active candidate     │
 │                                             │
@@ -473,7 +480,7 @@ Add two sortable columns to the existing per-resume table on the Resumes tab:
 
 New top-level tab. Three sub-sections:
 
-```
+```text
 ┌─ Drift · Mathilda Gell ──────────────────────────────────────┐
 │                                                              │
 │  Lineage (12 versions, baseline V9MQZX)                      │
@@ -585,11 +592,12 @@ Added cost: ~10ms (pure-Python diff of two JSON blobs). No LLM. No network.
 
 New workflow / slash command:
 
-```
+```text
 /brains-import — upload an existing DOCX as the candidate's baseline.
 ```
 
 Pipeline:
+
 1. User uploads DOCX (or pastes plain text).
 2. `scripts/parsers/docx_to_text.py` extracts the raw text.
 3. `scripts/drift/extract_facts.py::extract_facts_from_text(text)` calls the LLM with a structured-output prompt asking for all ten fact classes (identity, experience, education, skills, certifications, standalone_achievements, hobbies, languages, publications, portfolio_links). Returns a Section 4 dict OR raises `FactExtractionError` on validation failure. The extractor uses `null` (not `[]`) for classes the source text doesn't mention at all, and `[]` for classes the source explicitly says are empty (e.g., "Languages: English only" → `[{"language": "English", "proficiency": "native"}]`; vs. no mention of languages → `null`).
@@ -687,6 +695,7 @@ For each distinct `for_candidate` value (including the implicit `NULL` for the p
 ### 8f. Approach B interaction
 
 When Approach B (proper `candidates` table) ships:
+
 - `baseline_history.for_candidate` migrates to `candidate_id INTEGER REFERENCES candidates(id)` in lockstep with the rest of the candidate-scoped columns (handled by Approach B's migration).
 - The partial unique index on `resume_versions` rebuilds on `candidate_id`.
 - Snapshot and drift-score tables (keyed by `artifact_uid`) are unaffected.

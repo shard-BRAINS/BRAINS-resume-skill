@@ -1,5 +1,8 @@
 # v1.2.1 — AI-Signal Validator and De-AI Integration — Design Specification
 
+<!-- readability: skip -->
+<!-- Historical planning/spec document; predates the BRAINS readability standard (adopted 2026-05-29). -->
+
 **Version:** Draft v1
 **Date:** 2026-05-14
 **Status:** Awaiting user review
@@ -64,7 +67,7 @@ Same pattern as the three existing validators (`ats_check.py`, `bias_scan.py`, `
 
 ### File additions
 
-```
+```text
 scripts/validators/
 └── ai_signal_check.py              # NEW — 9-code catalog + score
 

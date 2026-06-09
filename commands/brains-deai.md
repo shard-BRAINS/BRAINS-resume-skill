@@ -3,6 +3,7 @@ description: Scan resume, cover letter, or LinkedIn text for AI-tell signals and
 argument-hint: [optional: file path to a .docx/.pdf/.md/.txt file; otherwise paste text in chat]
 ---
 
+<!-- markdownlint-disable-file MD041 -->
 Run the BRAINS Resume Skill AI-signal check. Load `~/.claude/skills/brains-resume/references/ai-signal-patterns.md` for the full pattern catalog and rewrite guidance. Input source: `$ARGUMENTS` (a file path) or pasted text in the next message.
 
 ## Procedure
@@ -16,19 +17,19 @@ from scripts.validators.ai_signal_check import ai_signal_check
 result = ai_signal_check(text)
 ```
 
-3. **Present the report.**
+1. **Present the report.**
 
    - Lead with the score: "AI-signal score: {result.score}/100" with the anchor-point interpretation from `references/ai-signal-patterns.md` (0-9 clean, 10-29 mild, 30-49 moderate, 50-79 heavy, 80-100 saturated).
    - For each finding, show the code, severity, excerpt, and suggestion.
    - For each finding code present, link to the matching section in `references/ai-signal-patterns.md` for the full rewrite guidance.
 
-4. **Offer next steps.**
+2. **Offer next steps.**
 
    - If the score is below 10: confirm the text reads as human-authored; no action needed.
    - If 10-29: surface the findings but state that the score is low enough that revision is optional.
    - If 30+: walk the user through the highest-severity findings first, offering rewrite suggestions one at a time. Do not auto-rewrite — the user always chooses.
 
-5. **Output artifact (optional).** If the user requests a saved report, write to `output/deai-report-YYYY-MM-DD-HHMMSS.md` as a BRAINS coaching artifact.
+3. **Output artifact (optional).** If the user requests a saved report, write to `output/deai-report-YYYY-MM-DD-HHMMSS.md` as a BRAINS coaching artifact.
 
 ## Safeguarding boundaries
 
