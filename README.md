@@ -12,7 +12,7 @@
 
 <br />
 
-[![Version](https://img.shields.io/badge/version-v1.5.0-D99518?style=for-the-badge&labelColor=0A0A0A)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v2.3.0-D99518?style=for-the-badge&labelColor=0A0A0A)](CHANGELOG.md)
 [![Status](https://img.shields.io/badge/status-shipped-D99518?style=for-the-badge&labelColor=0A0A0A)](STATUS.yml)
 [![BRAINS Certified Gold](https://img.shields.io/badge/BRAINS%20Certified-Gold-D99518?style=for-the-badge&labelColor=0A0A0A)](https://github.com/shard-BRAINS/BRAINS-template-repo)
 [![Licence](https://img.shields.io/badge/licence-MIT-0A0A0A?style=for-the-badge&labelColor=D99518)](LICENSE)
@@ -46,8 +46,8 @@ A Claude Code skill for neurodivergent job-seekers. It helps you review, write, 
 
 | | |
 |---|---|
-| **Current** | ![v1.5](https://img.shields.io/badge/-v1.5.0%20shipped-D99518?style=flat-square&labelColor=0A0A0A) per-JD output folders, traceable artifact UIDs |
-| **In flight** | ![v1.6](https://img.shields.io/badge/-v1.6%20in%20progress-7A7A7A?style=flat-square&labelColor=0A0A0A) disclosure framework polish · target 2026-07-15 |
+| **Current** | ![v2.3](https://img.shields.io/badge/-v2.3.0%20shipped-D99518?style=flat-square&labelColor=0A0A0A) disclosure framework polish — candidate-linked sessions, auto-apply downstream |
+| **Recent** | ![v2.2](https://img.shields.io/badge/-v2.2.0-D99518?style=flat-square&labelColor=0A0A0A) resume-first onboarding · ![v2.1](https://img.shields.io/badge/-v2.1.0-D99518?style=flat-square&labelColor=0A0A0A) dashboard orchestration + playbooks · ![v2.0](https://img.shields.io/badge/-v2.0.0-D99518?style=flat-square&labelColor=0A0A0A) multi-candidate support |
 
 For the full version history, see [CHANGELOG.md](CHANGELOG.md).
 
@@ -57,15 +57,17 @@ For the full version history, see [CHANGELOG.md](CHANGELOG.md).
 
 | Workflow | Status |
 |---|---|
-| **Résumé review** — checks an existing résumé. Flags ND-bias risks and ATS issues. Returns a plain-language coaching report. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
-| **Disclosure coaching** — guided decision framework. Covers whether, when, and how to share neurodivergent identity at each hiring stage. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
+| **Résumé review** — checks an existing résumé. Flags ND-bias risks and ATS issues. Returns a plain-language coaching report. Reads your landed disclosure preference and flags inconsistencies. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
+| **Disclosure coaching** — guided decision framework. Covers whether, when, and how to share neurodivergent identity at each hiring stage. Outcomes are persisted per candidate and respected by downstream workflows. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
 | **Create from scratch** — builds a résumé via a structured interview. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
 | **Edit / customise** — improves a résumé without targeting a specific job. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
-| **Tailor to a JD** — adapts a résumé to a specific role. Reports keyword coverage. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
-| **Cover letter** — drafts a three-paragraph cover letter to match the tailored résumé and JD. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
+| **Tailor to a JD** — adapts a résumé to a specific role. Reports keyword coverage. Reads and applies your landed disclosure preference. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
+| **Cover letter** — drafts a three-paragraph cover letter to match the tailored résumé and JD. Reads and applies your landed disclosure preference. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
 | **LinkedIn ingestion** — reads a LinkedIn ZIP export. Auto-skips third-party PII. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
 | **Career-change translation** — translates experience from one domain into another. Builds a clear skills-bridge. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
 | **Pre-submit check** — ATS, ND-bias, and integrity pass on a final résumé and cover letter. | ![live](https://img.shields.io/badge/-live-D99518?style=flat-square&labelColor=0A0A0A) |
+| **Multi-candidate support** — one install supports many candidate records. Each candidate has their own JDs, résumés, tracker rows, disclosure history, and dashboard layout. Switch from the sidebar. | ![live](https://img.shields.io/badge/-v2.0-4DA8FF?style=flat-square&labelColor=0A0A0A) |
+| **Dashboard orchestration** — Home tab is a customizable widget canvas with five guided playbooks (Apply to a job, Build a base résumé, Improve a résumé, Refresh LinkedIn, Career change). | ![live](https://img.shields.io/badge/-v2.1-4DA8FF?style=flat-square&labelColor=0A0A0A) |
 
 ---
 
@@ -84,6 +86,7 @@ flowchart TD
     INPUT --> REVIEW
     INPUT --> AUTHOR
     INPUT --> LINKEDIN
+    REVIEW --> AUTHOR
     AUTHOR --> QUALITY
     QUALITY --> TRACK
     AUTHOR --> TRACK
@@ -91,6 +94,8 @@ flowchart TD
 
     classDef bucket fill:#FFFFFF,stroke:#D99518,stroke-width:2px,color:#0A0A0A
 ```
+
+The **Review & coach** bucket feeds the **Author** bucket — disclosure-coaching outcomes are persisted per candidate (v2.3+) and read automatically by every downstream authoring workflow.
 
 ---
 
@@ -157,11 +162,11 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\brains-resume
 | Command | What it does |
 |---|---|
 | `/brains-review [path]` | Audit a résumé for ND-bias, ATS-safety, and integrity issues |
-| `/brains-disclosure` | Walk through the disclosure-decision framework |
+| `/brains-disclosure` | Walk through the disclosure-decision framework. Outcome is recorded against the active candidate. |
 | `/brains-create` | Build a résumé from scratch via interactive interview |
 | `/brains-edit [path]` | Apply review notes; produce a clean ATS-safe rewrite |
-| `/brains-tailor [résumé] [jd]` | Tailor a résumé to a specific job description |
-| `/brains-cover-letter [résumé] [jd]` | Generate a matched cover letter |
+| `/brains-tailor [résumé] [jd]` | Tailor a résumé to a specific job description. Applies your landed disclosure preference. |
+| `/brains-cover-letter [résumé] [jd]` | Generate a matched cover letter. Applies your landed disclosure preference. |
 | `/brains-career-change [target]` | Translate experience into a new domain |
 | `/brains-jd-analyze [jd]` | Analyse a job description for ND-relevant signals (red flags, masking cost, evidence of flex, role-fit score) |
 | `/brains-precheck [résumé] [jd]` | Six-question coaching pass before submit. Registers the application in the tracker. |
@@ -197,15 +202,18 @@ The skill walks you through template choice during create, edit, or tailor. See 
 
 ## Tracking applications
 
-The tracker is **opt-in**. It stores data in a local SQLite file at `~/.brains-resume/tracker.db`. The file is built the first time you use it. If you never run `/brains-track` or `/brains-precheck`, no file is built.
+The tracker is a local SQLite file at `~/.brains-resume/tracker.db`. It is built the first time you use it. Everything stays on your machine — no telemetry, no outbound network.
 
 The tracker holds:
 
-- Résumé versions (with focus-area tags and tailored-from lineage)
-- Job descriptions (with analyzer findings)
-- Cover letters (linked to résumé + JD)
-- Applications (with channel, agency, recruiter contact)
-- Outcomes (callback, interview, offer, rejection, etc.)
+- **Candidates** — name, email, focus areas, healthy weekly rate, career-intent profile (v2.0+)
+- **Résumé versions** — focus-area tags, tailored-from lineage, drift snapshots
+- **Job descriptions** — analyzer findings, per-JD output folders
+- **Cover letters** — linked to résumé + JD
+- **Applications** — channel, agency, recruiter contact
+- **Outcomes** — callback, interview, offer, rejection, etc.
+- **Disclosure sessions** — six-factor answers, landed strength, worksheet artifact UID (v2.3+)
+- **Playbook runs** — guided journey progress, step-by-step state (v2.1+)
 
 From these you can ask:
 
@@ -213,6 +221,7 @@ From these you can ask:
 - Per-template results — which template and JD pairs convert
 - Open applications by company or by date
 - Repeat-application checks — stop accidental re-apply
+- The active candidate's landed disclosure preference — downstream workflows respect this automatically
 
 Use `/brains-track summary` for a pipeline view. Use `/brains-track update <id> <event-type>` to log outcomes. Use `/brains-track healthy-rate` to set the pace that suits you. The skill never tells you what that number should be.
 
@@ -228,31 +237,44 @@ brains-resume-dashboard
 
 Opens at `http://localhost:8501`. Press **Ctrl+C** to stop.
 
-### What you get
+### Eight tabs (v2.x)
 
-- **Overview** — pipeline funnel, summary tiles, sparkline trends, idle-state callouts, pending-callbacks panel
-- **Résumés / Cover Letters / JDs** — tagged tables with focus areas, an AI-signal score per text, links to source files
+- **Home** — the orchestration surface. Customizable widget canvas: playbook cards, in-progress runs, computed next-actions worklist, pipeline mini-board, pacing / drift / library-count tiles, quick-launch, recent outcomes. Customize mode lets each candidate add, remove, and reorder widgets; the layout persists per candidate.
+- **Résumés / Cover Letters / JDs** — tagged tables with focus areas, an AI-signal score per text, links to source files; inline action buttons per row
 - **Applications** — table filtered by company, channel, status, or date
 - **Analytics** — results by template and channel
 - **Pacing** — this-week count vs your self-defined healthy weekly rate. Includes a sensory-load notes journal.
-- **Workflows** — every slash command as a card. Grouped into Résumé, JD & application, LinkedIn & coaching.
-- **Inline action buttons** on Résumés, Cover Letters, JDs, and Applications — pick a row, run the workflow
-- **In-dashboard validators** — de-AI scan, JD analyze, tracker CRUD, consolidation diff hand-off, final composite check, review preview. No Claude Code round-trip.
+- **Drift** — baseline-vs-current résumé diff with per-candidate scoping
+- **Disclosure** *(v2.3+)* — record disclosure-coaching outcomes against the active candidate, view past sessions, generate branded worksheets
+
+### Multi-candidate
+
+The sidebar exposes a candidate picker. One install supports many candidate records — every tab scopes to the active candidate, every JD / résumé / disclosure session lives under that candidate's record. Switch any time from the sidebar; nothing leaks across.
+
+### How the dashboard talks to Claude Code
+
+- **In-dashboard validators** — de-AI scan, JD analyze, tracker CRUD, disclosure recording, consolidation diff, final composite check, review preview. No Claude Code round-trip.
 - **Clipboard hand-off** for LLM-heavy commands — click *"Copy /brains-X"* and paste into Claude Code. Optional audit log at `~/.brains-resume/handoffs/`.
 
-The dashboard uses Incubator Blue with Gold Deep accents. Body text is Atkinson Hyperlegible. The theme is dark. It runs on localhost only. No telemetry. No outbound network. You can edit your profile and log outcomes. Everything else is read-only.
+The dashboard uses Incubator Blue with Gold Deep accents. Body text is Atkinson Hyperlegible. The theme is dark. It runs on localhost only. No telemetry. No outbound network. Mutable state is the candidate record, the tracker (outcomes), the disclosure_sessions table, and the per-candidate Home layout. Résumé / cover-letter / JD content is read-only.
 
 ---
 
 ## Output organisation
 
-All résumés and cover letters from the skill land in:
+Résumés and cover letters land in:
 
 ```text
 ~/.brains-resume/outputs/<JD-folder>/
 ```
 
-…with a fixed filename pattern. See [`SKILL.md`](SKILL.md) § File organization for the full convention.
+Disclosure worksheets land in:
+
+```text
+~/.brains-resume/outputs/disclosure/<candidate-slug>/
+```
+
+Both follow a fixed filename pattern with traceable artifact UIDs. See [`SKILL.md`](SKILL.md) § File organization for the full convention. Override the outputs root via the `BRAINS_OUTPUTS_DIR` env var.
 
 ---
 
@@ -286,7 +308,7 @@ Or paste your résumé content. The skill picks the review workflow by default w
 I'm applying for a role and I'm not sure whether to disclose that I'm autistic. Can you walk me through the decision?
 ```
 
-The skill runs the full disclosure framework. It covers factors, timing, and follow-up talking points. It returns a worksheet you can refer back to.
+The skill runs the full disclosure framework — factors, timing, follow-up talking points — and returns a branded worksheet (markdown + PDF) under `~/.brains-resume/outputs/disclosure/<candidate>/`. From v2.3, the landed strength is recorded against the active candidate's tracker row. Subsequent `/brains-tailor`, `/brains-cover-letter`, and `/brains-review` runs read it and apply it (strip / preserve / flag identity language per your stance), surfacing what they changed so you can see and override. Update or replace your stance any time from the dashboard's Disclosure tab.
 
 ### All other workflows
 
@@ -298,11 +320,11 @@ Use the slash commands listed above. Or describe your goal in plain language. Th
 
 **Six rules we do not bend. No setting changes them.**
 
-1. Output files go to a folder you choose (default `./output/` in your working directory). Nothing is written into the skill bundle.
+1. Output files go to a folder you choose (default `~/.brains-resume/outputs/`, overridable via `BRAINS_OUTPUTS_DIR`). Nothing is written into the skill bundle.
 2. The skill ships a `.gitignore` template that excludes the output folder and common résumé filenames. This stops you from committing private content by accident.
-3. On first use per session, the skill shows a plain-language notice. Your résumé content is processed by Claude within that session only.
+3. On first use per session, the skill shows a plain-language notice about how your résumé content is processed by Claude.
 4. The LinkedIn ZIP parser extracts only your own data. It skips `Connections.csv`, `messages.csv`, `Invitations.csv`, and any file with data about other people. It logs which files it skipped.
-5. The skill keeps no data between sessions. Disclosure choice, employer details, salary expectations, and all résumé content are session-only.
+5. **All persisted state stays local.** The tracker DB (`~/.brains-resume/tracker.db`) holds candidates, JDs, résumé versions, applications, outcomes, and disclosure sessions. Output artifacts live under `~/.brains-resume/outputs/`. None of this is ever sent anywhere — it stays on your machine. Résumé content sent through Claude during a workflow is processed within that conversation only and is not stored by the skill outside the tracker rows you explicitly create.
 6. No telemetry. No analytics. No phone-home.
 
 ---

@@ -26,6 +26,9 @@ def test_cached_list_applications_delegates_to_query(fresh_db):
 def test_cached_list_applications_returns_application_rows(fresh_db):
     from scripts.dashboard.data import cached_list_applications
     from scripts.tracker.add import add_application, add_jd, add_resume_version
+    from scripts.tracker.candidates import create_candidate, set_active_candidate
+    cid = create_candidate("Example", "Candidate", [], None, None)
+    set_active_candidate(cid)
     rv = add_resume_version(file_path=None, template="hybrid", focus_areas=[])
     jd = add_jd(
         source="paste", source_ref=None, company="Example Corp",

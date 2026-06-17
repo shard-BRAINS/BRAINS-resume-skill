@@ -1,10 +1,12 @@
-"""Read/write helpers for ~/.brains-resume/profile.json.
+"""Read/write helpers for ~/.brains-resume/profile.json (post-B trimmed shape).
 
-The profile holds the user's focus areas (used by the JD analyzer's role-fit
-score) and their self-defined healthy weekly application rate (used by the
-pre-application sanity check). Missing file or corrupt JSON both return an
-empty Profile — never crash. Tests override the path via
-BRAINS_TRACKER_PROFILE_PATH.
+The profile now holds two fields only: the pointer to the active candidate
+and the log_handoffs UI preference. Per-candidate data (name, focus areas,
+healthy weekly rate, pacing notes) lives in the candidates table.
+
+Backwards-compat: a legacy-shape file (with first_name/focus_areas/etc) is
+read as an empty Profile. The legacy fields are NOT lost — they are consumed
+by scripts.tracker._post_migration.run_b_backfill when the schema reaches v5.
 """
 import json
 import os
@@ -17,7 +19,6 @@ DEFAULT_PROFILE_PATH = Path.home() / ".brains-resume" / "profile.json"
 
 
 def get_profile_path() -> Path:
-    """Return the profile path, honouring BRAINS_TRACKER_PROFILE_PATH override."""
     override = os.environ.get("BRAINS_TRACKER_PROFILE_PATH")
     if override:
         return Path(override)
@@ -25,7 +26,6 @@ def get_profile_path() -> Path:
 
 
 def read_profile() -> Profile:
-    """Read the profile file. Missing file or corrupt JSON both return empty Profile."""
     path = get_profile_path()
     if not path.exists():
         return Profile()
@@ -33,29 +33,22 @@ def read_profile() -> Profile:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return Profile()
+    if not isinstance(data, dict):
+        return Profile()
     return Profile(
-        focus_areas=list(data.get("focus_areas", []) or []),
-        healthy_weekly_rate=data.get("healthy_weekly_rate"),
-        pacing_notes=data.get("pacing_notes"),
+        active_candidate_id=data.get("active_candidate_id"),
         log_handoffs=data.get("log_handoffs", True),
-        first_name=data.get("first_name"),
-        last_name=data.get("last_name"),
     )
 
 
 def write_profile(profile: Profile) -> None:
-    """Write the profile to disk. Creates parent directory if needed."""
     path = get_profile_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(
             {
-                "focus_areas": profile.focus_areas,
-                "healthy_weekly_rate": profile.healthy_weekly_rate,
-                "pacing_notes": profile.pacing_notes,
+                "active_candidate_id": profile.active_candidate_id,
                 "log_handoffs": profile.log_handoffs,
-                "first_name": profile.first_name,
-                "last_name": profile.last_name,
             },
             indent=2,
         ),

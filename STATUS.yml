@@ -1,20 +1,20 @@
 name: BRAINS Resume Skill
 status: shipped
 priority: P1
-next_step: v1.6 — disclosure framework polish
+next_step: Manual smoke + dashboard verification, then plan v2.4 cycle
 blocker: null
 workstream:
-  label: v1.6 cycle
+  label: v2.3 cycle
   phases:
   - id: SP
     label: spec
-    status: upcoming
+    status: done
   - id: BD
     label: build
-    status: upcoming
+    status: done
   - id: RL
     label: release
-    status: upcoming
+    status: done
 lifecycle:
   milestones:
   - v1.0
@@ -23,18 +23,27 @@ lifecycle:
   - v1.5
   - v1.6
   - v2.0
-  current_milestone: v1.5
-  overall_pct: 85
-  target_milestone: v1.6
-  target_date: '2026-07-15'
+  - v2.1
+  - v2.2
+  - v2.3
+  current_milestone: v2.3
+  overall_pct: 95
+  target_milestone: v2.4
+  target_date: null
 backlog:
-- Disclosure framework brainstorm (deferred from v1.5)
-notes: 'v1.5.0 released — per-JD folders + traceable artifact UIDs.
-
-  '
+- LinkedIn export ingest hardening (deferred)
+- v2.4 scope — TBD
+notes: |
+  v2.3.0 shipped — disclosure framework polish. Disclosure coaching outcomes
+  are now first-class, candidate-linked records: migration 0008
+  (disclosure_sessions), CRUD module, disclosure-specific branded worksheet
+  generator, rebuilt dashboard surface (record + history), and downstream
+  auto-apply wired through tailor / cover-letter / review specs.
 _auto:
-  last_commit: '155449c docs: v1.5.0 — file organization convention + workflow refs'
+  last_commit: '2bea8e3 feat(disclosure): worksheet generator + dashboard surface (v2.3 Phases 2-3)'
   branch: main
-  last_commit_at: '2026-05-19T03:20:08Z'
+  last_commit_at: '2026-06-08T00:00:00Z'
   dirty: true
-  refreshed_at: '2026-05-19T03:22:13.832935Z'
+  open_prs: 0
+  ci_status: green
+  refreshed_at: '2026-06-08T00:00:00Z'

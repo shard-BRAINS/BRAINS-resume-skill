@@ -28,12 +28,6 @@ def test_application_channels_complete():
     assert set(APPLICATION_CHANNELS) == expected
 
 
-def test_profile_default_empty():
-    p = Profile()
-    assert p.focus_areas == []
-    assert p.healthy_weekly_rate is None
-
-
 def test_resume_version_all_fields_present():
     rv = ResumeVersion(
         id=1,
@@ -69,11 +63,6 @@ def test_efficacy_row_carries_per_template_counts():
     assert e.submitted_count == 10
 
 
-def test_profile_default_pacing_notes_is_none():
-    p = Profile()
-    assert p.pacing_notes is None
-
-
 def test_resume_version_has_for_candidate_default_none():
     from scripts.tracker.models import ResumeVersion
     rv = ResumeVersion(
@@ -103,3 +92,51 @@ def test_cover_letter_has_for_candidate_default_none():
         created_at="2026-05-19T00:00:00Z", archived_at=None,
     )
     assert cl.for_candidate is None
+
+
+def test_candidate_dataclass_minimal():
+    from scripts.tracker.models import Candidate
+    c = Candidate(
+        id=1, first_name="Mathilda", last_name="Gell",
+        focus_areas=["retail"], healthy_weekly_rate=2,
+        pacing_notes=None,
+        created_at="2026-05-19T00:00:00Z", archived_at=None,
+    )
+    assert c.first_name == "Mathilda"
+
+
+def test_profile_holds_active_candidate_id():
+    from scripts.tracker.models import Profile
+    p = Profile(active_candidate_id=1, log_handoffs=True)
+    assert p.active_candidate_id == 1
+    assert p.log_handoffs is True
+
+
+def test_profile_default_no_active_candidate():
+    from scripts.tracker.models import Profile
+    p = Profile()
+    assert p.active_candidate_id is None
+    assert p.log_handoffs is True  # documented default
+
+
+def test_resume_version_carries_candidate_id():
+    from scripts.tracker.models import ResumeVersion
+    rv = ResumeVersion(
+        id=1, file_path=None, template="hybrid", focus_areas=[],
+        parent_id=None, tagged_jd_id=None,
+        created_at="2026-05-19T00:00:00Z", archived_at=None,
+        candidate_id=2,
+    )
+    assert rv.candidate_id == 2
+
+
+def test_jd_carries_candidate_id():
+    from scripts.tracker.models import JD
+    jd = JD(
+        id=1, source="manual", source_ref=None,
+        company="Acme", role_title="Eng", raw_text="...",
+        analyzer_findings={}, focus_areas_required=[], focus_areas_nice=[],
+        created_at="2026-05-19T00:00:00Z", archived_at=None,
+        candidate_id=1,
+    )
+    assert jd.candidate_id == 1

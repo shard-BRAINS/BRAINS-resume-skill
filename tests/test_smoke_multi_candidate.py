@@ -8,8 +8,7 @@ from scripts.generators.resume_to_docx import render_resume_docx
 from scripts.outputs.io import make_artifact_path, finalize_docx
 from scripts.outputs.tagging import read_artifact_meta
 from scripts.tracker.add import add_jd, add_resume_version
-from scripts.tracker.profile import write_profile
-from scripts.tracker.models import Profile
+from scripts.tracker.candidates import create_candidate, set_active_candidate
 
 
 @pytest.fixture
@@ -17,7 +16,6 @@ def isolated(monkeypatch, tmp_path):
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "test.db"))
     monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "profile.json"))
     monkeypatch.setenv("BRAINS_OUTPUTS_DIR", str(tmp_path / "outputs"))
-    write_profile(Profile(first_name="Matthew", last_name="Gell"))
     return tmp_path
 
 
@@ -34,9 +32,13 @@ def _minimal_data(name: str) -> dict:
 
 def test_two_candidates_one_installation(isolated):
     """Same installation produces UID-tagged DOCX for two different candidates."""
+    matthew = create_candidate("Matthew", "Gell", [], None, None)
+    mathilda = create_candidate("Mathilda", "Gell", [], None, None)
+    set_active_candidate(matthew)
+
     jd_id = add_jd("manual", None, "Acme", "Sales Assistant", "...", {}, [], [])
 
-    # Profile holder
+    # Active candidate
     self_path, self_meta = make_artifact_path(jd_id, "resume", parent_uid=None)
     render_resume_docx(_minimal_data("Matthew Gell"), self_path, template="hybrid")
     finalize_docx(self_path, self_meta)
@@ -47,14 +49,15 @@ def test_two_candidates_one_installation(isolated):
 
     # For someone else
     other_path, other_meta = make_artifact_path(
-        jd_id, "resume", parent_uid=None, for_candidate="Mathilda Gell",
+        jd_id, "resume", parent_uid=None, candidate_id=mathilda,
+        for_candidate="Mathilda Gell",
     )
     render_resume_docx(_minimal_data("Mathilda Gell"), other_path, template="hybrid")
     finalize_docx(other_path, other_meta)
     add_resume_version(
         file_path=str(other_path), template="hybrid", focus_areas=[],
         tagged_jd_id=jd_id, artifact_uid=other_meta.artifact_uid,
-        for_candidate="Mathilda Gell",
+        candidate_id=mathilda, for_candidate="Mathilda Gell",
     )
 
     assert self_path.exists()

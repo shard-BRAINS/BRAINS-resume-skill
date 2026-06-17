@@ -16,7 +16,25 @@ This workflow activates when:
 Gather the following before beginning. Mark each item clearly as received or pending.
 
 - **The resume** — PDF, DOCX, or pasted plain text
-- **Disclosure stance preference** — if not already established this session, ask whether the user has a preference on including any identity-related language. If the user wants to think it through before answering, point them to `references/disclosure-decision-tree.md`
+- **Disclosure stance preference** — read from the tracker first; only ask if no session exists.
+
+  ```python
+  from scripts.tracker import disclosure as disclosure_db
+  from scripts.tracker.candidates import get_active_candidate
+
+  active = get_active_candidate()
+  latest = disclosure_db.get_latest_for_candidate(active.id) if active else None
+  ```
+
+  - If `latest` is **None** or `latest.landed_strength == "undecided"`: no
+    preference on file — ask, and point the user at
+    `references/disclosure-decision-tree.md` if they want to think it
+    through. Offer to run `/brains-disclosure` first.
+  - If `latest.landed_strength` is set: surface it back to the user so
+    they can confirm or override. *"You previously recorded a
+    {landed_strength} preference on {created_at[:10]} — I'll flag any
+    content inconsistent with it. Override?"* Review never silently
+    edits; it flags only.
 - **Language preference** — identity-first (e.g. "autistic engineer") or person-first (e.g. "engineer with autism"). BRAINS defaults to identity-first; user preference overrides
 
 ---
@@ -58,6 +76,8 @@ Evaluate the summary or profile paragraph against the warmth-vs-specificity cali
 
 **(h) Compile findings into the coaching report template.**
 Structure the full output using `templates/coaching_report.md` (added in Task 17). All section headings, finding formats, and user-veto language must follow the template. Every finding must be accompanied by the corresponding user-veto statement: the user may accept, modify, or dismiss any recommendation at any time.
+
+If a disclosure preference was loaded in the Inputs step, include a "Disclosure preference applied" line at the top of the findings section. Example: *"Applied your non-disclosure preference (recorded 2026-06-08) — flagged: 'autism advocacy' wording in role 2 (inconsistent with non-disclosure stance)."* Review only flags — the user decides whether to act.
 
 **(i) Render to branded PDF.**
 Run `scripts/generators/coaching_report_to_pdf.py` with `include_trust_footer=False`. Coaching reports use the standard origin-phrase footer only. The BRAINS Trust footer is reserved for disclosure worksheets; it must not appear on review outputs.

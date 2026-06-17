@@ -4,10 +4,19 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from scripts.tracker.candidates import get_active_candidate
 from scripts.tracker.db import open_db
 
 
 def render() -> None:
+    active = get_active_candidate()
+    if active is None:
+        st.info(
+            "No active candidate. Select or create one in the sidebar to see "
+            "cover letters."
+        )
+        return
+
     if st.button("↻ Refresh", key="cl_refresh"):
         st.rerun()
 
@@ -78,7 +87,16 @@ def render() -> None:
 
 
 def _list_cover_letters() -> list:
+    """Read-only direct query for cover letters + computed AI-signal score.
+
+    Scoped to the active candidate (Task 12). When no active candidate is set,
+    returns an empty list.
+    """
     from scripts.validators.ai_signal_check import ai_signal_check
+
+    active = get_active_candidate()
+    if active is None:
+        return []
 
     conn = open_db()
     try:
@@ -88,9 +106,10 @@ def _list_cover_letters() -> list:
                    cl.jd_id, j.company, j.role_title, cl.created_at
             FROM cover_letters cl
             JOIN jds j ON j.id = cl.jd_id
-            WHERE cl.archived_at IS NULL
+            WHERE cl.archived_at IS NULL AND cl.candidate_id = ?
             ORDER BY cl.created_at DESC
-            """
+            """,
+            (active.id,),
         )
         rows = []
         for row in cur.fetchall():

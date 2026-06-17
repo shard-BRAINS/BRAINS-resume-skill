@@ -14,50 +14,40 @@ from scripts.outputs.io import (
     make_artifact_path,
     read_artifact_uid,
     get_outputs_root,
-    ProfileNameMissingError,
 )
-from scripts.outputs.naming import artifact_filename, new_uid, split_candidate_name
+from scripts.outputs.naming import artifact_filename, new_uid
 from scripts.outputs.tagging import ArtifactMeta
-from scripts.tracker.profile import read_profile
+from scripts.tracker.add import NoActiveCandidateError
+from scripts.tracker.candidates import get_active_candidate
 
 
 def _resolve_target(
     jd_id: int,
     parent_uid: Optional[str] = None,
-    for_candidate: Optional[str] = None,
 ) -> Tuple[Path, ArtifactMeta]:
     """Compute the output path + ArtifactMeta for a /brains-edit run.
 
-    If jd_id > 0: anchor to that JD's folder via make_artifact_path.
-    If jd_id == 0: write to the _library directory using profile name (or
-    for_candidate override, when provided).
-    Raises ProfileNameMissingError when no candidate name is available.
+    Either branch resolves the active candidate. jd_id > 0 anchors to that
+    JD's folder via make_artifact_path; jd_id == 0 writes to the _library
+    directory using the active candidate's name.
+    Raises NoActiveCandidateError when no active candidate is set.
     """
-    for_candidate = (for_candidate or "").strip() or None
+    active = get_active_candidate()
+    if active is None:
+        raise NoActiveCandidateError(
+            "No active candidate is set. Select or create one in the sidebar."
+        )
 
     if jd_id:
         return make_artifact_path(
-            int(jd_id), "resume",
-            parent_uid=parent_uid,
-            for_candidate=for_candidate,
+            int(jd_id), "resume", parent_uid=parent_uid, candidate_id=active.id,
         )
-
-    if for_candidate:
-        first_name, last_name = split_candidate_name(for_candidate)
-    else:
-        profile = read_profile()
-        if not profile.first_name or not profile.last_name:
-            raise ProfileNameMissingError(
-                "Profile is missing first_name or last_name. "
-                "Set them in the sidebar, or fill 'For candidate' above."
-            )
-        first_name, last_name = profile.first_name, profile.last_name
 
     library = get_outputs_root() / "_library"
     library.mkdir(parents=True, exist_ok=True)
     uid = new_uid()
     target_path = library / artifact_filename(
-        first_name=first_name, last_name=last_name,
+        first_name=active.first_name, last_name=active.last_name,
         kind="resume", created_date=date.today(), uid=uid,
     )
     meta = ArtifactMeta(
@@ -65,7 +55,7 @@ def _resolve_target(
         jd_id=None, parent_uid=parent_uid,
         created_at=datetime.utcnow().isoformat() + "Z",
         skill_version=_SKILL_VERSION,
-        for_candidate=for_candidate,
+        candidate_id=active.id,
     )
     return target_path, meta
 
@@ -73,16 +63,16 @@ def _resolve_target(
 def render(file_path: Optional[Path] = None, key_prefix: str = "edit") -> None:
     st.markdown("**Apply review fixes to a resume.**")
     st.caption("Hands the resume + the most recent review findings off to Claude Code for a clean ATS-safe rewrite.")
+    active = get_active_candidate()
+    if active is None:
+        st.error("No active candidate. Select or create one in the sidebar.")
+        return
+    st.caption(f"This resume will be for: **{active.first_name} {active.last_name}**.")
     if file_path is None:
         file_path = pick_file("resume", key=f"{key_prefix}_pick")
     jd_id = st.number_input(
         "JD id (optional — leave at 0 to save in _library)", min_value=0, step=1,
         key=f"{key_prefix}_jd_id",
-    )
-    for_candidate = st.text_input(
-        "For candidate (optional — leave blank for yourself)",
-        key=f"{key_prefix}_for_candidate",
-        help="If you're editing a resume for someone else, enter their name here.",
     )
     st.write(f"Selected: `{file_path}`" if file_path else "_No file selected._")
     if file_path is not None:
@@ -91,11 +81,9 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "edit") -> None:
         except Exception:
             source_uid = None
         try:
-            target_path, meta = _resolve_target(
-                int(jd_id), parent_uid=source_uid, for_candidate=for_candidate,
-            )
-        except ProfileNameMissingError as e:
-            st.error(str(e))
+            target_path, meta = _resolve_target(int(jd_id), parent_uid=source_uid)
+        except NoActiveCandidateError:
+            st.error("No active candidate. Select or create one in the sidebar.")
             return
         except Exception as exc:
             st.warning(f"Could not resolve output path: {exc}")
@@ -108,8 +96,7 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "edit") -> None:
             note=(
                 "Claude Code will load the resume and apply review findings. "
                 "After save, call `scripts.outputs.io.finalize_docx(target_path, meta)` "
-                "and register the new version in the tracker with `for_candidate` "
-                "set to the same value if provided. "
+                "and register the new version in the tracker for the active candidate. "
                 "Then call `scripts.drift.on_artifact_finalised(meta.artifact_uid, data)` "
                 "to persist a fact snapshot and compute drift."
             ),

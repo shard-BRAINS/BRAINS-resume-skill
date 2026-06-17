@@ -60,3 +60,5 @@ desktop.ini
 # Distribution artifacts (built on demand)
 dist/*
 !dist/.gitkeep
+
+.superpowers/

@@ -94,7 +94,7 @@ def ensure_jd_folder(jd_id: int) -> Path:
         conn.close()
 
 
-_SKILL_VERSION = "1.7.0"
+_SKILL_VERSION = "2.3.0"
 _MAX_UID_RETRIES = 5
 
 
@@ -103,6 +103,7 @@ def make_artifact_path(
     kind: Literal["resume", "cover-letter"],
     parent_uid: str | None = None,
     for_candidate: str | None = None,
+    candidate_id: int | None = None,
 ) -> tuple[Path, ArtifactMeta]:
     """Reserve a new artifact path + UID within the JD folder.
 
@@ -110,26 +111,34 @@ def make_artifact_path(
     generator succeeds). The caller passes the returned ArtifactMeta
     into the generator or to finalize_docx after save.
 
-    If `for_candidate` is provided, it supersedes the profile name for
-    filename construction and is stamped onto the returned ArtifactMeta
-    so the DOCX records who the artifact is FOR. When None, the profile
-    name is used (pre-C behaviour).
+    Resolution order for the candidate whose name appears in the filename:
+      1. explicit candidate_id (if provided)
+      2. for_candidate name (resolved to candidate_id via find_or_create_by_name)
+      3. active candidate from profile.json
+      4. raises NoActiveCandidateError if none of the above resolves
 
-    Raises ProfileNameMissingError if first_name or last_name is unset
-    AND no for_candidate override is provided.
+    `for_candidate`, when provided, is also stamped onto the returned
+    ArtifactMeta so the DOCX records the free-text name the caller used.
     """
-    from scripts.outputs.naming import split_candidate_name
+    from scripts.tracker.candidates import (
+        get_active_candidate, get_candidate, find_or_create_by_name,
+    )
 
-    if for_candidate:
-        first_name, last_name = split_candidate_name(for_candidate)
-    else:
-        profile = read_profile()
-        if not profile.first_name or not profile.last_name:
-            raise ProfileNameMissingError(
-                "Profile is missing first_name or last_name. "
-                "Set them in the dashboard sidebar, or pass for_candidate explicitly."
+    if candidate_id is None and for_candidate:
+        candidate_id = find_or_create_by_name(for_candidate)
+    if candidate_id is None:
+        active = get_active_candidate()
+        if active is None:
+            from scripts.tracker.add import NoActiveCandidateError
+            raise NoActiveCandidateError(
+                "No active candidate set. Pass candidate_id, for_candidate, "
+                "or select a candidate in the dashboard sidebar."
             )
-        first_name, last_name = profile.first_name, profile.last_name
+        candidate_id = active.id
+
+    candidate = get_candidate(candidate_id)
+    if candidate is None:
+        raise ValueError(f"No candidate row with id={candidate_id}")
 
     folder = ensure_jd_folder(jd_id)
     today = _date.today()
@@ -143,8 +152,8 @@ def make_artifact_path(
             f"Database may be saturated; investigate."
         )
     filename = artifact_filename(
-        first_name=first_name,
-        last_name=last_name,
+        first_name=candidate.first_name,
+        last_name=candidate.last_name,
         kind=kind,
         created_date=today,
         uid=uid,
@@ -158,6 +167,7 @@ def make_artifact_path(
         created_at=datetime.utcnow().isoformat() + "Z",
         skill_version=_SKILL_VERSION,
         for_candidate=for_candidate,
+        candidate_id=candidate_id,
     )
     return path, meta
 

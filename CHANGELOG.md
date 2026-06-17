@@ -4,6 +4,65 @@ All notable changes to the BRAINS Resume Skill are documented here.
 
 The format follows Keep a Changelog conventions; the project follows semantic versioning.
 
+## v2.3.0 — 2026-06-08
+
+### Added
+- **Disclosure framework polish** — disclosure-coaching outcomes are now first-class, candidate-linked records.
+  - `disclosure_sessions` table (migration 0008): six factor answers, landed strength (`non-disclosure` / `neutral` / `explicit` / `undecided`), optional target employer/role, notes, and traceable artifact UID per worksheet.
+  - `scripts/tracker/disclosure.py` — CRUD module with `get_latest_for_candidate` as the read used by downstream auto-apply.
+  - `scripts/generators/disclosure_worksheet.py` + `templates/disclosure_worksheet.md` — branded worksheet (MD + PDF) rendered direct from session data; lands under `<outputs>/disclosure/<candidate-slug>/disclosure-YYYY-MM-DD-<uid>.{md,pdf}`.
+  - Dashboard Disclosure tab rebuilt: safeguarding caveat, six-factor record form with live suggested strength, save / save-and-generate buttons, archived-aware history panel.
+
+### Changed
+- `references/workflows/disclosure.md` — adds step (g) persist-to-DB and step (h) close, points to the new artifact path.
+- `references/workflows/tailor.md`, `cover-letter.md`, `review.md` — read the candidate's landed disclosure strength from the tracker first, surface "applied your X preference: ..." in the output.
+
+## v2.2.0 — 2026-05-21
+
+### Added
+- **Resume-first onboarding** — creating a candidate now collects only name + email. A Home-tab onboarding surface gathers career intent (career stage, direction, target roles/industries, leadership intent, work preferences, location, timeline) once, then disappears.
+- `candidates` table gains an `email` column and eleven career-intent columns (migration 0007).
+
+### Changed
+- The sidebar "+ New candidate" form is trimmed to name + email. Focus areas, pacing rate, and pacing notes are set via "Edit selected"; career intent via the onboarding surface.
+
+## v2.1.0 — 2026-05-21
+
+### Added
+- **Dashboard orchestration** — the dashboard is now an orchestration hub. A new **Home** tab is a customizable widget canvas: playbook cards, an in-progress-runs tracker, a computed next-actions worklist, a pipeline mini-board, reporting tiles, and a quick-launch panel.
+- **Playbook engine** — five guided journeys (Apply to a job, Build a base resume, Improve a resume, Refresh LinkedIn, Career change) with auto-detected step progress (`scripts/playbooks/`, migration 0006).
+- **Customize mode** — each candidate can add, remove, and reorder Home widgets; the layout persists per candidate.
+
+### Changed
+- The dashboard has eight tabs (was nine): the **Overview** and **Workflows** tabs are removed — their content is absorbed into the Home widget canvas.
+
+### Removed
+- The Overview tab's application-funnel chart, weekly sparkline cards, idle-state callouts, and pending/recent twin panels. The next-actions worklist and the recent-outcomes tile cover the same need; efficacy analysis remains on the Analytics tab.
+
+## v2.0.0 — 2026-05-20
+
+### Breaking
+- `Profile` dataclass is trimmed to `{active_candidate_id, log_handoffs}`. Per-user fields (first_name, last_name, focus_areas, healthy_weekly_rate, pacing_notes) now live on the `Candidate` row pointed to by `active_candidate_id`.
+- `make_artifact_path` no longer raises `ProfileNameMissingError`; instead raises `NoActiveCandidateError` when no candidate is selected.
+
+### Added
+- `candidates` table (migration 0005) — first-class multi-candidate support.
+- `scripts.tracker.candidates` module — CRUD + active-candidate accessor.
+- Dashboard sidebar candidate picker; per-tab scoping; JD analyzer scoped to active candidate's focus areas.
+- DOCX custom property `BrainsCandidateId` records the candidate row id.
+
+### Changed
+- The v1.7.0 drift subsystem (`scripts/drift/`, the Drift tab, the Overview drift tile, the Resumes-tab drift columns, `/brains-import`) now scopes candidates by `candidate_id` instead of the `for_candidate` text column.
+- `baseline_history` (added in v1.7.0) gains a `candidate_id` column; the `is_baseline` partial unique index is rebuilt on `candidate_id`.
+
+### Migration
+- Existing v1.5/1.6/1.7 installs are migrated automatically on first `open_db()` after upgrade (migration 0005 + the post-migration backfill hook):
+  - The seed candidate is created from the legacy profile.json fields.
+  - All existing resumes, cover letters, JDs, and baseline-history rows are linked to the seed candidate.
+  - Rows with `for_candidate` populated (v1.6+) link to a per-name candidate created on first read.
+  - profile.json is rewritten to the trimmed shape; legacy fields are dropped.
+- The Approach-C `for_candidate` columns are RETAINED as a denormalized cache for data export and provenance.
+
 ## v1.7.0 — 2026-05-20
 
 ### Added

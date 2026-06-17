@@ -6,6 +6,7 @@ expected fields, and persisting via add_jd works.
 from pathlib import Path
 
 from scripts.tracker.add import add_jd
+from scripts.tracker.candidates import create_candidate, set_active_candidate
 from scripts.tracker.db import open_db
 from scripts.validators.jd_analyzer import jd_analyze
 from tests.fixtures import jd_analyzer_fixtures as fx
@@ -13,6 +14,9 @@ from tests.fixtures import jd_analyzer_fixtures as fx
 
 def test_jd_analyze_smoke(monkeypatch, tmp_path):
     monkeypatch.setenv("BRAINS_TRACKER_DB_PATH", str(tmp_path / "t.db"))
+    monkeypatch.setenv("BRAINS_TRACKER_PROFILE_PATH", str(tmp_path / "p.json"))
+    cid = create_candidate("Example", "Candidate", [], None, None)
+    set_active_candidate(cid)
 
     # (a) Analyse a mixed JD with focus areas + company + role
     result = jd_analyze(

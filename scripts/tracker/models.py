@@ -33,6 +33,16 @@ APPLICATION_CHANNELS = (
     "other",
 )
 
+# Disclosure-strength values for the disclosure_sessions table.
+# `undecided` lets a coaching session that didn't reach a decision still be
+# recorded — the downstream auto-apply treats it as "no preference on file".
+DISCLOSURE_STRENGTHS = (
+    "non-disclosure",
+    "neutral",
+    "explicit",
+    "undecided",
+)
+
 
 @dataclass
 class ResumeVersion:
@@ -47,6 +57,31 @@ class ResumeVersion:
     artifact_uid: Optional[str] = None
     parent_uid: Optional[str] = None
     for_candidate: Optional[str] = None
+    candidate_id: Optional[int] = None
+
+
+@dataclass
+class Candidate:
+    id: Optional[int]
+    first_name: str
+    last_name: str
+    focus_areas: List[str]
+    healthy_weekly_rate: Optional[int]
+    pacing_notes: Optional[str]
+    created_at: str
+    archived_at: Optional[str]
+    email: Optional[str] = None
+    career_stage: Optional[str] = None
+    direction: Optional[str] = None
+    target_roles: List[str] = field(default_factory=list)
+    target_industries: List[str] = field(default_factory=list)
+    leadership_intent: Optional[str] = None
+    work_preferences: List[str] = field(default_factory=list)
+    location: Optional[str] = None
+    relocation_open: Optional[int] = None
+    role_priorities: Optional[str] = None
+    timeline: Optional[str] = None
+    intent_collected_at: Optional[str] = None
 
 
 @dataclass
@@ -61,6 +96,7 @@ class CoverLetter:
     artifact_uid: Optional[str] = None
     parent_uid: Optional[str] = None
     for_candidate: Optional[str] = None
+    candidate_id: Optional[int] = None
 
 
 @dataclass
@@ -77,6 +113,7 @@ class JD:
     created_at: str
     archived_at: Optional[str]
     folder_path: Optional[str] = None
+    candidate_id: Optional[int] = None
 
 
 @dataclass
@@ -106,13 +143,28 @@ class Outcome:
 
 
 @dataclass
+class DisclosureSession:
+    id: Optional[int]
+    candidate_id: int
+    created_at: str
+    landed_strength: str
+    target_employer: Optional[str] = None
+    target_role: Optional[str] = None
+    factor_1: Optional[str] = None
+    factor_2: Optional[str] = None
+    factor_3: Optional[str] = None
+    factor_4: Optional[str] = None
+    factor_5: Optional[str] = None
+    factor_6: Optional[str] = None
+    notes: Optional[str] = None
+    artifact_uid: Optional[str] = None
+    archived_at: Optional[str] = None
+
+
+@dataclass
 class Profile:
-    focus_areas: List[str] = field(default_factory=list)
-    healthy_weekly_rate: Optional[int] = None
-    pacing_notes: Optional[str] = None
+    active_candidate_id: Optional[int] = None
     log_handoffs: bool = True
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
 
 
 @dataclass

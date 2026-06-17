@@ -24,8 +24,28 @@ Before beginning, confirm every input below:
    - URL: fetch and parse via `scripts/parsers/jd_url_fetch.py`
    - Screenshot: read directly; Claude can parse image text
 3. **Company or recipient details** (optional) — carry any company name, team context, or culture signals through to the summary and match report.
-4. **Disclosure stance** — carry over from the current session. If not established, ask before proceeding.
-5. **Is this resume for the profile holder, or for someone else?** If for someone else, capture their full name (e.g., "Mathilda Gell"). The workflow otherwise proceeds normally — every reference to "the user" in subsequent steps applies to the named candidate. Pass the candidate name into the generator path (`make_artifact_path(..., for_candidate="<name>")`) and into the tracker insert (`add_resume_version(..., for_candidate="<name>")`) so the DOCX and the tracker row both record who the artifact is FOR. When the workflow runs for the profile holder, leave `for_candidate` unset.
+4. **Disclosure stance** — read from the tracker first; only ask if no session exists.
+
+   ```python
+   from scripts.tracker import disclosure as disclosure_db
+   from scripts.tracker.candidates import get_active_candidate
+
+   active = get_active_candidate()
+   latest = disclosure_db.get_latest_for_candidate(active.id)
+   ```
+
+   - If `latest` is **None** or `latest.landed_strength == "undecided"`: no
+     preference on file — ask the user, and offer to walk them through the
+     disclosure-decision framework before continuing (point to
+     `references/workflows/disclosure.md`).
+   - If `latest.landed_strength` is **"non-disclosure"** / **"neutral"** /
+     **"explicit"**: surface it back to the user so they can confirm or
+     override before proceeding. *"You previously recorded a
+     {landed_strength} preference on {created_at[:10]}. I'll apply it
+     unless you tell me otherwise."* If they override, do not silently
+     update the session — direct them to the dashboard's Disclosure tab
+     to record a new one.
+5. **Confirm the active candidate.** Read the active candidate from `scripts.tracker.candidates.get_active_candidate()`. State the candidate's name explicitly: *"This interview will produce a resume for **{first} {last}**."* If the user expected someone else, instruct them to switch via the dashboard sidebar before proceeding. Do not proceed until the candidate is confirmed.
 
 ---
 
@@ -64,6 +84,13 @@ Based on the gap analysis, draft and present specific proposals:
 
 For each proposal, state the original text, the proposed revision, and the JD requirement it addresses.
 
+**Apply the landed disclosure preference.** Before showing the proposals, reconcile every proposed revision against the candidate's landed strength (collected in Input 4):
+
+- **Non-disclosure:** strip explicit ND identity references (Pattern 1 vocabulary, named-condition wording, identity-first credentials in the summary). If any are present in the original, propose their removal or neutral reframing.
+- **Neutral signalling:** preserve ND-associated competency framing (depth of focus, systems thinking, pattern recognition, accessibility-aware experience). Flag — do not silently keep — any explicit identity language.
+- **Explicit disclosure:** preserve identity language where it appears; do not add new identity language to bullets where the original did not have it.
+- **Undecided / no preference on file:** make no disclosure-driven changes; surface that no preference is set.
+
 **(f) Walk the user through each proposed edit.**
 Present one edit at a time. Prompt accept, reject, or modify. Record every decision; do not apply edits silently or in batches. If a proposal would be factually inaccurate for the user's actual experience, withdraw it — do not ask the user to accept a fabrication.
 
@@ -85,6 +112,7 @@ Write a match report markdown file capturing:
 
 - **Changes made:** each accepted edit, keyed to the JD requirement it addressed
 - **Keyword coverage before and after:** side-by-side count of JD keywords present in the original vs. tailored resume
+- **Disclosure preference applied:** a one-line summary referencing the candidate's landed strength and the disclosure-driven changes made (added, removed, flagged), or "no preference on file" if none was set. Example: *"Applied non-disclosure preference (recorded 2026-06-08) — removed: identity-first credential in summary, flagged: 'autism advocacy' wording in role 2."*
 - **Remaining gaps:** must-haves or nice-to-haves not addressed in the resume, flagged for potential handling in a cover letter
 
 The match report is a BRAINS coaching artifact and carries BRAINS branding. The submitted resume documents do not.

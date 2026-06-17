@@ -5,6 +5,7 @@ import pytest
 
 from scripts.drift.compute import write_snapshot_and_compute_drift
 from scripts.tracker.add import add_resume_version
+from scripts.tracker.candidates import create_candidate, set_active_candidate
 from scripts.tracker.db import open_db
 
 
@@ -14,8 +15,11 @@ def fresh_db(monkeypatch, tmp_path):
     return tmp_path
 
 
-def _seed(scope="X"):
-    """Build a baseline + 2 derivatives for the candidate."""
+def _seed():
+    """Build a baseline + 2 derivatives for a fresh candidate. Returns the id."""
+    cid = create_candidate("Test", "Candidate", [], None, None)
+    set_active_candidate(cid)
+
     facts_base = {
         "identity": {"name": "X", "location": "Q", "email": "x@y", "phone": "0"},
         "experience": [], "education": [], "skills": ["A"],
@@ -26,27 +30,28 @@ def _seed(scope="X"):
     facts_v2 = {**facts_base, "skills": ["A", "B"]}
     facts_v3 = {**facts_base, "skills": ["A", "B", "C"]}
 
-    add_resume_version(None, "hybrid", [], artifact_uid="BL", for_candidate=scope)
+    add_resume_version(None, "hybrid", [], artifact_uid="BL", candidate_id=cid)
     write_snapshot_and_compute_drift("BL", facts_base)
 
     add_resume_version(None, "hybrid", [], artifact_uid="V2",
-                       parent_uid="BL", for_candidate=scope)
+                       parent_uid="BL", candidate_id=cid)
     write_snapshot_and_compute_drift("V2", facts_v2)
 
     add_resume_version(None, "hybrid", [], artifact_uid="V3",
-                       parent_uid="V2", for_candidate=scope)
+                       parent_uid="V2", candidate_id=cid)
     write_snapshot_and_compute_drift("V3", facts_v3)
+    return cid
 
 
 def test_promote_flips_is_baseline(fresh_db):
     from scripts.drift.baseline import promote_baseline
-    _seed()
+    cid = _seed()
     promote_baseline("V2", reason="Test promotion")
     conn = open_db()
     try:
         rows = dict(conn.execute(
             "SELECT artifact_uid, is_baseline FROM resume_versions "
-            "WHERE for_candidate='X'"
+            "WHERE candidate_id=?", (cid,),
         ).fetchall())
     finally:
         conn.close()
@@ -57,17 +62,46 @@ def test_promote_flips_is_baseline(fresh_db):
 
 def test_promote_appends_history_row(fresh_db):
     from scripts.drift.baseline import promote_baseline
-    _seed()
+    cid = _seed()
     promote_baseline("V2", reason="Real-life change")
     conn = open_db()
     try:
         row = conn.execute(
-            "SELECT for_candidate, artifact_uid, reason "
+            "SELECT candidate_id, artifact_uid, reason "
             "FROM baseline_history WHERE artifact_uid='V2'"
         ).fetchone()
     finally:
         conn.close()
-    assert row == ("X", "V2", "Real-life change")
+    # candidate_id is written to baseline_history (non-null, == the candidate).
+    assert row[0] == cid
+    assert row[0] is not None
+    assert row[1] == "V2"
+    assert row[2] == "Real-life change"
+
+
+def test_promote_scoped_to_candidate(fresh_db):
+    """promote_baseline must not clear or recompute another candidate's rows."""
+    from scripts.drift.baseline import promote_baseline
+    cid_a = _seed()
+    # A second candidate with its own baseline.
+    cid_b = create_candidate("Other", "Person", [], None, None)
+    set_active_candidate(cid_b)
+    add_resume_version(None, "hybrid", [], artifact_uid="B_BL", candidate_id=cid_b)
+    # Promote V2 within candidate A's scope.
+    promote_baseline("V2", reason="x")
+    conn = open_db()
+    try:
+        b_baseline = conn.execute(
+            "SELECT is_baseline FROM resume_versions WHERE artifact_uid='B_BL'"
+        ).fetchone()[0]
+        hist_b = conn.execute(
+            "SELECT COUNT(*) FROM baseline_history WHERE candidate_id=?", (cid_b,),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    # Candidate B's baseline untouched, no spurious history rows for B.
+    assert b_baseline == 1
+    assert hist_b == 0
 
 
 def test_promote_recomputes_vs_baseline_for_descendants(fresh_db):

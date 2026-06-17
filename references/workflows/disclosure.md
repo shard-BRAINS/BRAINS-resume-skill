@@ -52,15 +52,55 @@ Based on the pattern of answers, suggest one of the three disclosure strengths f
 After the factor review and suggestion, offer to produce a worksheet that summarises the conversation. Ask: "Would you like a written summary of this conversation — the factors you considered and the position you landed on — as a document you can keep?"
 
 **(f) If the user accepts the worksheet offer: generate and render the document.**
-Generate the worksheet as a markdown document using the coaching-report template structure (`templates/coaching_report.md`, added in Task 17). Render to a branded PDF via `scripts/generators/coaching_report_to_pdf.py` (Task 18) with `include_trust_footer=True` so that the BRAINS Trust safeguarding-credit line appears in the footer of the rendered document.
+Use the disclosure-specific generator added in v2.3:
 
-Save outputs to:
+```python
+from scripts.generators.disclosure_worksheet import generate
+md_path, pdf_path = generate(session_id)
+```
 
-- `output/disclosure-worksheet-YYYY-MM-DD-HHMMSS.md`
-- `output/disclosure-worksheet-YYYY-MM-DD-HHMMSS.pdf`
+The generator writes the worksheet markdown + branded PDF under
+`<outputs>/disclosure/<candidate-slug>/disclosure-YYYY-MM-DD-<uid>.{md,pdf}`,
+assigns an `artifact_uid` to the session row, and renders the PDF with
+`include_trust_footer=True` so the BRAINS Trust safeguarding-credit line
+appears in the footer.
 
-**(g) Close by offering to continue.**
-Offer to continue into the resume-review or resume-edit workflow. Pass any surfaced disclosure preference forward as context.
+**(g) Persist the session to the tracker.**
+Record the session against the active candidate via the v2.3 disclosure
+CRUD module:
+
+```python
+from scripts.tracker import disclosure as disclosure_db
+from scripts.tracker.candidates import get_active_candidate
+
+candidate = get_active_candidate()
+session_id = disclosure_db.create_session(
+    candidate_id=candidate.id,
+    landed_strength=landed_strength,   # 'non-disclosure' | 'neutral' | 'explicit' | 'undecided'
+    target_employer=target_employer,    # optional
+    target_role=target_role,            # optional
+    factor_1=factor_1_answer,           # the user's verbatim answer
+    factor_2=factor_2_answer,
+    factor_3=factor_3_answer,
+    factor_4=factor_4_answer,
+    factor_5=factor_5_answer,
+    factor_6=factor_6_answer,
+    notes=notes,                        # optional reasoning / caveats
+)
+```
+
+If a worksheet was generated in step (f), `generate()` already attached
+its `artifact_uid` to the row — do not write it twice.
+
+Surface to the user: *"Your disclosure session has been recorded against
+your candidate record. The next time you run a resume tailor, review, or
+cover-letter workflow, your landed preference will be applied — and you
+can see and change it in the dashboard's Disclosure tab."*
+
+**(h) Close by offering to continue.**
+Offer to continue into the resume-review or resume-edit workflow. Pass
+the saved session's `landed_strength` forward as context so the next
+workflow does not need to re-ask.
 
 ---
 
@@ -68,10 +108,11 @@ Offer to continue into the resume-review or resume-edit workflow. Pass any surfa
 
 | Artifact | Path pattern |
 |---|---|
-| Worksheet (markdown) | `output/disclosure-worksheet-YYYY-MM-DD-HHMMSS.md` |
-| Worksheet (branded PDF) | `output/disclosure-worksheet-YYYY-MM-DD-HHMMSS.pdf` |
+| `disclosure_sessions` row (DB) | tracker.db — keyed to active candidate, surfaced in dashboard Disclosure tab |
+| Worksheet (markdown) | `<outputs>/disclosure/<candidate-slug>/disclosure-YYYY-MM-DD-<uid>.md` |
+| Worksheet (branded PDF) | `<outputs>/disclosure/<candidate-slug>/disclosure-YYYY-MM-DD-<uid>.pdf` |
 
-The PDF is rendered with `include_trust_footer=True`. The BRAINS Trust safeguarding-credit line must appear in the footer.
+`<outputs>` resolves to `~/.brains-resume/outputs/` by default (overridable via the `BRAINS_OUTPUTS_DIR` env var). The PDF is rendered with `include_trust_footer=True`. The BRAINS Trust safeguarding-credit line must appear in the footer.
 
 ---
 

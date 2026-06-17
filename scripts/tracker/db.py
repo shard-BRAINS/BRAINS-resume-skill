@@ -28,14 +28,22 @@ def get_db_path() -> Path:
 
 def open_db() -> sqlite3.Connection:
     """Open (creating if needed) the tracker db, run pending migrations,
-    enable foreign keys, and return the connection."""
+    apply post-migration backfill hooks, enable foreign keys, return the
+    connection."""
     db_path = get_db_path()
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(db_path))
     conn.execute("PRAGMA foreign_keys = ON")
     _ensure_migrations_table(conn)
     _run_pending_migrations(conn)
+    _run_post_migration_hooks(conn)
     return conn
+
+
+def _run_post_migration_hooks(conn: sqlite3.Connection) -> None:
+    """Idempotent post-migration backfill. Safe to run on every open."""
+    from scripts.tracker._post_migration import run_b_backfill
+    run_b_backfill(conn)
 
 
 def _ensure_migrations_table(conn: sqlite3.Connection) -> None:

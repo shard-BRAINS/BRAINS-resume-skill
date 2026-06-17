@@ -163,3 +163,51 @@ def test_for_candidate_absent_reads_as_none(tmp_path):
     write_artifact_meta(docx_path, meta)
     roundtrip = read_artifact_meta(docx_path)
     assert roundtrip.for_candidate is None
+
+
+def test_artifact_meta_has_candidate_id_default_none():
+    from scripts.outputs.tagging import ArtifactMeta
+    m = ArtifactMeta(
+        artifact_uid="ABC123", artifact_kind="resume",
+        jd_id=None, parent_uid=None,
+        created_at="2026-05-20T00:00:00Z", skill_version="2.0.0",
+    )
+    assert m.candidate_id is None
+
+
+def test_candidate_id_roundtrips_through_docx(tmp_path):
+    """Write a DOCX with candidate_id set, read it back."""
+    from docx import Document
+    from scripts.outputs.tagging import ArtifactMeta, write_artifact_meta, read_artifact_meta
+
+    docx_path = tmp_path / "test.docx"
+    Document().save(str(docx_path))
+
+    meta = ArtifactMeta(
+        artifact_uid="ABC123", artifact_kind="resume",
+        jd_id=None, parent_uid=None,
+        created_at="2026-05-20T00:00:00Z", skill_version="2.0.0",
+        candidate_id=42,
+    )
+    write_artifact_meta(docx_path, meta)
+    roundtrip = read_artifact_meta(docx_path)
+    assert roundtrip.candidate_id == 42
+
+
+def test_candidate_id_absent_reads_as_none(tmp_path):
+    """A DOCX written without candidate_id reads as None (forward-compat)."""
+    from docx import Document
+    from scripts.outputs.tagging import ArtifactMeta, write_artifact_meta, read_artifact_meta
+
+    docx_path = tmp_path / "test.docx"
+    Document().save(str(docx_path))
+
+    meta = ArtifactMeta(
+        artifact_uid="ABC123", artifact_kind="resume",
+        jd_id=None, parent_uid=None,
+        created_at="2026-05-20T00:00:00Z", skill_version="2.0.0",
+        # candidate_id omitted
+    )
+    write_artifact_meta(docx_path, meta)
+    roundtrip = read_artifact_meta(docx_path)
+    assert roundtrip.candidate_id is None

@@ -14,41 +14,32 @@ from typing import Optional, Tuple
 
 import streamlit as st
 
-from scripts.outputs.io import get_outputs_root, ProfileNameMissingError, _SKILL_VERSION
-from scripts.outputs.naming import artifact_filename, new_uid, split_candidate_name
+from scripts.outputs.io import get_outputs_root, _SKILL_VERSION
+from scripts.outputs.naming import artifact_filename, new_uid
 from scripts.outputs.tagging import ArtifactMeta
-from scripts.tracker.profile import read_profile
+from scripts.tracker.add import NoActiveCandidateError
+from scripts.tracker.candidates import get_active_candidate
 
 
-def _resolve_target(
-    for_candidate: Optional[str] = None,
-) -> Tuple[Path, ArtifactMeta, Optional[str]]:
+def _resolve_target() -> Tuple[Path, ArtifactMeta, int]:
     """Compute the output path + ArtifactMeta for an imported baseline.
 
-    Imports always land in the _library directory (no JD anchor). When
-    `for_candidate` is provided it supersedes the profile name for filename
-    construction and is stamped onto the returned ArtifactMeta. When None,
-    the profile name is used.
+    Imports always land in the _library directory (no JD anchor) and use the
+    active candidate's name for the filename and id stamped on the meta.
 
-    Raises ProfileNameMissingError when no candidate name is available.
+    Raises NoActiveCandidateError when no active candidate is set.
     """
-    for_candidate = (for_candidate or "").strip() or None
-
-    if for_candidate:
-        first_name, last_name = split_candidate_name(for_candidate)
-    else:
-        profile = read_profile()
-        if not profile.first_name or not profile.last_name:
-            raise ProfileNameMissingError(
-                "Set first and last name in the sidebar, or fill 'For candidate' above."
-            )
-        first_name, last_name = profile.first_name, profile.last_name
+    active = get_active_candidate()
+    if active is None:
+        raise NoActiveCandidateError(
+            "No active candidate is set. Select or create one in the sidebar."
+        )
 
     library = get_outputs_root() / "_library"
     library.mkdir(parents=True, exist_ok=True)
     uid = new_uid()
     target_path = library / artifact_filename(
-        first_name=first_name, last_name=last_name,
+        first_name=active.first_name, last_name=active.last_name,
         kind="resume", created_date=date.today(), uid=uid,
     )
     meta = ArtifactMeta(
@@ -56,17 +47,19 @@ def _resolve_target(
         jd_id=None, parent_uid=None,
         created_at=datetime.utcnow().isoformat() + "Z",
         skill_version=_SKILL_VERSION,
-        for_candidate=for_candidate,
+        candidate_id=active.id,
     )
-    return target_path, meta, for_candidate
+    return target_path, meta, active.id
 
 
 def run_import(
     source_text: str,
-    for_candidate: Optional[str],
     confirm_despite_warnings: bool,
 ) -> dict:
     """Pure-Python entry point used by the Streamlit card AND by tests.
+
+    The imported baseline is linked to the active candidate. To import for a
+    new person, create that candidate in the sidebar first.
 
     Returns one of:
       {'status': 'imported', 'artifact_uid': '...', 'facts': {...}, 'warnings': []}
@@ -94,8 +87,8 @@ def run_import(
         }
 
     try:
-        path, meta, resolved_for = _resolve_target(for_candidate=for_candidate)
-    except ProfileNameMissingError as e:
+        path, meta, candidate_id = _resolve_target()
+    except NoActiveCandidateError as e:
         return {"status": "error", "message": str(e), "artifact_uid": None}
 
     add_resume_version(
@@ -103,7 +96,7 @@ def run_import(
         template="imported",
         focus_areas=[],
         artifact_uid=meta.artifact_uid,
-        for_candidate=resolved_for,
+        candidate_id=candidate_id,
     )
     write_snapshot_and_compute_drift(meta.artifact_uid, facts)
     return {
@@ -121,11 +114,12 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "import") -> None
         "snapshot you can review before committing."
     )
 
-    for_candidate = st.text_input(
-        "For candidate (optional — leave blank for yourself)",
-        key=f"{key_prefix}_for_candidate",
-        help="If you're importing a resume for someone else, enter their name here.",
-    )
+    active = get_active_candidate()
+    if active is None:
+        st.error("No active candidate. Select or create one in the sidebar.")
+        return
+    st.caption(f"This baseline will be for: **{active.first_name} {active.last_name}**.")
+
     source_text = st.text_area(
         "Resume text (paste the plain-text content of the DOCX here)",
         key=f"{key_prefix}_source",
@@ -142,7 +136,6 @@ def render(file_path: Optional[Path] = None, key_prefix: str = "import") -> None
             return
         result = run_import(
             source_text=source_text,
-            for_candidate=for_candidate,
             confirm_despite_warnings=confirm,
         )
         if result["status"] == "error":

@@ -5,6 +5,7 @@ import pytest
 
 from scripts.drift.compute import write_snapshot_and_compute_drift
 from scripts.tracker.add import add_resume_version
+from scripts.tracker.candidates import create_candidate, set_active_candidate
 
 
 @pytest.fixture
@@ -14,7 +15,10 @@ def fresh_db(monkeypatch, tmp_path):
     return tmp_path
 
 
-def _seed():
+def _seed() -> int:
+    """Create + activate a candidate, seed a baseline + derivative. Returns cid."""
+    cid = create_candidate("X", "Candidate", [], None, None)
+    set_active_candidate(cid)
     facts = {
         "identity": {"name": "X", "location": "Y", "email": "x@y", "phone": "0"},
         "experience": [], "education": [], "skills": ["A"],
@@ -22,17 +26,18 @@ def _seed():
         "hobbies": None, "languages": None, "publications": None,
         "portfolio_links": None,
     }
-    add_resume_version(None, "hybrid", [], artifact_uid="BL", for_candidate="X")
+    add_resume_version(None, "hybrid", [], artifact_uid="BL", candidate_id=cid)
     write_snapshot_and_compute_drift("BL", facts)
     add_resume_version(None, "hybrid", [], artifact_uid="V2",
-                       parent_uid="BL", for_candidate="X")
+                       parent_uid="BL", candidate_id=cid)
     write_snapshot_and_compute_drift("V2", {**facts, "skills": ["A", "B"]})
+    return cid
 
 
 def test_lineage_data_for_strip(fresh_db):
     from scripts.dashboard.tabs.drift import _lineage_data
-    _seed()
-    data = _lineage_data({"for_candidate": "X"})
+    cid = _seed()
+    data = _lineage_data({"candidate_id": cid})
     assert data["baseline_uid"] == "BL"
     assert [n["artifact_uid"] for n in data["nodes"]] == ["BL", "V2"]
     assert data["nodes"][0]["is_baseline"] is True
